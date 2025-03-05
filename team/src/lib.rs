@@ -19,9 +19,13 @@ pub struct Team {
 
 impl Team {
     pub fn new(captain: Pubkey, team_size: usize) -> Self {
+        let captain_info = ParticipantInfo {
+            paid_by_captain: true,
+            refunded: false,
+        };
         Self {
             captain,
-            participants: BTreeMap::new(),
+            participants: [(captain, captain_info)].into(),
             team_size,
         }
     }
@@ -57,18 +61,32 @@ impl Team {
         Ok(())
     }
 
-    pub fn refund_participant(&mut self, participant: &Pubkey) -> Result<Pubkey> {
+    pub fn refund_participant(&mut self, participant: &Pubkey) -> Result<usize> {
         let info = self
             .participants
             .get_mut(participant)
             .ok_or(TournamentError::ParticipantNotFound)?;
 
+        if info.refunded {
+            return Ok(0);
+        }
+
         info.refunded = true;
-        Ok(if info.paid_by_captain {
-            self.captain
-        } else {
-            *participant
-        })
+
+        if !info.paid_by_captain {
+            return Ok(1);
+        }
+
+        if *participant == self.captain {
+            let count = self
+                .participants
+                .values()
+                .filter(|p| p.paid_by_captain)
+                .count();
+            return Ok(count);
+        }
+
+        Ok(0)
     }
 }
 
@@ -91,7 +109,7 @@ mod tests {
         assert!(team.add_participant_by_captain(participant).is_ok());
 
         let participant_info = team.participants.get(&participant).unwrap();
-        assert_eq!(team.participants.len(), 1);
+        assert_eq!(team.participants.len(), 2);
         assert!(participant_info.paid_by_captain);
         assert!(!participant_info.refunded);
     }
@@ -102,7 +120,7 @@ mod tests {
         let participant = new_pubkey();
         let mut team = Team::new(captain, TEAM_SIZE);
 
-        for _ in 0..TEAM_SIZE {
+        for _ in 1..TEAM_SIZE {
             assert!(team.add_participant_by_captain(new_pubkey()).is_ok());
         }
 
@@ -135,7 +153,7 @@ mod tests {
         assert!(team.add_participant(participant).is_ok());
 
         let participant_info = team.participants.get(&participant).unwrap();
-        assert_eq!(team.participants.len(), 1);
+        assert_eq!(team.participants.len(), 2);
         assert!(!participant_info.paid_by_captain);
         assert!(!participant_info.refunded);
     }
@@ -146,7 +164,7 @@ mod tests {
         let participant = new_pubkey();
         let mut team = Team::new(captain, TEAM_SIZE);
 
-        for _ in 0..TEAM_SIZE {
+        for _ in 1..TEAM_SIZE {
             assert!(team.add_participant(new_pubkey()).is_ok());
         }
 
@@ -182,7 +200,7 @@ mod tests {
             .refund_participant(&participant)
             .expect("Expected participant refunded");
 
-        assert_eq!(result, participant);
+        assert_eq!(result, 1);
 
         let participant_info = team.participants.get(&participant).unwrap();
         assert!(participant_info.refunded);
@@ -200,10 +218,31 @@ mod tests {
             .refund_participant(&participant)
             .expect("Expected participant refunded");
 
-        assert_eq!(result, captain);
+        assert_eq!(result, 0);
 
         let participant_info = team.participants.get(&participant).unwrap();
         assert!(participant_info.refunded);
+    }
+
+    #[test]
+    fn test_refund_captain_success() {
+        let captain = new_pubkey();
+        let participant_1 = new_pubkey();
+        let participant_2 = new_pubkey();
+        let participant_3 = new_pubkey();
+        let participant_4 = new_pubkey();
+        let mut team = Team::new(captain, TEAM_SIZE);
+
+        assert!(team.add_participant_by_captain(participant_1).is_ok());
+        assert!(team.add_participant_by_captain(participant_2).is_ok());
+        assert!(team.add_participant_by_captain(participant_3).is_ok());
+        assert!(team.add_participant(participant_4).is_ok());
+
+        let result = team
+            .refund_participant(&captain)
+            .expect("Expected participant refunded");
+
+        assert_eq!(result, 4);
     }
 
     #[test]
