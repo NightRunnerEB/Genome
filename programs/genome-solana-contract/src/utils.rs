@@ -1,6 +1,5 @@
 use crate::{error::TournamentError, state::{BloomFilterAccount, GenomeConfig, Tournament, TournamentData}};
 use anchor_lang::{error, prelude::{Account, Result}, require};
-use solana_program::msg;
 use growable_bloom_filter::GrowableBloom as Bloom;
 
 const MIN_TEAM_PLAYERS_CAPACITY: u16 = 1;
@@ -33,15 +32,15 @@ pub fn validate_params(params: &TournamentData, config: &GenomeConfig) -> Result
         TournamentError::InvalidTeamLimit
     );
     require!(
-        params.sponsor_pool >= config.min_sponsor_pool,
-        TournamentError::InvalidSponsorPool
+        params.prize_pool >= config.min_prize_pool,
+        TournamentError::InvalidPrizePool
     );
     require!(
         params.sponsor_fee <= config.max_sponsor_fee,
         TournamentError::InvalidSponsorFee
     );
     require!(
-        params.participant_per_team >= MIN_TEAM_PLAYERS_CAPACITY,
+        params.team_size >= MIN_TEAM_PLAYERS_CAPACITY,
         TournamentError::InvalidTeamCapacity
     );
     Ok(())
@@ -51,7 +50,7 @@ pub fn initialize_bloom_filter(
     tournament: &Tournament,
     bloom_filter: &mut Account<BloomFilterAccount>,
 ) -> Result<()> {
-    let items_count = tournament.max_teams * tournament.participant_per_team;
+    let items_count = tournament.max_teams * tournament.team_size;
     let bloom = Bloom::new(FP_P, items_count as usize);
     bloom_filter.data = bincode::serialize(&bloom)
         .map_err(|_| error!(TournamentError::SerializationError))?;

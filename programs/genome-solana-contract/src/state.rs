@@ -9,7 +9,7 @@ pub struct GenomeConfig {
     pub platform_fee: u64,
     pub platform_wallet: Pubkey,
     pub min_entry_fee: u64,
-    pub min_sponsor_pool: u64,
+    pub min_prize_pool: u64,
     pub max_sponsor_fee: u64,
     pub min_teams: u16,
     pub max_teams: u16,
@@ -19,45 +19,45 @@ pub struct GenomeConfig {
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct TournamentData {
-    pub organizer_wallet: Pubkey,
-    pub sponsor_wallet: Pubkey,
+    pub organizer: Pubkey,
+    pub sponsor: Pubkey,
     pub organizer_royalty: u64,
-    pub sponsor_pool: u64,
+    pub prize_pool: u64,
     pub sponsor_fee: u64,
     pub entry_fee: u64,
     pub registration_start: u64,
-    pub participant_per_team: u16,
+    pub team_size: u16,
     pub min_teams: u16,
     pub max_teams: u16,
     pub token: Pubkey,
 }
 
 #[account]
-#[derive(AccountSize, Default)]
+#[derive(InitSpace)]
 pub struct Tournament {
     id: u32,
-    pub organizer_wallet: Pubkey,
-    pub sponsor_wallet: Pubkey,
+    pub organizer: Pubkey,
+    pub organizer_royalty: u64,
+    pub sponsor: Pubkey,
     pub token: Pubkey,
-    pub captains: Vec<Pubkey>,
-    pub sponsor_pool: u64,
+    pub prize_pool: u64,
     pub entry_fee: u64,
     pub registration_start: u64,
-    pub participant_per_team: u16,
+    pub team_size: u16,
     pub min_teams: u16,
     pub max_teams: u16,
 }
 
 impl Tournament {
-    pub fn initialize(&mut self, id: &mut u32, tournament_data: TournamentData) {
-        *id += 1;
-        self.id = *id;
-        self.organizer_wallet = tournament_data.organizer_wallet;
-        self.sponsor_wallet = tournament_data.sponsor_wallet;
+    pub fn initialize(&mut self, id: u32, tournament_data: TournamentData) {
+        self.id = id;
+        self.organizer = tournament_data.organizer;
+        self.organizer_royalty = tournament_data.organizer_royalty;
+        self.sponsor = tournament_data.sponsor;
         self.entry_fee = tournament_data.entry_fee;
-        self.sponsor_pool = tournament_data.sponsor_pool;
+        self.prize_pool = tournament_data.prize_pool;
         self.registration_start = tournament_data.registration_start;
-        self.participant_per_team = tournament_data.participant_per_team;
+        self.team_size = tournament_data.team_size;
         self.min_teams = tournament_data.min_teams;
         self.max_teams = tournament_data.max_teams;
         self.token = tournament_data.token;
@@ -67,13 +67,14 @@ impl Tournament {
 #[event]
 pub struct TournamentCreated {
     pub tournament_id: Pubkey,
-    pub organizer_wallet: Pubkey,
-    pub sponsor_wallet: Pubkey,
+    pub organizer: Pubkey,
+    pub organizer_royalty: u64,
+    pub sponsor: Pubkey,
     pub token: Pubkey,
-    pub sponsor_pool: u64,    
+    pub prize_pool: u64,    
     pub entry_fee: u64,
     pub registration_start: u64,
-    pub participant_per_team: u16,
+    pub team_size: u16,
     pub min_teams: u16,
     pub max_teams: u16,
 }

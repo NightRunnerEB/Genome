@@ -1,4 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
+import { BN } from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { assert } from "chai";
 import {
@@ -8,15 +9,15 @@ import {
 } from "@solana/spl-token";
 import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
 import { GenomeContract } from "../target/types/genome_contract";
-import { getAdminKeyPairs } from "./utits";
+import { getAdminKeyPairs, getProvider } from "./utils";
 
 describe("Genome Contract Tests (initialize & createTournament)", () => {
-    const provider = anchor.AnchorProvider.env();
-    anchor.setProvider(provider);
+    const provider = getProvider();
 
     const program = anchor.workspace.GenomeContract as Program<GenomeContract>;
     const adminKeypair = getAdminKeyPairs().admin;
     const organizerKeypair = Keypair.generate();
+    const sponsorKeypair = Keypair.generate();
     let mintPubkey: PublicKey;
     let sponsorAtaPubkey: PublicKey;
 
@@ -25,17 +26,63 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
         program.programId
     )[0];
 
+    const tournamentDataMock = {
+        organizer: organizerKeypair.publicKey,
+        sponsor: sponsorKeypair.publicKey,
+        prizePool: new anchor.BN(1000),
+        organizerRoyalty: new anchor.BN(100),
+        sponsorFee: new anchor.BN(100),
+        entryFee: new anchor.BN(20),
+        registrationStart: new anchor.BN(12345678),
+        teamSize: 10,
+        minTeams: 4,
+        maxTeams: 20,
+        token: mintPubkey,
+    };
+
+    const createTournamentAndExpectError = async (
+        overrideParams: Partial<typeof tournamentDataMock>,
+        expectedRegex: RegExp
+      ) => {
+        const invalidData = { ...tournamentDataMock, ...overrideParams };
+        let threwError = false;
+        try {
+          await program.methods
+            .createTournament(invalidData)
+            .accounts({
+              organizer: organizerKeypair.publicKey,
+              sponsor: sponsorKeypair.publicKey,
+              mint: mintPubkey,
+              tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+            })
+            .signers([organizerKeypair, sponsorKeypair])
+            .rpc();
+        } catch (err: any) {
+          threwError = true;
+          assert.match(err.toString(), expectedRegex);
+        }
+        assert.ok(threwError, "An error was expected, but the transaction was successful");
+      };
+
     before(async () => {
         const sigAdmin = await provider.connection.requestAirdrop(
             adminKeypair.publicKey,
             3 * anchor.web3.LAMPORTS_PER_SOL
         );
         await provider.connection.confirmTransaction(sigAdmin);
+
         const sigOrg = await provider.connection.requestAirdrop(
             organizerKeypair.publicKey,
             3 * anchor.web3.LAMPORTS_PER_SOL
         );
         await provider.connection.confirmTransaction(sigOrg);
+
+        const sigSponsor = await provider.connection.requestAirdrop(
+            sponsorKeypair.publicKey,
+            3 * anchor.web3.LAMPORTS_PER_SOL
+        );
+        await provider.connection.confirmTransaction(sigSponsor);
+
         mintPubkey = await createMint(
             provider.connection,
             adminKeypair,
@@ -43,11 +90,12 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
             null,
             6
         );
+        tournamentDataMock.token = mintPubkey;
         const sponsorAta = await getOrCreateAssociatedTokenAccount(
             provider.connection,
             adminKeypair,
             mintPubkey,
-            organizerKeypair.publicKey
+            sponsorKeypair.publicKey
         );
         sponsorAtaPubkey = sponsorAta.address;
         await mintTo(
@@ -67,7 +115,7 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
             platformFee: new anchor.BN(10),
             platformWallet: adminKeypair.publicKey,
             minEntryFee: new anchor.BN(10),
-            minSponsorPool: new anchor.BN(500),
+            minPrizePool: new anchor.BN(500),
             maxSponsorFee: new anchor.BN(1000),
             minTeams: 2,
             maxTeams: 20,
@@ -88,7 +136,7 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
         const configAccount = await program.account.genomeConfig.fetch(configPda);
         assert.ok(configAccount != null);
         assert.equal(configAccount.minEntryFee.toNumber(), 10);
-        assert.equal(configAccount.minSponsorPool.toNumber(), 500);
+        assert.equal(configAccount.minPrizePool.toNumber(), 500);
     });
 
     it("Create a Tournament", async () => {
@@ -102,120 +150,87 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
             ],
             program.programId
         );
-        const [bloomPda] = PublicKey.findProgramAddressSync(
-            [Buffer.from("genome"), Buffer.from("bloom")],
-            program.programId
-        );
-
-        const tournamentData = {
-            organizerWallet: organizerKeypair.publicKey,
-            sponsorWallet: organizerKeypair.publicKey,
-            sponsorPool: new anchor.BN(1000),
-            organizerRoyalty: new anchor.BN(100),
-            sponsorFee: new anchor.BN(100),
-            entryFee: new anchor.BN(20),
-            registrationStart: new anchor.BN(12345678),
-            participantPerTeam: 10,
-            minTeams: 4,
-            maxTeams: 20,
-            token: mintPubkey,
-        };
 
         try {
             await program.methods
-                .createTournament(tournamentData)
+                .createTournament(tournamentDataMock)
                 .accounts({
                     organizer: organizerKeypair.publicKey,
+                    sponsor: sponsorKeypair.publicKey,
                     mint: mintPubkey,
                     tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
                 })
-                .signers([organizerKeypair])
+                .signers([organizerKeypair, sponsorKeypair])
                 .rpc();
 
             const configDataAfter = await program.account.genomeConfig.fetch(configPda);
             const tournamentAccount = await program.account.tournament.fetch(tournamentPda);
+
+            console.log(tournamentAccount.token);
+
             assert.ok(tournamentAccount != null);
             assert.equal(tournamentAccount.id, configDataAfter.tournamentNonce);
-            assert.equal(
-                tournamentAccount.sponsorWallet.toBase58(),
-                tournamentData.sponsorWallet.toBase58(),
-            );
-            assert.equal(
-                tournamentAccount.sponsorPool.toNumber(),
-                tournamentData.sponsorPool.toNumber(),
-            );
-            assert.equal(
-                tournamentAccount.entryFee.toNumber(),
-                tournamentData.entryFee.toNumber(),
-            );
-            assert.equal(
-                tournamentAccount.registrationStart.toNumber(),
-                tournamentData.registrationStart.toNumber(),
-            );
-            assert.equal(
-                tournamentAccount.participantPerTeam,
-                tournamentData.participantPerTeam,
-            );
-            assert.equal(
-                tournamentAccount.minTeams,
-                tournamentData.minTeams,
-            );
-            assert.equal(
-                tournamentAccount.maxTeams,
-                tournamentData.maxTeams,
-            );
+            assert.equal(tournamentAccount.sponsor.toBase58(), tournamentDataMock.sponsor.toBase58());
+            assert.equal(tournamentAccount.prizePool.toNumber(), tournamentDataMock.prizePool.toNumber());
+            assert.equal(tournamentAccount.organizerRoyalty.toNumber(), tournamentDataMock.organizerRoyalty.toNumber());
+            assert.equal(tournamentAccount.entryFee.toNumber(), tournamentDataMock.entryFee.toNumber());
+            assert.equal(tournamentAccount.registrationStart.toNumber(), tournamentDataMock.registrationStart.toNumber());
+            assert.equal(tournamentAccount.teamSize, tournamentDataMock.teamSize);
+            assert.equal(tournamentAccount.minTeams,tournamentDataMock.minTeams);
+            assert.equal(tournamentAccount.maxTeams, tournamentDataMock.maxTeams);
+            assert.equal(tournamentAccount.organizer.toBase58(), tournamentDataMock.organizer.toBase58());
+            assert.equal(tournamentAccount.token.toBase58(), tournamentDataMock.token.toBase58());
         } catch (err) {
             console.error(err.error);
             throw err
         }
     });
 
-    it("Invalid tournament params", async () => {
-        const configData = await program.account.genomeConfig.fetch(configPda);
-        const sponsorPoolTooSmall = new anchor.BN(10);
-        const tournamentDataInvalid = {
-            organizerWallet: organizerKeypair.publicKey,
-            sponsorWallet: organizerKeypair.publicKey,
-            sponsorPool: sponsorPoolTooSmall,
-            organizerRoyalty: new anchor.BN(50),
-            sponsorFee: new anchor.BN(100),
-            entryFee: new anchor.BN(30),
-            registrationStart: new anchor.BN(Math.floor(Date.now() / 1000) + 60),
-            participantPerTeam: 5,
-            minTeams: 3,
-            maxTeams: 10,
-            token: mintPubkey,
-        };
-        const [tournamentPda2] = PublicKey.findProgramAddressSync(
-            [
-                Buffer.from("genome"),
-                Buffer.from("tournament"),
-                new Uint8Array(new Uint32Array([configData.tournamentNonce]).buffer),
-            ],
-            program.programId
+    it("Invalid organizerRoyalty", async () => {
+        await createTournamentAndExpectError(
+          { organizerRoyalty: new BN(9999999) },
+          /InvalidRoyalty|custom program error/
         );
-        const [bloomPda2] = PublicKey.findProgramAddressSync(
-            [Buffer.from("genome"), Buffer.from("bloom")],
-            program.programId
+      });
+    
+      it("Invalid entry_fee", async () => {
+        await createTournamentAndExpectError(
+          { entryFee: new BN(1) },
+          /InvalidAdmissionFee|custom program error/
         );
-        const bloomFilterAccount = await program.account.bloomFilterAccount.fetch(bloomPda2);
-        console.log("Bloom:", bloomFilterAccount.data.length);
+      });
+    
+      it("Invalid team limit (minTeams, maxTeams)", async () => {
+        console.log(tournamentDataMock);
+        await createTournamentAndExpectError(
+          { maxTeams: 100 },
+          /InvalidTeamLimit|custom program error/
+        );
 
-        let threwError = false;
-        try {
-            await program.methods
-                .createTournament(tournamentDataInvalid)
-                .accounts({
-                    organizer: organizerKeypair.publicKey,
-                    mint: mintPubkey,
-                    tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-                })
-                .signers([organizerKeypair])
-                .rpc();
-        } catch (err: any) {
-            threwError = true;
-            assert.match(err.toString(), /InvalidSponsorPool|custom program error/);
-        }
-        assert.ok(threwError);
-    });
+        await createTournamentAndExpectError(
+            { minTeams: 0},
+            /InvalidTeamLimit|custom program error/
+          );
+      });
+    
+      it("Invalid prize_pool param", async () => {
+        await createTournamentAndExpectError(
+          { prizePool: new BN(10) },
+          /InvalidPrizePool|custom program error/
+        );
+      });
+    
+      it("Invalid sponsor_fee", async () => {
+        await createTournamentAndExpectError(
+          { sponsorFee: new BN(999999) },
+          /InvalidSponsorFee|custom program error/
+        );
+      });
+    
+      it("Invalid team_size", async () => {
+        await createTournamentAndExpectError(
+          { teamSize: 1 },
+          /InvalidTeamCapacity|custom program error/
+        );
+      });
 });
