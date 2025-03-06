@@ -24,6 +24,5 @@ idl-build = [
 anchor-lang = { version = "0.30.1", features = ["init-if-needed"] }
 anchor-spl = "0.30.1"
 solana-program = "1.18.17"
-derive = { path = "derive" }
 bincode = "1.3"
 growable-bloom-filter = "2.1.1"

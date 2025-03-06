@@ -79,7 +79,7 @@ pub struct Initialize<'info> {
     #[account(
         init,
         payer = admin,
-        space = GenomeConfig::get_account_size(),
+        space = GenomeConfig::INIT_SPACE,
         seeds = [GENOME_ROOT, CONFIG],
         bump
     )]

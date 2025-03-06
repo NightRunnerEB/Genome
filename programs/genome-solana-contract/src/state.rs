@@ -1,8 +1,7 @@
 use anchor_lang::prelude::*;
-use derive::AccountSize;
 
 #[account]
-#[derive(AccountSize, Default)]
+#[derive(InitSpace)]
 pub struct GenomeConfig {
     pub admin: Pubkey,
     pub tournament_nonce: u128,

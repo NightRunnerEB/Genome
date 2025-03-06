@@ -885,14 +885,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "derive"
-version = "0.1.0"
-dependencies = [
- "quote",
- "syn 2.0.99",
-]
-
-[[package]]
 name = "digest"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1002,7 +994,6 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "bincode",
- "derive",
  "growable-bloom-filter",
  "solana-program",
 ]
