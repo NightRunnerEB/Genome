@@ -9,13 +9,12 @@ pub fn calculate_bloom_memory(players_count: u16) -> Result<usize> {
     if players_count > 3200 {
         return Err(TournamentError::MaxPlayersExceeded.into());
     }
-    let false_positive_rate = 0.000065;
-    let num_slices = ((1.0_f64 / false_positive_rate).log2()).ceil() as u64;
+    let num_slices = ((1.0_f64 / FP_P).log2()).ceil() as u64;
     let slice_len_bits = (players_count as f64 / 2f64.ln()).ceil() as u64;
     let total_bits = num_slices * slice_len_bits;
     let buffer_bytes = ((total_bits + 7) / 8) as usize;
     let memory = 8*9 + 4 + buffer_bytes;
-    return Ok(memory)
+    Ok(memory)
 }
 
 pub fn validate_params(params: &TournamentData, config: &GenomeConfig) -> Result<()> {
@@ -32,12 +31,8 @@ pub fn validate_params(params: &TournamentData, config: &GenomeConfig) -> Result
         TournamentError::InvalidTeamLimit
     );
     require!(
-        params.prize_pool >= config.min_prize_pool,
-        TournamentError::InvalidPrizePool
-    );
-    require!(
-        params.sponsor_fee <= config.max_sponsor_fee,
-        TournamentError::InvalidSponsorFee
+        params.sponsor_pool >= config.min_sponsor_pool,
+        TournamentError::InvalidSponsorPool
     );
     require!(
         params.team_size >= MIN_TEAM_PLAYERS_CAPACITY,

@@ -14,7 +14,7 @@ use anchor_spl::{
 use state::{Tournament, TournamentCreated, GenomeConfig, TournamentData, BloomFilterAccount};
 use utils::{calculate_bloom_memory, validate_params, initialize_bloom_filter};
 
-declare_id!("4pVeqak3JdGUoNqSiVcuft1tQ5AzHcBKP7VZabxBjejF");
+declare_id!("E6GWpwUmrTeigWajiCAk2LTSNQ2a4mPeuhDBqyDgfdmV");
 
 #[cfg(feature = "localnet")]
 const DEPLOYER: Pubkey = pubkey!("4JBz7FTeRHcVgMx8qU4pUWbgqsZPp48eM8uV1tZXRjG7");
@@ -52,14 +52,14 @@ pub mod genome_contract {
         };
 
         let cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), accounts);
-        transfer_checked(cpi, tournament.prize_pool, ctx.accounts.mint.decimals)?;
+        transfer_checked(cpi, tournament.sponsor_pool, ctx.accounts.mint.decimals)?;
 
         emit!(TournamentCreated {
-            tournament_id: tournament.key(),
+            id: tournament.id,
             organizer: tournament.organizer,
             organizer_royalty: tournament.organizer_royalty,
             sponsor: tournament.sponsor,
-            prize_pool: tournament.prize_pool,
+            sponsor_pool: tournament.sponsor_pool,
             entry_fee: tournament.entry_fee,
             registration_start: tournament.registration_start,
             team_size: tournament.team_size,
@@ -128,7 +128,7 @@ pub struct CreateTournamentSinglechain<'info> {
         seeds = [GENOME_ROOT, BLOOM],
         bump
     )]
-    pub bloom_filter: Account<'info, BloomFilterAccount>,
+    pub bloom_filter: Box<Account<'info, BloomFilterAccount>>,
     associated_token_program: Program<'info, AssociatedToken>,
     system_program: Program<'info, System>,
     token_program: Interface<'info, TokenInterface>,

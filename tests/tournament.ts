@@ -29,9 +29,8 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
     const tournamentDataMock = {
         organizer: organizerKeypair.publicKey,
         sponsor: sponsorKeypair.publicKey,
-        prizePool: new anchor.BN(1000),
+        sponsorPool: new anchor.BN(1000),
         organizerRoyalty: new anchor.BN(100),
-        sponsorFee: new anchor.BN(100),
         entryFee: new anchor.BN(20),
         registrationStart: new anchor.BN(12345678),
         teamSize: 10,
@@ -111,12 +110,11 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
     it("Initialize GenomeConfig", async () => {
         const configData = {
             admin: adminKeypair.publicKey,
-            tournamentNonce: 0,
+            tournamentNonce: new anchor.BN(0),
             platformFee: new anchor.BN(10),
             platformWallet: adminKeypair.publicKey,
             minEntryFee: new anchor.BN(10),
-            minPrizePool: new anchor.BN(500),
-            maxSponsorFee: new anchor.BN(1000),
+            minSponsorPool: new anchor.BN(500),
             minTeams: 2,
             maxTeams: 20,
             maxOrganizerRoyalty: new anchor.BN(5000),
@@ -136,17 +134,17 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
         const configAccount = await program.account.genomeConfig.fetch(configPda);
         assert.ok(configAccount != null);
         assert.equal(configAccount.minEntryFee.toNumber(), 10);
-        assert.equal(configAccount.minPrizePool.toNumber(), 500);
+        assert.equal(configAccount.minSponsorPool.toNumber(), 500);
     });
 
     it("Create a Tournament", async () => {
         const configDataBefore = await program.account.genomeConfig.fetch(configPda);
-        const tournamentNonce = configDataBefore.tournamentNonce;
+        const nonceBuffer = configDataBefore.tournamentNonce.toArrayLike(Buffer, 'le', 16);
         const [tournamentPda] = PublicKey.findProgramAddressSync(
             [
                 Buffer.from("genome"),
                 Buffer.from("tournament"),
-                new Uint8Array(new Uint32Array([tournamentNonce]).buffer),
+                nonceBuffer,
             ],
             program.programId
         );
@@ -166,12 +164,10 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
             const configDataAfter = await program.account.genomeConfig.fetch(configPda);
             const tournamentAccount = await program.account.tournament.fetch(tournamentPda);
 
-            console.log(tournamentAccount.token);
-
             assert.ok(tournamentAccount != null);
-            assert.equal(tournamentAccount.id, configDataAfter.tournamentNonce);
+            assert.equal(tournamentAccount.id.toNumber(), configDataAfter.tournamentNonce.toNumber());
             assert.equal(tournamentAccount.sponsor.toBase58(), tournamentDataMock.sponsor.toBase58());
-            assert.equal(tournamentAccount.prizePool.toNumber(), tournamentDataMock.prizePool.toNumber());
+            assert.equal(tournamentAccount.sponsorPool.toNumber(), tournamentDataMock.sponsorPool.toNumber());
             assert.equal(tournamentAccount.organizerRoyalty.toNumber(), tournamentDataMock.organizerRoyalty.toNumber());
             assert.equal(tournamentAccount.entryFee.toNumber(), tournamentDataMock.entryFee.toNumber());
             assert.equal(tournamentAccount.registrationStart.toNumber(), tournamentDataMock.registrationStart.toNumber());
@@ -201,7 +197,6 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
       });
     
       it("Invalid team limit (minTeams, maxTeams)", async () => {
-        console.log(tournamentDataMock);
         await createTournamentAndExpectError(
           { maxTeams: 100 },
           /InvalidTeamLimit|custom program error/
@@ -215,15 +210,8 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
     
       it("Invalid prize_pool param", async () => {
         await createTournamentAndExpectError(
-          { prizePool: new BN(10) },
+          { sponsorPool: new BN(10) },
           /InvalidPrizePool|custom program error/
-        );
-      });
-    
-      it("Invalid sponsor_fee", async () => {
-        await createTournamentAndExpectError(
-          { sponsorFee: new BN(999999) },
-          /InvalidSponsorFee|custom program error/
         );
       });
     

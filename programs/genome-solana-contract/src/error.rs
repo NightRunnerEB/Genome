@@ -10,10 +10,8 @@ pub enum TournamentError {
     ParticipantNotFound,
     #[msg("InvalidAdmissionFee")]
     InvalidAdmissionFee,
-    #[msg("InvalidSponsorFee")]
-    InvalidSponsorFee,
     #[msg("InvalidPrizePool")]
-    InvalidPrizePool,
+    InvalidSponsorPool,
     #[msg("InvalidTeamLimit")]
     InvalidTeamLimit,
     #[msg("InvalidTeamCapacity")]
