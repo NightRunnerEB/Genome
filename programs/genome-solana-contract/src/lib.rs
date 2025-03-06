@@ -14,7 +14,7 @@ use anchor_spl::{
 use state::{Tournament, TournamentCreated, GenomeConfig, TournamentData, BloomFilterAccount};
 use utils::{calculate_bloom_memory, validate_params, initialize_bloom_filter};
 
-declare_id!("E6GWpwUmrTeigWajiCAk2LTSNQ2a4mPeuhDBqyDgfdmV");
+declare_id!("3po1j895u6aRWedTsToPGYQGzi7p3oH8yhGVAZz4Aogf");
 
 #[cfg(feature = "localnet")]
 const DEPLOYER: Pubkey = pubkey!("4JBz7FTeRHcVgMx8qU4pUWbgqsZPp48eM8uV1tZXRjG7");

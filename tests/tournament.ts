@@ -154,37 +154,32 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
       program.programId
     );
 
-    try {
-      await program.methods
-        .createTournament(tournamentDataMock)
-        .accounts({
-          organizer: organizerKeypair.publicKey,
-          sponsor: sponsorKeypair.publicKey,
-          mint: mintPubkey,
-          tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-        })
-        .signers([organizerKeypair, sponsorKeypair])
-        .rpc();
+    await program.methods
+      .createTournament(tournamentDataMock)
+      .accounts({
+        organizer: organizerKeypair.publicKey,
+        sponsor: sponsorKeypair.publicKey,
+        mint: mintPubkey,
+        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+      })
+      .signers([organizerKeypair, sponsorKeypair])
+      .rpc();
 
-      const configDataAfter = await program.account.genomeConfig.fetch(configPda);
-      const tournamentAccount = await program.account.tournament.fetch(tournamentPda);
+    const configDataAfter = await program.account.genomeConfig.fetch(configPda);
+    const tournamentAccount = await program.account.tournament.fetch(tournamentPda);
 
-      assert.ok(tournamentAccount != null);
-      assert.equal(tournamentAccount.id.toNumber(), configDataAfter.tournamentNonce.toNumber());
-      assert.equal(tournamentAccount.sponsor.toBase58(), tournamentDataMock.sponsor.toBase58());
-      assert.equal(tournamentAccount.sponsorPool.toNumber(), tournamentDataMock.sponsorPool.toNumber());
-      assert.equal(tournamentAccount.organizerRoyalty.toNumber(), tournamentDataMock.organizerRoyalty.toNumber());
-      assert.equal(tournamentAccount.entryFee.toNumber(), tournamentDataMock.entryFee.toNumber());
-      assert.equal(tournamentAccount.registrationStart.toNumber(), tournamentDataMock.registrationStart.toNumber());
-      assert.equal(tournamentAccount.teamSize, tournamentDataMock.teamSize);
-      assert.equal(tournamentAccount.minTeams, tournamentDataMock.minTeams);
-      assert.equal(tournamentAccount.maxTeams, tournamentDataMock.maxTeams);
-      assert.equal(tournamentAccount.organizer.toBase58(), tournamentDataMock.organizer.toBase58());
-      assert.equal(tournamentAccount.token.toBase58(), tournamentDataMock.token.toBase58());
-    } catch (err) {
-      console.error(err.error);
-      throw err
-    }
+    assert.ok(tournamentAccount != null);
+    assert.equal(tournamentAccount.id.toNumber(), configDataAfter.tournamentNonce.toNumber());
+    assert.equal(tournamentAccount.sponsor.toBase58(), tournamentDataMock.sponsor.toBase58());
+    assert.equal(tournamentAccount.sponsorPool.toNumber(), tournamentDataMock.sponsorPool.toNumber());
+    assert.equal(tournamentAccount.organizerRoyalty.toNumber(), tournamentDataMock.organizerRoyalty.toNumber());
+    assert.equal(tournamentAccount.entryFee.toNumber(), tournamentDataMock.entryFee.toNumber());
+    assert.equal(tournamentAccount.registrationStart.toNumber(), tournamentDataMock.registrationStart.toNumber());
+    assert.equal(tournamentAccount.teamSize, tournamentDataMock.teamSize);
+    assert.equal(tournamentAccount.minTeams, tournamentDataMock.minTeams);
+    assert.equal(tournamentAccount.maxTeams, tournamentDataMock.maxTeams);
+    assert.equal(tournamentAccount.organizer.toBase58(), tournamentDataMock.organizer.toBase58());
+    assert.equal(tournamentAccount.token.toBase58(), tournamentDataMock.token.toBase58());
   });
 
   it("Invalid organizerRoyalty", async () => {
