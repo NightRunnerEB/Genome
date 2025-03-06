@@ -49,7 +49,6 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
     expectedRegex: RegExp
   ) => {
     const invalidData = { ...tournamentDataMock, ...overrideParams };
-    let threwError = false;
     try {
       await program.methods
         .createTournament(invalidData)
@@ -61,11 +60,11 @@ describe("Genome Contract Tests (initialize & createTournament)", () => {
         })
         .signers([organizerKeypair, sponsorKeypair])
         .rpc();
+
+      assert.fail("An error was expected, but the transaction was successful");
     } catch (err: any) {
-      threwError = true;
       assert.match(err.toString(), expectedRegex);
     }
-    assert.ok(threwError, "An error was expected, but the transaction was successful");
   };
 
   before(async () => {
