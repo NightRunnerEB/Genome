@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum TournamentError {
-    #[msg("MaxPlayersExceeded")]
+    #[msg("MaxPlayersExceeded(3200)")]
     MaxPlayersExceeded,
     #[msg("AlreadyRegistered")]
     AlreadyRegistered,
