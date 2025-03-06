@@ -28,7 +28,7 @@ pub fn validate_params(params: &TournamentData, config: &GenomeConfig) -> Result
     );
     require!(
         params.min_teams >= config.min_teams && params.max_teams <= config.max_teams,
-        TournamentError::InvalidTeamCount
+        TournamentError::InvalidTeamsCount
     );
     require!(
         params.sponsor_pool >= config.min_sponsor_pool,

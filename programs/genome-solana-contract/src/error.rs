@@ -12,8 +12,8 @@ pub enum TournamentError {
     InvalidAdmissionFee,
     #[msg("InvalidPrizePool")]
     InvalidSponsorPool,
-    #[msg("InvalidTeamCount")]
-    InvalidTeamCount,
+    #[msg("InvalidTeamsCount")]
+    InvalidTeamsCount,
     #[msg("InvalidTeamCapacity")]
     InvalidTeamCapacity,
     #[msg("InvalidAmountOfPlayers")]
