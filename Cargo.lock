@@ -995,7 +995,6 @@ dependencies = [
  "anchor-spl",
  "bincode",
  "growable-bloom-filter",
- "solana-program",
 ]
 
 [[package]]
