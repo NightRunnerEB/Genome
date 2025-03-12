@@ -105,41 +105,59 @@ describe("Genome Solana Singlechain", () => {
     });
 
     it("Invalid organizerRoyalty", async () => {
-        await createTournamentAndExpectError(
-            { organizerRoyalty: new anchor.BN(9999999) },
+        await txBuilder.createInvalidTournament(
+            organizer,
+            sponsor,
+            mint,
+            { ...tournamentDataMock, organizerRoyalty: new anchor.BN(9999999) },
             /InvalidRoyalty|custom program error/
         );
     });
 
     it("Invalid entry_fee", async () => {
-        await createTournamentAndExpectError(
-            { entryFee: new anchor.BN(1) },
+        await txBuilder.createInvalidTournament(
+            organizer,
+            sponsor,
+            mint,
+            { ...tournamentDataMock, entryFee: new anchor.BN(1) },
             /InvalidAdmissionFee|custom program error/
         );
     });
 
     it("Invalid team limit (minTeams, maxTeams)", async () => {
-        await createTournamentAndExpectError(
-            { maxTeams: 100 },
+        await txBuilder.createInvalidTournament(
+            organizer,
+            sponsor,
+            mint,
+            { ...tournamentDataMock, maxTeams: 100 },
             /InvalidTeamsCount|custom program error/
         );
 
-        await createTournamentAndExpectError(
-            { minTeams: 0 },
+        await txBuilder.createInvalidTournament(
+            organizer,
+            sponsor,
+            mint,
+            { ...tournamentDataMock, minTeams: 0 },
             /InvalidTeamsCount|custom program error/
         );
     });
 
     it("Invalid prize_pool param", async () => {
-        await createTournamentAndExpectError(
-            { sponsorPool: new anchor.BN(10) },
+        await txBuilder.createInvalidTournament(
+            organizer,
+            sponsor,
+            mint,
+            { ...tournamentDataMock, sponsorPool: new anchor.BN(10) },
             /InvalidPrizePool|custom program error/
         );
     });
 
     it("Invalid tournament capacity", async () => {
-        await createTournamentAndExpectError(
-            { maxTeams: 100, teamSize: 40 },
+        await txBuilder.createInvalidTournament(
+            organizer,
+            sponsor,
+            mint,
+            { ...tournamentDataMock, maxTeams: 100, teamSize: 40 },
             /MaxPlayersExceeded|custom program error/
         );
     });

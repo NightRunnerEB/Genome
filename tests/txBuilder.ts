@@ -7,6 +7,7 @@ import {
 } from "./utils";
 import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { assert } from "chai";
 
 export class TxBuilder {
     public program: anchor.Program<GenomeContract>;
@@ -46,6 +47,21 @@ export class TxBuilder {
             })
             .signers([organizer])
             .rpc();
+    }
+
+    async createInvalidTournament(
+        organizer: Keypair,
+        sponsor: Keypair,
+        mint: PublicKey,
+        params: any,
+        expectedRegex: RegExp
+    ): Promise<void> {
+        try {
+            await this.createTournamentSinglechain(organizer, sponsor, mint, params);
+            throw new Error("An error was expected, but the transaction was successful");
+        } catch (err: any) {
+            assert.match(err.toString(), expectedRegex);
+        }
     }
 
     async getConfig() {
