@@ -43,19 +43,6 @@ describe("Genome Solana Singlechain", () => {
         mint: token.publicKey,
     };
 
-    const createTournamentAndExpectError = async (
-        overrideParams: Partial<typeof tournamentDataMock>,
-        expectedRegex: RegExp
-    ) => {
-        const invalidData = { ...tournamentDataMock, ...overrideParams };
-        try {
-            await txBuilder.createTournamentSinglechain(organizer, sponsor, mint, invalidData);
-            assert.fail("An error was expected, but the transaction was successful");
-        } catch (err: any) {
-            assert.match(err.toString(), expectedRegex);
-        }
-    };
-
     before(async () => {
         await Promise.all(
             [admin, organizer, sponsor].map(
