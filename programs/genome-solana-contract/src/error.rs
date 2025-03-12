@@ -12,10 +12,6 @@ pub(crate) enum TournamentError {
     InvalidTeamsCount,
     #[msg("InvalidRoyalty")]
     InvalidRoyalty,
-}
-
-#[error_code]
-pub(crate) enum CustomError {
     #[msg("Invalid admin account is provided")]
     InvalidAdmin,
     #[msg("SerializationError")]

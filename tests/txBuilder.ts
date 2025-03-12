@@ -5,7 +5,6 @@ import {
     getGenomePda,
     getTournamentPda,
 } from "./utils";
-import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { assert } from "chai";
 
@@ -25,7 +24,6 @@ export class TxBuilder {
             .initialize(configData)
             .accounts({
                 admin: admin.publicKey,
-                systemProgram: SYSTEM_PROGRAM_ID,
             })
             .signers([admin])
             .rpc();
@@ -49,21 +47,6 @@ export class TxBuilder {
             .rpc();
     }
 
-    async createInvalidTournament(
-        organizer: Keypair,
-        sponsor: Keypair,
-        mint: PublicKey,
-        params: any,
-        expectedRegex: RegExp
-    ): Promise<void> {
-        try {
-            await this.createTournamentSinglechain(organizer, sponsor, mint, params);
-            throw new Error("An error was expected, but the transaction was successful");
-        } catch (err: any) {
-            assert.match(err.toString(), expectedRegex);
-        }
-    }
-
     async getConfig() {
         let configPda = getGenomePda();
         const config = await this.program.account.genomeConfig.fetch(configPda);
@@ -72,6 +55,7 @@ export class TxBuilder {
             tournamentNonce: config.tournamentNonce,
             platformFee: config.platformFee,
             platformWallet: config.platformWallet,
+            falsePrecision: config.falsePrecision,
             minEntryFee: config.minEntryFee,
             minSponsorPool: config.minSponsorPool,
             minTeams: config.minTeams,

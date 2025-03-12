@@ -6,7 +6,8 @@ import {
     airdrop,
     getKeyPairs,
     createGenomeMint,
-    delegateAccount
+    delegateAccount,
+    createInvalidTournament
 } from "./utils";
 
 describe("Genome Solana Singlechain", () => {
@@ -66,8 +67,17 @@ describe("Genome Solana Singlechain", () => {
 
         const configAccount = await txBuilder.getConfig();
         assert.ok(configAccount != null);
-        assert.equal(configAccount.minEntryFee, 10);
-        assert.equal(configAccount.minSponsorPool.toNumber(), 500);
+        assert.equal(configAccount.admin.toBase58(), configData.admin.toBase58());
+        assert.equal(configAccount.platformWallet.toBase58(), configData.platformWallet.toBase58());
+        assert.equal(configAccount.mint.toBase58(), configData.mint.toBase58());
+        assert.equal(configAccount.falsePrecision, configData.falsePrecision);
+        assert.equal(configAccount.platformFee.toNumber(), configData.platformFee.toNumber());
+        assert.equal(configAccount.minEntryFee.toNumber(), configData.minEntryFee.toNumber());
+        assert.equal(configAccount.minSponsorPool.toNumber(), configData.minSponsorPool.toNumber());
+        assert.equal(configAccount.maxOrganizerRoyalty.toNumber(), configData.maxOrganizerRoyalty.toNumber());
+        assert.equal(configAccount.tournamentNonce, configData.tournamentNonce);
+        assert.equal(configAccount.minTeams, configData.minTeams);
+        assert.equal(configAccount.maxTeams, configData.maxTeams);
     });
 
     it("Create a Tournament", async () => {
@@ -92,60 +102,48 @@ describe("Genome Solana Singlechain", () => {
     });
 
     it("Invalid organizerRoyalty", async () => {
-        await txBuilder.createInvalidTournament(
-            organizer,
-            sponsor,
-            mint,
+        await createInvalidTournament(
+            txBuilder,
             { ...tournamentDataMock, organizerRoyalty: new anchor.BN(9999999) },
-            /InvalidRoyalty|custom program error/
+            /InvalidRoyalty/
         );
     });
 
     it("Invalid entry_fee", async () => {
-        await txBuilder.createInvalidTournament(
-            organizer,
-            sponsor,
-            mint,
+        await createInvalidTournament(
+            txBuilder,
             { ...tournamentDataMock, entryFee: new anchor.BN(1) },
-            /InvalidAdmissionFee|custom program error/
+            /InvalidAdmissionFee/
         );
     });
 
     it("Invalid team limit (minTeams, maxTeams)", async () => {
-        await txBuilder.createInvalidTournament(
-            organizer,
-            sponsor,
-            mint,
+        await createInvalidTournament(
+            txBuilder,
             { ...tournamentDataMock, maxTeams: 100 },
-            /InvalidTeamsCount|custom program error/
+            /InvalidTeamsCount/
         );
 
-        await txBuilder.createInvalidTournament(
-            organizer,
-            sponsor,
-            mint,
+        await createInvalidTournament(
+            txBuilder,
             { ...tournamentDataMock, minTeams: 0 },
-            /InvalidTeamsCount|custom program error/
+            /InvalidTeamsCount/
         );
     });
 
     it("Invalid prize_pool param", async () => {
-        await txBuilder.createInvalidTournament(
-            organizer,
-            sponsor,
-            mint,
+        await createInvalidTournament(
+            txBuilder,
             { ...tournamentDataMock, sponsorPool: new anchor.BN(10) },
-            /InvalidPrizePool|custom program error/
+            /InvalidPrizePool/
         );
     });
 
     it("Invalid tournament capacity", async () => {
-        await txBuilder.createInvalidTournament(
-            organizer,
-            sponsor,
-            mint,
+        await createInvalidTournament(
+            txBuilder,
             { ...tournamentDataMock, maxTeams: 100, teamSize: 40 },
-            /MaxPlayersExceeded|custom program error/
+            /MaxPlayersExceeded/
         );
     });
 });

@@ -7,7 +7,7 @@ use growable_bloom_filter::GrowableBloom as Bloom;
 
 use crate::{
     data::{BloomFilterAccount, GenomeConfig, Tournament, TournamentData},
-    error::{CustomError, TournamentError},
+    error::TournamentError,
 };
 
 const MAX_TEAM_SIZE: u16 = 3200;
@@ -52,6 +52,6 @@ pub fn initialize_bloom_filter(
     let items_count = tournament.max_teams * tournament.team_size;
     let bloom = Bloom::new(*false_precision, items_count as usize);
     bloom_filter.data =
-        bincode::serialize(&bloom).map_err(|_| error!(CustomError::SerializationError))?;
+        bincode::serialize(&bloom).map_err(|_| error!(TournamentError::SerializationError))?;
     Ok(())
 }

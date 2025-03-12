@@ -10,10 +10,10 @@ use anchor_spl::{
     token_2022::TransferChecked,
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface},
 };
+use error::TournamentError;
 
 use crate::{
     data::{BloomFilterAccount, GenomeConfig, Tournament, TournamentCreated, TournamentData},
-    error::CustomError,
     utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params},
 };
 
@@ -80,7 +80,7 @@ pub mod genome_contract {
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(mut, address = DEPLOYER @ CustomError::InvalidAdmin)]
+    #[account(mut, address = DEPLOYER @ TournamentError::InvalidAdmin)]
     admin: Signer<'info>,
     #[account(
         init,
@@ -105,7 +105,7 @@ pub struct CreateTournamentSinglechain<'info> {
     #[account(
         init,
         payer = organizer,
-        space = 8 + Tournament::INIT_SPACE + tournament_data.max_teams as usize * std::mem::size_of::<Pubkey>(),
+        space = 8 + Tournament::INIT_SPACE,
         seeds = [GENOME_ROOT, TOURNAMENT, config.tournament_nonce.to_le_bytes().as_ref()],
         bump
     )]

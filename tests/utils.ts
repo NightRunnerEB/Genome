@@ -3,6 +3,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import * as splToken from "@solana/spl-token";
 import { GenomeContract } from "../target/types/genome_contract";
 import { utf8 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
+import { assert } from "chai";
 
 export const GENOME_ROOT = utf8.encode("genome");
 export const CONFIG = utf8.encode("config");
@@ -149,4 +150,18 @@ export async function delegateAccount(
         {},
         splToken.TOKEN_2022_PROGRAM_ID
     );
+}
+
+export async function createInvalidTournament(
+    txBuilder: any,
+    tournamentData: any,
+    expectedRegex: RegExp
+): Promise<void> {
+    let { sponsor, organizer, token } = getKeyPairs();
+    try {
+        await txBuilder.createTournamentSinglechain(organizer, sponsor, token.publicKey, tournamentData)
+        assert.fail("An error was expected, but the transaction was successful");
+    } catch (err: any) {
+        assert.match(err.toString(), expectedRegex);
+    }
 }
