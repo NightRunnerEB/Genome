@@ -22,7 +22,7 @@ export function getKeyPairs(): {
     token: Keypair,
 } {
     const adminSecret = Uint8Array.from(require("../keys/admin.json"));
-    const organizerSecret = Uint8Array.from(require("../keys/orginizer.json"));
+    const organizerSecret = Uint8Array.from(require("../keys/organizer.json"));
     const sponsorSecret = Uint8Array.from(require("../keys/sponsor.json"));
     const tokenSecret = Uint8Array.from(
         require("../keys/token.json")
