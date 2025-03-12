@@ -40,7 +40,7 @@ pub mod genome_contract {
         ctx: Context<CreateTournamentSinglechain>,
         tournament_data: TournamentData,
     ) -> Result<()> {
-        let tournament = &mut ctx.accounts.tournament.load_init()?;
+        let tournament = &mut ctx.accounts.tournament;
         validate_params(&tournament_data, &ctx.accounts.config)?;
         initialize_bloom_filter(
             tournament,
@@ -109,7 +109,7 @@ pub struct CreateTournamentSinglechain<'info> {
         seeds = [GENOME_ROOT, TOURNAMENT, config.tournament_nonce.to_le_bytes().as_ref()],
         bump
     )]
-    pub tournament: AccountLoader<'info, Tournament>,
+    pub tournament: Account<'info, Tournament>,
     pub mint: InterfaceAccount<'info, Mint>,
     #[account(
         init,

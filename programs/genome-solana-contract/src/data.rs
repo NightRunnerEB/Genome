@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_lang::zero_copy;
 
 #[account]
 #[derive(InitSpace)]
@@ -30,7 +29,7 @@ pub struct TournamentData {
     pub token: Pubkey,
 }
 
-#[account(zero_copy)]
+#[account]
 #[derive(InitSpace)]
 pub struct Tournament {
     pub organizer: Pubkey,
@@ -44,7 +43,16 @@ pub struct Tournament {
     pub team_size: u16,
     pub min_teams: u16,
     pub max_teams: u16,
-    pub status: u16,
+    pub status: TournamentStatus,
+}
+
+#[derive(PartialEq, Eq, AnchorSerialize, AnchorDeserialize, Clone, Default, InitSpace)]
+pub enum TournamentStatus {
+    #[default]
+    New,
+    Started,
+    Finished,
+    Canceled,
 }
 
 impl Tournament {

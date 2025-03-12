@@ -83,7 +83,7 @@ describe("Genome Solana Singlechain", () => {
         assert.equal(tournamentAccount.sponsorPool.toNumber(), tournamentDataMock.sponsorPool.toNumber());
         assert.equal(tournamentAccount.organizerRoyalty.toNumber(), tournamentDataMock.organizerRoyalty.toNumber());
         assert.equal(tournamentAccount.entryFee.toNumber(), tournamentDataMock.entryFee.toNumber());
-        assert.equal(tournamentAccount.status, 0);
+        assert.ok(tournamentAccount.status.new);
         assert.equal(tournamentAccount.teamSize, tournamentDataMock.teamSize);
         assert.equal(tournamentAccount.minTeams, tournamentDataMock.minTeams);
         assert.equal(tournamentAccount.maxTeams, tournamentDataMock.maxTeams);
