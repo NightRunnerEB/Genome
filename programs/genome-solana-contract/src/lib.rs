@@ -98,7 +98,7 @@ pub struct CreateTournamentSinglechain<'info> {
     #[account(mut)]
     pub organizer: Signer<'info>,
     /// CHECKED:
-    pub sponsor: AccountInfo<'info>,
+    pub sponsor: UncheckedAccount<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     pub config: Account<'info, GenomeConfig>,
     #[account(
