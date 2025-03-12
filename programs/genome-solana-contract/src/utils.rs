@@ -7,7 +7,7 @@ use growable_bloom_filter::GrowableBloom as Bloom;
 
 use crate::{
     error::TournamentError,
-    state::{BloomFilterAccount, GenomeConfig, Tournament, TournamentData},
+    data::{BloomFilterAccount, GenomeConfig, Tournament, TournamentData},
 };
 
 const MAX_TEAM_SIZE: u16 = 3200;

@@ -70,12 +70,12 @@ describe("Genome Solana Singlechain", () => {
 
     it("Delegate", async () => {
         let delegate = await delegateAccount(sponsorAta);
-        console.log("Initialize delegate: ", delegate);
+        console.log("Initialize delegate tx: ", delegate);
     });
 
     it("Initialize Genome Solana", async () => {
         let tx = await txBuilder.initialize(admin, configData);
-        console.log("Initialize genom tx: ", tx);
+        console.log("Initialize Genome tx: ", tx);
 
         const configAccount = await txBuilder.getConfig();
         assert.ok(configAccount != null);
@@ -84,7 +84,8 @@ describe("Genome Solana Singlechain", () => {
     });
 
     it("Create a Tournament", async () => {
-        await txBuilder.createTournamentSinglechain(organizer, sponsor, mint, tournamentDataMock)
+        let tx = await txBuilder.createTournamentSinglechain(organizer, sponsor, mint, tournamentDataMock)
+        console.log("Initialize createTournament tx: ", tx);
 
         const configData = await txBuilder.getConfig();
         const tournamentAccount = await txBuilder.getTournament(configData.tournamentNonce - 1);

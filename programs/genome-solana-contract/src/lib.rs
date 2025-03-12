@@ -1,7 +1,7 @@
 #![allow(unexpected_cfgs)]
 
 mod error;
-mod state;
+mod data;
 mod utils;
 
 use anchor_lang::prelude::*;
@@ -12,7 +12,7 @@ use anchor_spl::{
 };
 
 use crate::{
-    state::{BloomFilterAccount, GenomeConfig, Tournament, TournamentCreated, TournamentData},
+    data::{BloomFilterAccount, GenomeConfig, Tournament, TournamentCreated, TournamentData},
     utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params},
 };
 

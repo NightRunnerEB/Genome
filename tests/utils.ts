@@ -77,9 +77,6 @@ export async function airdrop(address: PublicKey, amount: number) {
     });
 }
 
-export const hexToBytes = (hex: string) =>
-    Uint8Array.from(Buffer.from(hex.replace(/^0x/, ""), "hex"));
-
 export async function createGenomeMint(): Promise<{ mint: PublicKey; sponsorAta: PublicKey }> {
     let { admin, sponsor, organizer, token } = getKeyPairs();
 
