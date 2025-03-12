@@ -994,6 +994,7 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "bincode",
+ "bytemuck",
  "growable-bloom-filter",
 ]
 

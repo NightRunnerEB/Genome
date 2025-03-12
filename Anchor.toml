@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-genome_solana_contracts = "3po1j895u6aRWedTsToPGYQGzi7p3oH8yhGVAZz4Aogf"
+genome_solana_contracts = "7cE2qCGyTDS5WgL35sf626utKRfeWKjLZ7KrXspbgN1n"
 
 [registry]
 url = "https://api.apr.dev"
@@ -15,4 +15,4 @@ cluster = "Localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/tournament.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/genome.ts"

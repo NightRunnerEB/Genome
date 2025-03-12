@@ -14,12 +14,12 @@ pub enum TournamentError {
     InvalidSponsorPool,
     #[msg("InvalidTeamsCount")]
     InvalidTeamsCount,
-    #[msg("InvalidTeamCapacity")]
-    InvalidTeamCapacity,
-    #[msg("InvalidAmountOfPlayers")]
-    InvalidAmountOfPlayers,
+    #[msg("InvalidTeamSize")]
+    InvalidTeamSize,
     #[msg("InvalidRoyalty")]
     InvalidRoyalty,
+    #[msg("InvalidStatus")]
+    InvalidStatus,
     #[msg("SerializationError")]
     SerializationError,
 }

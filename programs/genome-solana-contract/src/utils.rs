@@ -1,19 +1,26 @@
-use crate::{error::TournamentError, state::{BloomFilterAccount, GenomeConfig, Tournament, TournamentData}};
-use anchor_lang::{error, prelude::{Account, Result}, require};
+use anchor_lang::{
+    error,
+    prelude::{Account, Result},
+    require,
+};
 use growable_bloom_filter::GrowableBloom as Bloom;
 
-const MIN_TEAM_PLAYERS_CAPACITY: u16 = 1;
-const FP_P: f64 = 0.000065;
+use crate::{
+    error::TournamentError,
+    state::{BloomFilterAccount, GenomeConfig, Tournament, TournamentData},
+};
 
-pub fn calculate_bloom_memory(players_count: u16) -> Result<usize> {
-    if players_count > 3200 {
+const MAX_TEAM_SIZE: u16 = 3200;
+
+pub fn calculate_bloom_memory(players_count: u16, false_precision: f64) -> Result<usize> {
+    if players_count > MAX_TEAM_SIZE {
         return Err(TournamentError::MaxPlayersExceeded.into());
     }
-    let num_slices = ((1.0_f64 / FP_P).log2()).ceil() as u64;
+    let num_slices = ((1.0_f64 / false_precision).log2()).ceil() as u64;
     let slice_len_bits = (players_count as f64 / 2f64.ln()).ceil() as u64;
     let total_bits = num_slices * slice_len_bits;
     let buffer_bytes = ((total_bits + 7) / 8) as usize;
-    let memory = 8*9 + 4 + buffer_bytes;
+    let memory = 8 * 9 + 4 + buffer_bytes;
     Ok(memory)
 }
 
@@ -34,21 +41,17 @@ pub fn validate_params(params: &TournamentData, config: &GenomeConfig) -> Result
         params.sponsor_pool >= config.min_sponsor_pool,
         TournamentError::InvalidSponsorPool
     );
-    require!(
-        params.team_size >= MIN_TEAM_PLAYERS_CAPACITY,
-        TournamentError::InvalidTeamCapacity
-    );
     Ok(())
 }
 
 pub fn initialize_bloom_filter(
     tournament: &Tournament,
+    false_precision: &f64,
     bloom_filter: &mut Account<BloomFilterAccount>,
 ) -> Result<()> {
     let items_count = tournament.max_teams * tournament.team_size;
-    let bloom = Bloom::new(FP_P, items_count as usize);
-    bloom_filter.data = bincode::serialize(&bloom)
-        .map_err(|_| error!(TournamentError::SerializationError))?;
+    let bloom = Bloom::new(*false_precision, items_count as usize);
+    bloom_filter.data =
+        bincode::serialize(&bloom).map_err(|_| error!(TournamentError::SerializationError))?;
     Ok(())
 }
-
