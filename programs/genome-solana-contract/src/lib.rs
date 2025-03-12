@@ -1,7 +1,7 @@
 #![allow(unexpected_cfgs)]
 
-mod error;
 mod data;
+mod error;
 mod utils;
 
 use anchor_lang::prelude::*;
@@ -13,6 +13,7 @@ use anchor_spl::{
 
 use crate::{
     data::{BloomFilterAccount, GenomeConfig, Tournament, TournamentCreated, TournamentData},
+    error::CustomError,
     utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params},
 };
 
@@ -79,7 +80,7 @@ pub mod genome_contract {
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(mut, address = DEPLOYER)]
+    #[account(mut, address = DEPLOYER @ CustomError::InvalidAdmin)]
     admin: Signer<'info>,
     #[account(
         init,
@@ -113,21 +114,21 @@ pub struct CreateTournamentSinglechain<'info> {
     #[account(
         init,
         payer = organizer,
-        associated_token::mint = mint, 
+        associated_token::mint = mint,
         associated_token::authority = tournament,
         associated_token::token_program = token_program,
     )]
     pub prize_pool_ata: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
         mut,
-        associated_token::mint = mint, 
+        associated_token::mint = mint,
         associated_token::authority = sponsor,
         associated_token::token_program = token_program,
     )]
     pub sponsor_ata: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
-        init, 
-        payer = organizer, 
+        init,
+        payer = organizer,
         space = 8 + calculate_bloom_memory(tournament_data.max_teams * tournament_data.team_size, config.false_precision)?,
         seeds = [GENOME_ROOT, BLOOM, config.tournament_nonce.to_le_bytes().as_ref()],
         bump
