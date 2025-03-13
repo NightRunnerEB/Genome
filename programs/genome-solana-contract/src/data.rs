@@ -88,3 +88,69 @@ pub struct TournamentCreated {
 pub struct BloomFilterAccount {
     pub data: Vec<u8>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use growable_bloom_filter::GrowableBloom;
+    use bincode;
+
+    const SIZE: usize = 3200;
+    const FALSE_PRECISION: f64 = 0.000065;
+
+    #[test]
+    fn test_bloom_serialization_deserialization() {
+        let unique = Pubkey::new_unique();
+        let mut bloom = GrowableBloom::new(FALSE_PRECISION, SIZE);
+        bloom.insert(unique);
+
+        let serialized = bincode::serialize(&bloom).unwrap();
+        let deserialized: GrowableBloom = bincode::deserialize(&serialized).unwrap();
+
+        assert!(deserialized.contains(&unique));
+    }
+
+    #[test]
+    fn test_bloom_filter_account_insertion() {
+        let bloom = GrowableBloom::new(FALSE_PRECISION, SIZE);
+        let bloom_bytes = bincode::serialize(&bloom).unwrap();
+        let mut bloom_filter_account = BloomFilterAccount { data: bloom_bytes };
+
+        let mut bloom_loaded: GrowableBloom = bincode::deserialize(&bloom_filter_account.data).unwrap();
+        
+        let test_key = Pubkey::new_unique();
+        assert!(!bloom_loaded.contains(&test_key));
+
+        let inserted = bloom_loaded.insert(test_key);
+        assert!(inserted);
+
+        bloom_filter_account.data =
+            bincode::serialize(&bloom_loaded).unwrap();
+
+        let bloom_checked: GrowableBloom = bincode::deserialize(&bloom_filter_account.data).unwrap();
+        assert!(bloom_checked.contains(&test_key));
+    }
+
+    #[test]
+    fn test_bloom_filter_account_false_positive_rate() {
+        let mut bloom = GrowableBloom::new(FALSE_PRECISION, SIZE);
+
+        for _ in 0..SIZE {
+            bloom.insert(Pubkey::new_unique());
+        }
+
+        let serialized = bincode::serialize(&bloom).unwrap();
+        let bloom_loaded: GrowableBloom =
+            bincode::deserialize(&serialized).unwrap();
+
+        let test_count = 1000;
+        let mut false_positives = 0;
+        for _ in 0..test_count {
+            if bloom_loaded.contains(&Pubkey::new_unique()) {
+                false_positives += 1;
+            }
+        }
+        let observed_fp_rate = false_positives as f64 / test_count as f64;
+        assert!(observed_fp_rate < FALSE_PRECISION);
+    }
+}
