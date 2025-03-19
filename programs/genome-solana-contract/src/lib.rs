@@ -49,15 +49,17 @@ mod genome_contract {
         tournament.initialize(*id, tournament_data);
         *id += 1;
 
-        let accounts = TransferChecked {
-            from: ctx.accounts.sponsor_ata.to_account_info(),
-            to: ctx.accounts.prize_pool_ata.to_account_info(),
-            mint: ctx.accounts.mint.to_account_info(),
-            authority: ctx.accounts.organizer.to_account_info(),
-        };
+        if tournament.sponsor_pool > 0 {
+            let accounts = TransferChecked {
+                from: ctx.accounts.sponsor_ata.to_account_info(),
+                to: ctx.accounts.prize_pool_ata.to_account_info(),
+                mint: ctx.accounts.mint.to_account_info(),
+                authority: ctx.accounts.organizer.to_account_info(),
+            };
 
-        let cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), accounts);
-        transfer_checked(cpi, tournament.sponsor_pool, ctx.accounts.mint.decimals)?;
+            let cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), accounts);
+            transfer_checked(cpi, tournament.sponsor_pool, ctx.accounts.mint.decimals)?;
+        }
 
         emit!(TournamentCreated {
             id: tournament.id,
