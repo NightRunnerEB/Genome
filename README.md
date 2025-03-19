@@ -78,3 +78,5 @@ solana-keygen new --outfile keys/organizer.json
 solana-keygen new --outfile keys/sponsor.json
 solana-keygen new --outfile keys/token.json
 ```
+
+NOTE: Set the Publickey generated for the admin as a Deployer(lib.rs)
