@@ -7,8 +7,10 @@ import {
     getKeyPairs,
     createGenomeMint,
     delegateAccount,
-    createInvalidTournament
+    createInvalidTournament,
+    getPrizePoolAta
 } from "./utils";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 
 describe("Genome Solana Singlechain", () => {
     anchor.setProvider(anchor.AnchorProvider.env());
@@ -99,6 +101,9 @@ describe("Genome Solana Singlechain", () => {
         assert.equal(tournamentAccount.maxTeams, tournamentDataMock.maxTeams);
         assert.equal(tournamentAccount.organizer.toBase58(), tournamentDataMock.organizer.toBase58());
         assert.equal(tournamentAccount.token.toBase58(), tournamentDataMock.token.toBase58());
+
+        const prizePoolAta = await getPrizePoolAta(mint, tournamentAccount.tournamentPda);
+        assert.equal(tournamentAccount.sponsorPool.toNumber(), prizePoolAta.amount);
     });
 
     it("Invalid organizerRoyalty", async () => {
@@ -135,7 +140,7 @@ describe("Genome Solana Singlechain", () => {
         await createInvalidTournament(
             txBuilder,
             { ...tournamentDataMock, sponsorPool: new anchor.BN(10) },
-            /InvalidPrizePool/
+            /InvalidSponsorPool/
         );
     });
 

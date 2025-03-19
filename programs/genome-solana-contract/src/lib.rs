@@ -10,12 +10,10 @@ use anchor_spl::{
     token_2022::TransferChecked,
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface},
 };
-use error::TournamentError;
 
-use crate::{
-    data::{BloomFilterAccount, GenomeConfig, Tournament, TournamentCreated, TournamentData},
-    utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params},
-};
+use data::{BloomFilter, GenomeConfig, Tournament, TournamentCreated, TournamentData};
+use error::TournamentError;
+use utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params};
 
 declare_id!("7cE2qCGyTDS5WgL35sf626utKRfeWKjLZ7KrXspbgN1n");
 
@@ -28,7 +26,7 @@ const BLOOM: &[u8] = b"bloom";
 const TOURNAMENT: &[u8] = b"tournament";
 
 #[program]
-pub mod genome_contract {
+mod genome_contract {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>, config_params: GenomeConfig) -> Result<()> {
@@ -97,11 +95,11 @@ pub struct Initialize<'info> {
 #[instruction(tournament_data: TournamentData)]
 pub struct CreateTournamentSinglechain<'info> {
     #[account(mut)]
-    pub organizer: Signer<'info>,
+    organizer: Signer<'info>,
     /// CHECKED
-    pub sponsor: UncheckedAccount<'info>,
+    sponsor: UncheckedAccount<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
-    pub config: Account<'info, GenomeConfig>,
+    config: Account<'info, GenomeConfig>,
     #[account(
         init,
         payer = organizer,
@@ -109,8 +107,8 @@ pub struct CreateTournamentSinglechain<'info> {
         seeds = [GENOME_ROOT, TOURNAMENT, config.tournament_nonce.to_le_bytes().as_ref()],
         bump
     )]
-    pub tournament: Account<'info, Tournament>,
-    pub mint: InterfaceAccount<'info, Mint>,
+    tournament: Account<'info, Tournament>,
+    mint: InterfaceAccount<'info, Mint>,
     #[account(
         init,
         payer = organizer,
@@ -118,14 +116,14 @@ pub struct CreateTournamentSinglechain<'info> {
         associated_token::authority = tournament,
         associated_token::token_program = token_program,
     )]
-    pub prize_pool_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    prize_pool_ata: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = mint,
         associated_token::authority = sponsor,
         associated_token::token_program = token_program,
     )]
-    pub sponsor_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    sponsor_ata: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
         init,
         payer = organizer,
@@ -133,7 +131,7 @@ pub struct CreateTournamentSinglechain<'info> {
         seeds = [GENOME_ROOT, BLOOM, config.tournament_nonce.to_le_bytes().as_ref()],
         bump
     )]
-    pub bloom_filter: Box<Account<'info, BloomFilterAccount>>,
+    bloom_filter: Box<Account<'info, BloomFilter>>,
     associated_token_program: Program<'info, AssociatedToken>,
     system_program: Program<'info, System>,
     token_program: Interface<'info, TokenInterface>,

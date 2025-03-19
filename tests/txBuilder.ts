@@ -6,7 +6,6 @@ import {
     getTournamentPda,
 } from "./utils";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
-import { assert } from "chai";
 
 export class TxBuilder {
     public program: anchor.Program<GenomeContract>;
@@ -84,6 +83,7 @@ export class TxBuilder {
             maxTeams: tournament.maxTeams,
             teamCount: tournament.teamCount,
             token: tournament.token,
+            tournamentPda: tournamentPda
         };
     }
 }

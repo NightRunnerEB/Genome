@@ -21,7 +21,6 @@ idl-build = [
 ]
 
 [dependencies]
-bytemuck = { version = "1.20.0", features = ["min_const_generics"] }
 anchor-lang = { version = "0.31.0", features = ["init-if-needed"] }
 anchor-spl = "0.31.0"
 bincode = "1.3"

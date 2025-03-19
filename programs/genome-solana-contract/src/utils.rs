@@ -6,7 +6,7 @@ use anchor_lang::{
 use growable_bloom_filter::GrowableBloom as Bloom;
 
 use crate::{
-    data::{BloomFilterAccount, GenomeConfig, Tournament, TournamentData},
+    data::{BloomFilter, GenomeConfig, Tournament, TournamentData},
     error::TournamentError,
 };
 
@@ -47,7 +47,7 @@ pub fn validate_params(params: &TournamentData, config: &GenomeConfig) -> Result
 pub fn initialize_bloom_filter(
     tournament: &Tournament,
     false_precision: &f64,
-    bloom_filter: &mut Account<BloomFilterAccount>,
+    bloom_filter: &mut Account<BloomFilter>,
 ) -> Result<()> {
     let items_count = tournament.max_teams * tournament.team_size;
     let bloom = Bloom::new(*false_precision, items_count as usize);

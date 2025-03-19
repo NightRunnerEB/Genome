@@ -46,9 +46,8 @@ pub struct Tournament {
     pub status: TournamentStatus,
 }
 
-#[derive(PartialEq, Eq, AnchorSerialize, AnchorDeserialize, Clone, Default, InitSpace)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub enum TournamentStatus {
-    #[default]
     New,
     Started,
     Finished,
@@ -85,15 +84,15 @@ pub struct TournamentCreated {
 }
 
 #[account]
-pub struct BloomFilterAccount {
+pub struct BloomFilter {
     pub data: Vec<u8>,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use growable_bloom_filter::GrowableBloom;
     use bincode;
+    use growable_bloom_filter::GrowableBloom;
 
     const SIZE: usize = 3200;
     const FALSE_PRECISION: f64 = 0.000065;
@@ -114,20 +113,21 @@ mod tests {
     fn test_bloom_filter_account_insertion() {
         let bloom = GrowableBloom::new(FALSE_PRECISION, SIZE);
         let bloom_bytes = bincode::serialize(&bloom).unwrap();
-        let mut bloom_filter_account = BloomFilterAccount { data: bloom_bytes };
+        let mut bloom_filter_account = BloomFilter { data: bloom_bytes };
 
-        let mut bloom_loaded: GrowableBloom = bincode::deserialize(&bloom_filter_account.data).unwrap();
-        
+        let mut bloom_loaded: GrowableBloom =
+            bincode::deserialize(&bloom_filter_account.data).unwrap();
+
         let test_key = Pubkey::new_unique();
         assert!(!bloom_loaded.contains(&test_key));
 
         let inserted = bloom_loaded.insert(test_key);
         assert!(inserted);
 
-        bloom_filter_account.data =
-            bincode::serialize(&bloom_loaded).unwrap();
+        bloom_filter_account.data = bincode::serialize(&bloom_loaded).unwrap();
 
-        let bloom_checked: GrowableBloom = bincode::deserialize(&bloom_filter_account.data).unwrap();
+        let bloom_checked: GrowableBloom =
+            bincode::deserialize(&bloom_filter_account.data).unwrap();
         assert!(bloom_checked.contains(&test_key));
     }
 
@@ -140,8 +140,7 @@ mod tests {
         }
 
         let serialized = bincode::serialize(&bloom).unwrap();
-        let bloom_loaded: GrowableBloom =
-            bincode::deserialize(&serialized).unwrap();
+        let bloom_loaded: GrowableBloom = bincode::deserialize(&serialized).unwrap();
 
         let test_count = 1000;
         let mut false_positives = 0;

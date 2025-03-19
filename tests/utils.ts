@@ -1,6 +1,16 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import * as splToken from "@solana/spl-token";
+import {
+    getAssociatedTokenAddress,
+    getAccount,
+    TOKEN_2022_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    Account as SplTokenAccount,
+    createAssociatedTokenAccount,
+    approveChecked,
+    mintTo,
+    createMint
+} from "@solana/spl-token";
 import { GenomeContract } from "../target/types/genome_contract";
 import { utf8 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { assert } from "chai";
@@ -62,6 +72,27 @@ export function getTournamentPda(
     )[0];
 }
 
+export async function getPrizePoolAta(
+    mint: PublicKey,
+    authority: PublicKey
+): Promise<SplTokenAccount> {
+    const prizePoolAta = await getAssociatedTokenAddress(
+        mint,
+        authority,
+        true,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+
+    const provider = getProvider();
+    return getAccount(
+        provider.connection,
+        prizePoolAta,
+        undefined,
+        TOKEN_2022_PROGRAM_ID
+    );
+}
+
 export async function airdrop(address: PublicKey, amount: number) {
     const provider = getProvider();
 
@@ -81,7 +112,7 @@ export async function airdrop(address: PublicKey, amount: number) {
 export async function createGenomeMint(): Promise<{ mint: PublicKey; sponsorAta: PublicKey }> {
     let { admin, sponsor, organizer, token } = getKeyPairs();
 
-    const mint = await splToken.createMint(
+    const mint = await createMint(
         getProvider().connection,
         admin,
         admin.publicKey,
@@ -89,34 +120,34 @@ export async function createGenomeMint(): Promise<{ mint: PublicKey; sponsorAta:
         6,
         token,
         null,
-        splToken.TOKEN_2022_PROGRAM_ID
+        TOKEN_2022_PROGRAM_ID
     );
     console.log("Genome mint:", mint.toBase58());
     console.log("Genome token:", token.publicKey.toBase58());
 
-    const sponsorAta = await splToken.createAssociatedTokenAccount(
+    const sponsorAta = await createAssociatedTokenAccount(
         getProvider().connection,
         admin,
         token.publicKey,
         sponsor.publicKey,
         null,
-        splToken.TOKEN_2022_PROGRAM_ID,
-        splToken.ASSOCIATED_TOKEN_PROGRAM_ID
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
     );
     console.log("Sponsor genome ata:", sponsorAta.toBase58());
 
-    const reward_pool_ata = await splToken.createAssociatedTokenAccount(
+    const reward_pool_ata = await createAssociatedTokenAccount(
         getProvider().connection,
         admin,
         token.publicKey,
         organizer.publicKey,
         null,
-        splToken.TOKEN_2022_PROGRAM_ID,
-        splToken.ASSOCIATED_TOKEN_PROGRAM_ID
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
     );
     console.log("Tournament pool ata:", reward_pool_ata.toBase58());
 
-    let tx = await splToken.mintTo(
+    let tx = await mintTo(
         getProvider().connection,
         admin,
         token.publicKey,
@@ -125,7 +156,7 @@ export async function createGenomeMint(): Promise<{ mint: PublicKey; sponsorAta:
         1000000000000000,
         [],
         {},
-        splToken.TOKEN_2022_PROGRAM_ID
+        TOKEN_2022_PROGRAM_ID
     );
     console.log("Mint to sponsor tx:", tx);
 
@@ -137,7 +168,7 @@ export async function delegateAccount(
 ): Promise<String> {
     let provider = getProvider();
     let { admin, sponsor, organizer, token } = getKeyPairs();
-    return splToken.approveChecked(
+    return approveChecked(
         provider.connection,
         admin,
         token.publicKey,
@@ -148,7 +179,7 @@ export async function delegateAccount(
         6,
         [],
         {},
-        splToken.TOKEN_2022_PROGRAM_ID
+        TOKEN_2022_PROGRAM_ID
     );
 }
 
