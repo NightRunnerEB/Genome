@@ -7,8 +7,7 @@ mod utils;
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::TransferChecked,
-    token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface},
+    token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 
 use data::{BloomFilter, GenomeConfig, Tournament, TournamentCreated, TournamentData};
