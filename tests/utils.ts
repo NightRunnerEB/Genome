@@ -93,6 +93,18 @@ export async function getPrizePoolAta(
     );
 }
 
+export async function getSponsorAta(
+    sponsorPoolAta: PublicKey
+): Promise<SplTokenAccount> {
+    const provider = getProvider();
+    return getAccount(
+        provider.connection,
+        sponsorPoolAta,
+        undefined,
+        TOKEN_2022_PROGRAM_ID
+    );
+}
+
 export async function airdrop(address: PublicKey, amount: number) {
     const provider = getProvider();
 
@@ -123,7 +135,6 @@ export async function createGenomeMint(): Promise<{ mint: PublicKey; sponsorAta:
         TOKEN_2022_PROGRAM_ID
     );
     console.log("Genome mint:", mint.toBase58());
-    console.log("Genome token:", token.publicKey.toBase58());
 
     const sponsorAta = await createAssociatedTokenAccount(
         getProvider().connection,
