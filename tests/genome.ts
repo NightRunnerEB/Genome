@@ -21,13 +21,13 @@ describe("Genome Solana Singlechain", () => {
   let sponsorAta: PublicKey;
   const txBuilder = new TxBuilder();
 
-before(async () => {
-  await Promise.all(
+  before(async () => {
+    await Promise.all(
       [admin, organizer, sponsor, captain, participant1, participant2, participant3].map(
-          async (keypair) => await airdrop(keypair.publicKey, 100)
+        async (keypair) => await airdrop(keypair.publicKey, 100)
       )
-  );
-});
+    );
+  });
 
   it("Create mint", async () => {
     ({ mint, sponsorAta } = await createGenomeMint());
@@ -73,6 +73,7 @@ before(async () => {
     assert.equal(tournamentAccount.sponsor.toBase58(), tournamentDataMock.sponsor.toBase58());
     assert.equal(tournamentAccount.sponsorPool.toNumber(), tournamentDataMock.sponsorPool.toNumber());
     assert.equal(tournamentAccount.organizerRoyalty.toNumber(), tournamentDataMock.organizerRoyalty.toNumber());
+    assert.equal(tournamentAccount.expirationTime.toNumber(), tournamentDataMock.expirationTime.toNumber());
     assert.equal(tournamentAccount.entryFee.toNumber(), tournamentDataMock.entryFee.toNumber());
     assert.equal(tournamentAccount.teamSize, tournamentDataMock.teamSize);
     assert.equal(tournamentAccount.minTeams, tournamentDataMock.minTeams);
@@ -84,33 +85,28 @@ before(async () => {
     assert.equal(sponsorAtaBefore.amount - sponsorAtaAfter.amount, prizePoolAta.amount);
   });
 
-  it("Register tournament 1", async () => {
-    await txBuilder.registerTournament(captain, mint, registerParams1)
-
-    const configData = await txBuilder.getConfig();
+  it("Register tournament - Captain + Teammates", async () => {
+    await txBuilder.registerTournament(captain, mint, registerParams1);
     const teamAccount = await txBuilder.getTeam(0, captain.publicKey);
-    console.log("Team account: " + teamAccount);
-});
+    assert.ok(teamAccount);
+    assert.equal(teamAccount.captain.toBase58(), captain.publicKey.toBase58());
+    assert.equal(teamAccount.participants.length, registerParams1.teammates.length + 1);
+  });
 
-it("Register invalid tournament 2", async () => {
+  it("Register invalid tournament - Already registered", async () => {
     try {
-        await txBuilder.registerTournament(participant1, mint, registerParams2)
-    } catch(error) {
-        checkAnchorError(error, "Already registered");
+      await txBuilder.registerTournament(participant1, mint, registerParams2);
+    } catch (error) {
+      checkAnchorError(error, "Already registered");
     }
+  });
 
-    const configData = await txBuilder.getConfig();
+  it("Register tournament - Additional participant", async () => {
+    await txBuilder.registerTournament(participant3, mint, registerParams3);
     const teamAccount = await txBuilder.getTeam(0, captain.publicKey);
-    console.log("configData account: " + configData);
-});
-
-it("Register tournament 3", async () => {
-    await txBuilder.registerTournament(participant3, mint, registerParams3)
-
-    const configData = await txBuilder.getConfig();
-    const teamAccount = await txBuilder.getTeam(0, captain.publicKey);
-    console.log("Team account: " + teamAccount);
-});
+    assert.ok(teamAccount);
+    assert.equal(teamAccount.participants.length, registerParams1.teammates.length + 2);
+  });
 
   it("Invalid organizerRoyalty", async () => {
     try {

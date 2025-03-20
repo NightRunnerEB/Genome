@@ -1,3 +1,4 @@
+import * as anchor from "@coral-xyz/anchor";
 import { getKeyPairs } from "./utils";
 
 const { admin, organizer, sponsor, token, captain, participant1, participant2, participant3 } = getKeyPairs();

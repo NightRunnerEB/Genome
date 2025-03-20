@@ -85,6 +85,7 @@ export class TxBuilder {
       sponsor: tournament.sponsor,
       sponsorPool: tournament.sponsorPool,
       organizerRoyalty: tournament.organizerRoyalty,
+      expirationTime: tournament.expirationTime,
       entryFee: tournament.entryFee,
       status: tournament.status,
       teamSize: tournament.teamSize,
@@ -104,7 +105,9 @@ export class TxBuilder {
     let teamPda = getTeamPda([nonceBuffer, captain.toBuffer()]);
     const team = await this.program.account.team.fetch(teamPda);
     return {
-
+      captain: team.captain,
+      participants: team.participants,
+      teamSize: team.teamSize,
     };
   }
 }
