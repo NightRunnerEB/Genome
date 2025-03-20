@@ -5,7 +5,6 @@ use anchor_lang::prelude::*;
 pub struct GenomeConfig {
     pub admin: Pubkey,
     pub platform_wallet: Pubkey,
-    pub mint: Pubkey,
     pub false_precision: f64,
     pub platform_fee: u64,
     pub min_entry_fee: u64,

@@ -14,10 +14,10 @@ use data::{BloomFilter, GenomeConfig, Tournament, TournamentCreated, TournamentD
 use error::TournamentError;
 use utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params};
 
-declare_id!("7cE2qCGyTDS5WgL35sf626utKRfeWKjLZ7KrXspbgN1n");
+declare_id!("G4nqiWUsV9ho8CTBT1SQE5CHQTcAhpy4viPip95MziLk");
 
 #[cfg(feature = "localnet")]
-const DEPLOYER: Pubkey = pubkey!("ADMimZiEmRJczgEvYqGQXoMsYJd2vXpeqJxyGDJh5J4");
+const DEPLOYER: Pubkey = pubkey!("4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB");
 
 const GENOME_ROOT: &[u8] = b"genome";
 const CONFIG: &[u8] = b"config";
@@ -119,7 +119,8 @@ pub struct CreateTournamentSinglechain<'info> {
     )]
     prize_pool_ata: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
-        mut,
+        init_if_needed,
+        payer = organizer,
         associated_token::mint = mint,
         associated_token::authority = sponsor,
         associated_token::token_program = token_program,

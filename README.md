@@ -80,3 +80,37 @@ solana-keygen new --outfile keys/token.json
 ```
 
 NOTE: Set the Publickey generated for the admin as a Deployer(lib.rs)
+NOTE: Do NOT use any keypairs which were published in gitlab for production
+
+### Run scripts
+
+#### Initialize Genome Program
+
+NOTE: Before running it, ensure you provide desired values in `migrations/config.ts` on field `genomeConfig`
+
+Initialize Genome Program using `genomeConfig` in `migrations/config.ts`
+```sh
+anchor run initialize -- <path-to-deployer-keypair> <path-to-admin-keypair> <plaftormWallet>
+# Example: anchor run initialize -- keys/admin.json keys/admin.json ADMimZiEmRJczgEvYqGQXoMsYJd2vXpeqJxyGDJh5J4
+```
+
+To ensure genomeConfig is set properly
+```sh
+anchor account genome_contract.GenomeConfig <genomeConfig-address>
+# Example: anchor account genome_contract.GenomeConfig JDwp8jxWr1ZTVrij5tRevrcgnfnPF8ZcmYgAYBch7UYb
+```
+
+#### Create Tournament
+
+NOTE: Before running it, ensure you provide desired values in `migrations/config.ts` on field `tournamentData` <br>
+NOTE: Before running it, genome token should be created
+```sh
+spl-token create-token -u <network> <path-to-genome-keypair>
+# Example: spl-token create-token -u localhost keys/token.json
+```
+
+Create tournament using `tournamentData` in `migrations/config.ts`
+```sh
+anchor run create-tournament -- <path-to-admin-keypair> <sponsorAddress> <mintAddress>
+# Example: anchor run create-tournament -- keys/admin.json  7NukBTvEvJytba1bjBfTUqeijevxQMkRsmbse894WZMS 6F7Tn3YPcArLG6G2FoKGtkPYrwrQqdJeA7SQ3i5Uy1py
+```
