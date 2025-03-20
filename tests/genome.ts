@@ -172,4 +172,33 @@ describe("Genome Solana Singlechain", () => {
       checkAnchorError(error, "Max players exceeded(3200)");
     }
   });
+
+  it("Set valid bloom precision", async () => {
+    const newPrecision = 0.000123;
+
+    await txBuilder.setBloomPrecision(admin, newPrecision);
+
+    const config = await txBuilder.getConfig();
+    assert.equal(config.falsePrecision, newPrecision);
+  });
+
+  it("Fail to set bloom precision", async () => {
+    try {
+      await txBuilder.setBloomPrecision(organizer, 0.0001);
+    } catch (error) {
+      checkAnchorError(error, "Invalid admin account");
+    }
+
+    try {
+      await txBuilder.setBloomPrecision(admin, -0.1);
+    } catch (error) {
+      checkAnchorError(error, "Invalid false positive precision");
+    }
+
+    try {
+      await txBuilder.setBloomPrecision(admin, 1.5);
+    } catch (error) {
+      checkAnchorError(error, "Invalid false positive precision");
+    }
+  });
 });

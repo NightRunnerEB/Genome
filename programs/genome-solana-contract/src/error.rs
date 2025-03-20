@@ -22,7 +22,7 @@ pub(crate) enum TournamentError {
     InvalidPrecision,
     #[msg("Invalid status")]
     InvalidStatus,
-    #[msg("Invalid admin account is provided")]
+    #[msg("Invalid admin account")]
     InvalidAdmin,
     #[msg("Invalid token")]
     InvalidToken,

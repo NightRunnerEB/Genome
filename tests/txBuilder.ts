@@ -56,6 +56,16 @@ export class TxBuilder {
       .rpc();
   }
 
+  async setBloomPrecision(admin: Keypair, newPrecision: number): Promise<string> {
+    return this.program.methods
+      .setBloomPrecision(newPrecision)
+      .accounts({
+        admin: admin.publicKey,
+      })
+      .signers([admin])
+      .rpc();
+  }
+
   async getConfig() {
     let configPda = getGenomePda();
     const config = await this.program.account.genomeConfig.fetch(configPda);
