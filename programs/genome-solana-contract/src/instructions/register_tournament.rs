@@ -25,7 +25,7 @@ pub fn handle_register_tournament(
     let team = &mut ctx.accounts.team;
     let bloom_filter = &mut ctx.accounts.bloom_filter;
     let mut bloom: Bloom =
-        bincode::deserialize(&bloom_filter.data).expect("Error deserialize GrowableBloom");
+        bincode::deserialize(&bloom_filter.data).expect("Error deserialize Bloom");
 
     bloom_check(&register_params, &mut bloom)?;
 
@@ -67,7 +67,7 @@ pub fn handle_register_tournament(
         team.add_participant(register_params.participant)?;
     }
 
-    bloom_filter.data = bincode::serialize(&bloom).expect("msg");
+    bloom_filter.data = bincode::serialize(&bloom).expect("Error serialize Bloom");
     Ok(())
 }
 
