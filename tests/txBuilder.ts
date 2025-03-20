@@ -1,8 +1,8 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { GenomeContract } from "../target/types/genome_contract";
-import { getGenomePda, getTournamentPda } from "./utils";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getGenomePda, getTournamentPda, getTeamPda } from "./utils";
+import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export class TxBuilder {
   public program: anchor.Program<GenomeContract>;
@@ -40,31 +40,45 @@ export class TxBuilder {
       .rpc();
   }
 
+  async registerTournament(
+    payer: Keypair,
+    mint: PublicKey,
+    registerParams: any
+  ): Promise<string> {
+    return this.program.methods
+      .registerTournament(registerParams)
+      .accounts({
+        participant: payer.publicKey,
+        mint: mint,
+        tokenProgram: TOKEN_PROGRAM_ID
+      })
+      .signers([payer])
+      .rpc();
+  }
+
   async getConfig() {
     let configPda = getGenomePda();
     const config = await this.program.account.genomeConfig.fetch(configPda);
     return {
       admin: config.admin,
       tournamentNonce: config.tournamentNonce,
-      platformFee: config.platformFee.toNumber(),
+      platformFee: config.platformFee,
       platformWallet: config.platformWallet,
       falsePrecision: config.falsePrecision,
-      minEntryFee: config.minEntryFee.toNumber(),
-      minSponsorPool: config.minSponsorPool.toNumber(),
+      minEntryFee: config.minEntryFee,
+      minSponsorPool: config.minSponsorPool,
       minTeams: config.minTeams,
       maxTeams: config.maxTeams,
-      maxOrganizerRoyalty: config.maxOrganizerRoyalty.toNumber(),
+      maxOrganizerRoyalty: config.maxOrganizerRoyalty,
     };
   }
 
-  async getTournament(tournamentNonce: number) {
-    const nonceBuffer = new Uint8Array(
-      new Uint32Array([tournamentNonce]).buffer
-    );
+  async getTournament(
+    tournamentNonce: number
+  ) {
+    const nonceBuffer = new Uint8Array(new Uint32Array([tournamentNonce]).buffer);
     let tournamentPda = getTournamentPda(nonceBuffer);
-    const tournament = await this.program.account.tournament.fetch(
-      tournamentPda
-    );
+    const tournament = await this.program.account.tournament.fetch(tournamentPda);
     return {
       id: tournament.id,
       organizer: tournament.organizer,
@@ -77,8 +91,20 @@ export class TxBuilder {
       minTeams: tournament.minTeams,
       maxTeams: tournament.maxTeams,
       teamCount: tournament.teamCount,
-      token: tournament.token,
-      tournamentPda: tournamentPda,
+      assetMint: tournament.assetMint,
+      tournamentPda: tournamentPda
+    };
+  }
+
+  async getTeam(
+    tournamen_id: number,
+    captain: PublicKey
+  ) {
+    const nonceBuffer = new Uint8Array(new Uint32Array([tournamen_id]).buffer);
+    let teamPda = getTeamPda([nonceBuffer, captain.toBuffer()]);
+    const team = await this.program.account.team.fetch(teamPda);
+    return {
+
     };
   }
 }
