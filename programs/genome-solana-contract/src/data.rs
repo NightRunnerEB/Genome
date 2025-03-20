@@ -8,7 +8,7 @@ pub struct GenomeConfig {
     #[max_len(0)]
     pub verifier_addresses: Vec<Pubkey>,
     pub consensus_rate: u64,
-    pub false_precision: u64,
+    pub false_precision: f64,
     pub platform_fee: u64,
     pub min_entry_fee: u64,
     pub min_sponsor_pool: u64,
@@ -49,7 +49,7 @@ pub struct Tournament {
     pub max_teams: u16,
     pub status: TournamentStatus,
     pub bump: u8,
-    pub finish_metadata: FinishTournamentMetadata
+    pub finish_metadata: FinishTournamentMetadata,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Default, Clone, InitSpace)]

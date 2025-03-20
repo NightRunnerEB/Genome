@@ -1,7 +1,7 @@
 use crate::error::TournamentError;
 use anchor_lang::prelude::*;
 
-#[derive(Default, Clone, AnchorDeserialize, AnchorSerialize, Debug, PartialEq, Eq, InitSpace)]
+#[derive(Default, Clone, AnchorDeserialize, AnchorSerialize, Debug, PartialEq, InitSpace)]
 pub struct ParticipantInfo {
     pub pubkey: Pubkey,
     pub paid_by_captain: bool,
@@ -15,7 +15,6 @@ pub struct Team {
     #[max_len(0)]
     pub participants: Vec<ParticipantInfo>,
     pub team_size: u16,
-    pub canceled: bool,
 }
 
 impl Team {
@@ -24,20 +23,21 @@ impl Team {
             captain,
             participants: vec![],
             team_size,
-            canceled: false
         }
     }
 
-    pub fn add_participant_by_captain(&mut self, participant: Pubkey) -> Result<()> {
-        if self.participants.len() >= self.team_size as usize {
+    pub fn add_participants_by_captain(&mut self, participants: Vec<Pubkey>) -> Result<()> {
+        if self.participants.len() + participants.len() > self.team_size as usize {
             return Err(TournamentError::InvalidTeamSize.into());
         }
 
-        self.participants.push(ParticipantInfo {
-            pubkey: participant,
-            paid_by_captain: true,
-            refunded: false,
-        });
+        for participant in participants {
+            self.participants.push(ParticipantInfo {
+                pubkey: participant,
+                paid_by_captain: true,
+                refunded: false,
+            });
+        }
         Ok(())
     }
 

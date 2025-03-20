@@ -1,5 +1,5 @@
-use anchor_lang::prelude::*;
 use crate::{data::GenomeConfig, TournamentError, CONFIG, DEPLOYER, GENOME_ROOT};
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct SetBloomPrecision<'info> {
@@ -11,9 +11,12 @@ pub struct SetBloomPrecision<'info> {
 
 pub fn handle_set_bloom_precision(
     ctx: Context<SetBloomPrecision>,
-    new_precision: u64,
+    new_precision: f64,
 ) -> Result<()> {
-    require!(new_precision > 0 && new_precision < 1_000_000_000, TournamentError::InvalidPrecision);
+    require!(
+        new_precision > 0.0 && new_precision < 1.0,
+        TournamentError::InvalidPrecision
+    );
 
     let config = &mut ctx.accounts.config;
     config.false_precision = new_precision;

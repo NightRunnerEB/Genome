@@ -1,14 +1,15 @@
+use std::mem;
+
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    token_2022::TransferChecked,
-    token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface},
+use anchor_spl::token_interface::{
+    transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 use growable_bloom_filter::GrowableBloom as Bloom;
 
 use crate::{
     data::{BloomFilter, GenomeConfig, Tournament, TournamentStatus},
     error::TournamentError,
-    team::Team,
+    team::{ParticipantInfo, Team},
     BLOOM, CONFIG, GENOME_ROOT, TEAM, TOURNAMENT,
 };
 
@@ -26,49 +27,43 @@ pub fn handle_register_tournament(
     let mut bloom: Bloom =
         bincode::deserialize(&bloom_filter.data).expect("Error deserialize GrowableBloom");
 
-    if !register_params.teammates.is_empty() {
-        check_and_transfer(
-            &mut bloom,
-            tournament,
-            register_params.participant,
-            ctx.accounts.payer_ata.to_account_info(),
-            ctx.accounts.reward_pool_ata.to_account_info(),
-            ctx.accounts.mint.to_account_info(),
-            ctx.accounts.participant.to_account_info(),
-            ctx.accounts.token_program.to_account_info(),
-            ctx.accounts.mint.decimals,
-        )?;
+    bloom_check(&register_params, &mut bloom)?;
 
+    if !register_params.teammates.is_empty() {
         **team = Team::new(register_params.participant, tournament.team_size);
         tournament.team_count += 1;
-        team.add_participant_by_captain(register_params.participant)?;
 
-        for teammate in register_params.teammates {
-            check_and_transfer(
-                &mut bloom,
-                tournament,
-                teammate,
-                ctx.accounts.payer_ata.to_account_info(),
-                ctx.accounts.reward_pool_ata.to_account_info(),
-                ctx.accounts.mint.to_account_info(),
-                ctx.accounts.participant.to_account_info(),
-                ctx.accounts.token_program.to_account_info(),
-                ctx.accounts.mint.decimals,
-            )?;
-            team.add_participant_by_captain(teammate)?;
-        }
-    } else {
-        check_and_transfer(
-            &mut bloom,
-            tournament,
-            register_params.participant,
-            ctx.accounts.payer_ata.to_account_info(),
-            ctx.accounts.reward_pool_ata.to_account_info(),
-            ctx.accounts.mint.to_account_info(),
-            ctx.accounts.participant.to_account_info(),
+        let cpi_ctx = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
+            TransferChecked {
+                from: ctx.accounts.participant_ata.to_account_info(),
+                to: ctx.accounts.reward_pool_ata.to_account_info(),
+                mint: ctx.accounts.mint.to_account_info(),
+                authority: ctx.accounts.participant.to_account_info(),
+            },
+        );
+
+        let mut all_participants = vec![register_params.participant];
+        all_participants.extend(register_params.teammates);
+
+        transfer_checked(
+            cpi_ctx,
+            all_participants.len() as u64 * tournament.entry_fee,
             ctx.accounts.mint.decimals,
         )?;
+        team.add_participants_by_captain(all_participants)?;
+    } else {
+        let cpi_ctx = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            TransferChecked {
+                from: ctx.accounts.participant_ata.to_account_info(),
+                to: ctx.accounts.reward_pool_ata.to_account_info(),
+                mint: ctx.accounts.mint.to_account_info(),
+                authority: ctx.accounts.participant.to_account_info(),
+            },
+        );
+        transfer_checked(cpi_ctx, tournament.entry_fee, ctx.accounts.mint.decimals)?;
+
         team.add_participant(register_params.participant)?;
     }
 
@@ -76,32 +71,17 @@ pub fn handle_register_tournament(
     Ok(())
 }
 
-fn check_and_transfer<'info>(
-    bloom: &mut Bloom,
-    tournament: &mut Tournament,
-    participant: Pubkey,
-    payer_ata: AccountInfo<'info>,
-    reward_pool_ata: AccountInfo<'info>,
-    mint: AccountInfo<'info>,
-    payer: AccountInfo<'info>,
-    token_program: AccountInfo<'info>,
-    decimals: u8,
-) -> Result<()> {
-    if !bloom.insert(&participant) {
+fn bloom_check(register_params: &RegisterParams, bloom: &mut Bloom) -> Result<()> {
+    if !bloom.insert(register_params.participant) {
         return Err(TournamentError::AlreadyRegistered.into());
     }
 
-    let cpi_ctx = CpiContext::new(
-        token_program.clone(),
-        TransferChecked {
-            from: payer_ata,
-            to: reward_pool_ata,
-            mint,
-            authority: payer,
-        },
-    );
-    transfer_checked(cpi_ctx, tournament.entry_fee, decimals)?;
-    
+    for teammate in &register_params.teammates {
+        if !bloom.insert(teammate) {
+            return Err(TournamentError::AlreadyRegistered.into());
+        }
+    }
+
     Ok(())
 }
 
@@ -121,7 +101,7 @@ pub struct RegisterParticipantToTournamentSinglechain<'info> {
     #[account(
         init_if_needed,
         payer = participant,
-        space = 8 + Team::INIT_SPACE + (32 + 2 + 1)*tournament.team_size as usize,
+        space = 8 + Team::INIT_SPACE + mem::size_of::<ParticipantInfo>()*tournament.team_size as usize,
         seeds = [GENOME_ROOT, TEAM, register_params.tournament_id.to_le_bytes().as_ref(), register_params.captain.as_ref()],
         bump
     )]
@@ -134,7 +114,7 @@ pub struct RegisterParticipantToTournamentSinglechain<'info> {
         associated_token::authority = participant,
         associated_token::token_program = token_program,
     )]
-    pub payer_ata: InterfaceAccount<'info, TokenAccount>,
+    pub participant_ata: InterfaceAccount<'info, TokenAccount>,
     #[account(
         mut,
         associated_token::mint = mint,

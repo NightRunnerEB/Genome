@@ -19,7 +19,6 @@ declare_id!("E8Pa2NFPqUCqZ9PUweRxyMzHcHphyGWwzx7VhDc5dPyv");
 #[cfg(feature = "localnet")]
 const DEPLOYER: Pubkey = pubkey!("5sCjqmPxku7C71uyGrPQf4LoRgkwRaEzhA3Bzyz6tXT");
 
-#[constant]
 const GENOME_ROOT: &[u8] = b"genome";
 const CONFIG: &[u8] = b"config";
 const BLOOM: &[u8] = b"bloom";
@@ -49,10 +48,7 @@ pub mod genome_contract {
         instructions::handle_register_tournament(ctx, register_params)
     }
 
-    pub fn set_bloom_precision(
-        ctx: Context<SetBloomPrecision>,
-        new_precision: u64
-    ) -> Result<()> {
+    pub fn set_bloom_precision(ctx: Context<SetBloomPrecision>, new_precision: f64) -> Result<()> {
         instructions::handle_set_bloom_precision(ctx, new_precision)
     }
 }

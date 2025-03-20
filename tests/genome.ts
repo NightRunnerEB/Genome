@@ -11,6 +11,7 @@ import {
   getSponsorAta,
   checkAnchorError,
 } from "./utils";
+import { configData, registerParams1, registerParams2, registerParams3, tournamentDataMock } from "./mockData";
 
 describe("Genome Solana Singlechain", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
@@ -19,55 +20,6 @@ describe("Genome Solana Singlechain", () => {
   let mint: PublicKey;
   let sponsorAta: PublicKey;
   const txBuilder = new TxBuilder();
-
-  const tournamentDataMock = {
-    organizer: organizer.publicKey,
-    sponsor: sponsor.publicKey,
-    organizerRoyalty: new anchor.BN(100),
-    sponsorPool: new anchor.BN(1000),
-    expirationTime: new anchor.BN(Math.floor(Date.now() / 1000)),
-    entryFee: new anchor.BN(20),
-    teamSize: 10,
-    minTeams: 4,
-    maxTeams: 10,
-    assetMint: token.publicKey,
-};
-
-const configData = {
-  admin: admin.publicKey,
-  platformWallet: admin.publicKey,
-  verifierAddresses: [],
-  platformFee: new anchor.BN(10),
-  minEntryFee: new anchor.BN(10),
-  minSponsorPool: new anchor.BN(500),
-  maxOrganizerRoyalty: new anchor.BN(5000),
-  tournamentNonce: 0,
-  minTeams: 2,
-  maxTeams: 20,
-  consensusRate: new anchor.BN(60),
-  falsePrecision: new anchor.BN(Math.round(0.000065 * 1_000_000_000)),
-};
-
-const registerParams1 = {
-  tournamentId: 0,
-  participant: captain.publicKey,
-  captain: captain.publicKey,
-  teammates: [participant1.publicKey, participant2.publicKey]
-}
-
-const registerParams2 = {
-  tournamentId: 0,
-  participant: participant1.publicKey,
-  captain: captain.publicKey,
-  teammates: []
-}
-
-const registerParams3 = {
-  tournamentId: 0,
-  participant: participant3.publicKey,
-  captain: captain.publicKey,
-  teammates: []
-}
 
 before(async () => {
   await Promise.all(
@@ -94,7 +46,7 @@ before(async () => {
     assert.ok(config != null);
     assert.deepEqual(config.admin, configData.admin);
     assert.deepEqual(config.platformWallet, configData.platformWallet);
-    assert.equal(config.falsePrecision.toNumber(), configData.falsePrecision.toNumber());
+    assert.equal(config.falsePrecision, configData.falsePrecision);
     assert.equal(config.platformFee, configData.platformFee.toNumber());
     assert.equal(config.minEntryFee, configData.minEntryFee.toNumber());
     assert.equal(config.minSponsorPool, configData.minSponsorPool.toNumber());
