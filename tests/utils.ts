@@ -195,8 +195,8 @@ export async function delegateAccount(sponsorAta: PublicKey): Promise<String> {
 
 export function checkAnchorError(error: any, errMsg: string) {
   if (error instanceof anchor.AnchorError) {
-      assert.equal((error as anchor.AnchorError).error.errorMessage, errMsg);
+    assert.equal((error as anchor.AnchorError).error.errorMessage, errMsg);
   } else {
-      assert.fail(error);
+    assert.fail(error);
   }
 }

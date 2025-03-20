@@ -66,33 +66,21 @@ describe("Genome Solana Singlechain", () => {
     let tx = await txBuilder.initialize(admin, configData);
     console.log("Initialize Genome tx: ", tx);
 
-    const configAccount = await txBuilder.getConfig();
-    assert.ok(configAccount != null);
-    assert.equal(configAccount.admin.toBase58(), configData.admin.toBase58());
+    const config = await txBuilder.getConfig();
+    assert.ok(config != null);
+    assert.deepEqual(config.admin, configData.admin);
+    assert.deepEqual(config.platformWallet, configData.platformWallet);
+    assert.equal(config.falsePrecision, configData.falsePrecision);
+    assert.equal(config.platformFee, configData.platformFee.toNumber());
+    assert.equal(config.minEntryFee, configData.minEntryFee.toNumber());
+    assert.equal(config.minSponsorPool, configData.minSponsorPool.toNumber());
     assert.equal(
-      configAccount.platformWallet.toBase58(),
-      configData.platformWallet.toBase58()
-    );
-    assert.equal(configAccount.falsePrecision, configData.falsePrecision);
-    assert.equal(
-      configAccount.platformFee.toNumber(),
-      configData.platformFee.toNumber()
-    );
-    assert.equal(
-      configAccount.minEntryFee.toNumber(),
-      configData.minEntryFee.toNumber()
-    );
-    assert.equal(
-      configAccount.minSponsorPool.toNumber(),
-      configData.minSponsorPool.toNumber()
-    );
-    assert.equal(
-      configAccount.maxOrganizerRoyalty.toNumber(),
+      config.maxOrganizerRoyalty,
       configData.maxOrganizerRoyalty.toNumber()
     );
-    assert.equal(configAccount.tournamentNonce, configData.tournamentNonce);
-    assert.equal(configAccount.minTeams, configData.minTeams);
-    assert.equal(configAccount.maxTeams, configData.maxTeams);
+    assert.equal(config.tournamentNonce, configData.tournamentNonce);
+    assert.equal(config.minTeams, configData.minTeams);
+    assert.equal(config.maxTeams, configData.maxTeams);
   });
 
   it("Create a Tournament", async () => {
@@ -154,77 +142,66 @@ describe("Genome Solana Singlechain", () => {
 
   it("Invalid organizerRoyalty", async () => {
     try {
-      await txBuilder.createTournamentSinglechain(
-        organizer,
-        sponsor,
-        mint,
-        { ...tournamentDataMock, organizerRoyalty: new anchor.BN(9999999) }
-      );
+      await txBuilder.createTournamentSinglechain(organizer, sponsor, mint, {
+        ...tournamentDataMock,
+        organizerRoyalty: new anchor.BN(9999999),
+      });
     } catch (error) {
-      checkAnchorError(error, "Invalid royalty")
+      checkAnchorError(error, "Invalid royalty");
     }
   });
 
   it("Invalid entry_fee", async () => {
     try {
-      await txBuilder.createTournamentSinglechain(
-        organizer,
-        sponsor,
-        mint,
-        { ...tournamentDataMock, entryFee: new anchor.BN(1) }
-      );
+      await txBuilder.createTournamentSinglechain(organizer, sponsor, mint, {
+        ...tournamentDataMock,
+        entryFee: new anchor.BN(1),
+      });
     } catch (error) {
-      checkAnchorError(error, "Invalid admission fee")
+      checkAnchorError(error, "Invalid admission fee");
     }
   });
 
   it("Invalid team limit (minTeams, maxTeams)", async () => {
     try {
-      await txBuilder.createTournamentSinglechain(
-        organizer,
-        sponsor,
-        mint,
-        { ...tournamentDataMock, maxTeams: 100 }
-      );
+      await txBuilder.createTournamentSinglechain(organizer, sponsor, mint, {
+        ...tournamentDataMock,
+        maxTeams: 100,
+      });
     } catch (error) {
-      checkAnchorError(error, "Invalid teams count")
+      checkAnchorError(error, "Invalid teams count");
     }
 
     try {
-      await txBuilder.createTournamentSinglechain(
-        organizer,
-        sponsor,
-        mint,
-        { ...tournamentDataMock, minTeams: 0 },
-      );
+      await txBuilder.createTournamentSinglechain(organizer, sponsor, mint, {
+        ...tournamentDataMock,
+        minTeams: 0,
+      });
     } catch (error) {
-      checkAnchorError(error, "Invalid teams count")
+      checkAnchorError(error, "Invalid teams count");
     }
   });
 
   it("Invalid prize_pool param", async () => {
     try {
-      await txBuilder.createTournamentSinglechain(
-        organizer,
-        sponsor,
-        mint,
-        { ...tournamentDataMock, sponsorPool: new anchor.BN(10) },
-      );
+      await txBuilder.createTournamentSinglechain(organizer, sponsor, mint, {
+        ...tournamentDataMock,
+        sponsorPool: new anchor.BN(10),
+      });
     } catch (error) {
-      checkAnchorError(error, "Invalid sponsor pool")
+      checkAnchorError(error, "Invalid sponsor pool");
     }
   });
 
   it("Invalid tournament capacity", async () => {
     try {
-      await txBuilder.createTournamentSinglechain(
-        organizer,
-        sponsor,
-        mint,
-        { ...tournamentDataMock, maxTeams: 100, teamSize: 40 },
-      );
+      await txBuilder.createTournamentSinglechain(organizer, sponsor, mint, {
+        ...tournamentDataMock,
+        maxTeams: 100,
+        teamSize: 40,
+      });
     } catch (error) {
-      checkAnchorError(error, "Max players exceeded(3200)")
+      checkAnchorError(error, "Max players exceeded(3200)");
     }
   });
 });

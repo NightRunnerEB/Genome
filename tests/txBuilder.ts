@@ -46,14 +46,14 @@ export class TxBuilder {
     return {
       admin: config.admin,
       tournamentNonce: config.tournamentNonce,
-      platformFee: config.platformFee,
+      platformFee: config.platformFee.toNumber(),
       platformWallet: config.platformWallet,
       falsePrecision: config.falsePrecision,
-      minEntryFee: config.minEntryFee,
-      minSponsorPool: config.minSponsorPool,
+      minEntryFee: config.minEntryFee.toNumber(),
+      minSponsorPool: config.minSponsorPool.toNumber(),
       minTeams: config.minTeams,
       maxTeams: config.maxTeams,
-      maxOrganizerRoyalty: config.maxOrganizerRoyalty,
+      maxOrganizerRoyalty: config.maxOrganizerRoyalty.toNumber(),
     };
   }
 
