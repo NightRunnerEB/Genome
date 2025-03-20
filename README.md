@@ -72,7 +72,11 @@ The test suite covers:
 Before running the program, you can generate the necessary keypairs:
 
 ```sh
+# Generate keys
 make keys
+
+# Clean keys
+make clean
 ```
 
 NOTE: Set the Publickey generated for the admin as a Deployer(lib.rs)
