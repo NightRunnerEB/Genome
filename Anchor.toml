@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-genome_contract = "7cE2qCGyTDS5WgL35sf626utKRfeWKjLZ7KrXspbgN1n"
+genome_contract = "3wPJRuHnSkRK3hjhbRSevr2ERzXvEXZWFeoh66RYqp4v"
 
 [registry]
 url = "https://api.apr.dev"

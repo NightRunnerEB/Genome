@@ -9,15 +9,13 @@ import {
     delegateAccount,
     createInvalidTournament,
     getPrizePoolAta,
-    getProvider,
     getSponsorAta
 } from "./utils";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, getAccount, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 
 describe("Genome Solana Singlechain", () => {
     anchor.setProvider(anchor.AnchorProvider.env());
 
-    const { admin, organizer, sponsor, token } = getKeyPairs();
+    const { admin, organizer, sponsor, token, captain, participant1, participant2, participant3 } = getKeyPairs();
     let mint: PublicKey;
     let sponsorAta: PublicKey;
     const txBuilder = new TxBuilder();
@@ -25,33 +23,56 @@ describe("Genome Solana Singlechain", () => {
     const tournamentDataMock = {
         organizer: organizer.publicKey,
         sponsor: sponsor.publicKey,
-        organizerRoyalty: new anchor.BN(100),
+        organizerFee: new anchor.BN(100),
         sponsorPool: new anchor.BN(1000),
+        expirationTime: new anchor.BN(Math.floor(Date.now() / 1000)),
         entryFee: new anchor.BN(20),
         teamSize: 10,
         minTeams: 4,
         maxTeams: 10,
-        token: token.publicKey,
+        assetMint: token.publicKey,
     };
-
+    
     const configData = {
         admin: admin.publicKey,
-        tournamentNonce: 0,
-        platformFee: new anchor.BN(10),
         platformWallet: admin.publicKey,
+        platformFee: new anchor.BN(10),
         minEntryFee: new anchor.BN(10),
         minSponsorPool: new anchor.BN(500),
+        maxOrganizerFee: new anchor.BN(5000),
+        tournamentNonce: 0,
         minTeams: 2,
         maxTeams: 20,
-        falsePrecision: 0.000065,
-        maxOrganizerRoyalty: new anchor.BN(5000),
-        mint: token.publicKey,
+        consensusRate: new anchor.BN(60),
+        falsePrecision: new anchor.BN(Math.floor(0.000065 * 1_000_000_000)),
     };
+    
+
+    const registerParams1 = {
+        tournamentId: 0,
+        participant: captain.publicKey,
+        captain: captain.publicKey,
+        teammates: [participant1.publicKey, participant2.publicKey]
+    }
+
+    const registerParams2 = {
+        tournamentId: 0,
+        participant: participant1.publicKey,
+        captain: captain.publicKey,
+        teammates: []
+    }
+
+    const registerParams3 = {
+        tournamentId: 0,
+        participant: participant3.publicKey,
+        captain: captain.publicKey,
+        teammates: []
+    }
 
     before(async () => {
         await Promise.all(
-            [admin, organizer, sponsor].map(
-                async (keypair) => await airdrop(keypair.publicKey, 10)
+            [admin, organizer, sponsor, captain, participant1, participant2, participant3].map(
+                async (keypair) => await airdrop(keypair.publicKey, 100)
             )
         );
     });
@@ -73,12 +94,11 @@ describe("Genome Solana Singlechain", () => {
         assert.ok(configAccount != null);
         assert.equal(configAccount.admin.toBase58(), configData.admin.toBase58());
         assert.equal(configAccount.platformWallet.toBase58(), configData.platformWallet.toBase58());
-        assert.equal(configAccount.mint.toBase58(), configData.mint.toBase58());
-        assert.equal(configAccount.falsePrecision, configData.falsePrecision);
+        assert.equal(configAccount.falsePrecision.toNumber(), configData.falsePrecision.toNumber());
         assert.equal(configAccount.platformFee.toNumber(), configData.platformFee.toNumber());
         assert.equal(configAccount.minEntryFee.toNumber(), configData.minEntryFee.toNumber());
         assert.equal(configAccount.minSponsorPool.toNumber(), configData.minSponsorPool.toNumber());
-        assert.equal(configAccount.maxOrganizerRoyalty.toNumber(), configData.maxOrganizerRoyalty.toNumber());
+        assert.equal(configAccount.maxOrganizerFee.toNumber(), configData.maxOrganizerFee.toNumber());
         assert.equal(configAccount.tournamentNonce, configData.tournamentNonce);
         assert.equal(configAccount.minTeams, configData.minTeams);
         assert.equal(configAccount.maxTeams, configData.maxTeams);
@@ -97,25 +117,53 @@ describe("Genome Solana Singlechain", () => {
         assert.equal(tournamentAccount.id, configData.tournamentNonce - 1);
         assert.equal(tournamentAccount.sponsor.toBase58(), tournamentDataMock.sponsor.toBase58());
         assert.equal(tournamentAccount.sponsorPool.toNumber(), tournamentDataMock.sponsorPool.toNumber());
-        assert.equal(tournamentAccount.organizerRoyalty.toNumber(), tournamentDataMock.organizerRoyalty.toNumber());
+        assert.equal(tournamentAccount.organizerFee.toNumber(), tournamentDataMock.organizerFee.toNumber());
         assert.equal(tournamentAccount.entryFee.toNumber(), tournamentDataMock.entryFee.toNumber());
         assert.ok(tournamentAccount.status.new);
         assert.equal(tournamentAccount.teamSize, tournamentDataMock.teamSize);
         assert.equal(tournamentAccount.minTeams, tournamentDataMock.minTeams);
         assert.equal(tournamentAccount.maxTeams, tournamentDataMock.maxTeams);
         assert.equal(tournamentAccount.organizer.toBase58(), tournamentDataMock.organizer.toBase58());
-        assert.equal(tournamentAccount.token.toBase58(), tournamentDataMock.token.toBase58());
+        assert.equal(tournamentAccount.assetMint.toBase58(), tournamentDataMock.assetMint.toBase58());
 
 
         const prizePoolAta = await getPrizePoolAta(mint, tournamentAccount.tournamentPda);
         assert.equal(sponsorAtaBefore.amount - sponsorAtaAfter.amount, prizePoolAta.amount);
     });
 
-    it("Invalid organizerRoyalty", async () => {
+    it("Register tournament 1", async () => {
+        await txBuilder.registerTournament(captain, mint, registerParams1)
+
+        const configData = await txBuilder.getConfig();
+        const teamAccount = await txBuilder.getTeam(0, captain.publicKey);
+        console.log("Team account: " + teamAccount);
+    });
+
+    it("Register invalid tournament 2", async () => {
+        try {
+            await txBuilder.registerTournament(participant1, mint, registerParams2)
+        } catch(err) {
+            assert.match(err.toString(), /AlreadyRegistered/);
+        }
+
+        const configData = await txBuilder.getConfig();
+        const teamAccount = await txBuilder.getTeam(0, captain.publicKey);
+        console.log("Team account: " + teamAccount);
+    });
+
+    it("Register tournament 3", async () => {
+        await txBuilder.registerTournament(participant3, mint, registerParams3)
+
+        const configData = await txBuilder.getConfig();
+        const teamAccount = await txBuilder.getTeam(0, captain.publicKey);
+        console.log("Team account: " + teamAccount);
+    });
+
+    it("Invalid organizer fee", async () => {
         await createInvalidTournament(
             txBuilder,
-            { ...tournamentDataMock, organizerRoyalty: new anchor.BN(9999999) },
-            /InvalidRoyalty/
+            { ...tournamentDataMock, organizerFee: new anchor.BN(9999999) },
+            /InvalidOrganizerFee/
         );
     });
 

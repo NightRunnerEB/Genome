@@ -18,6 +18,7 @@ import { assert } from "chai";
 export const GENOME_ROOT = utf8.encode("genome");
 export const CONFIG = utf8.encode("config");
 export const TOURNAMENT = utf8.encode("tournament");
+export const TEAM = utf8.encode("team");
 
 export function getProvider() {
     const provider = anchor.AnchorProvider.env();
@@ -31,24 +32,39 @@ export function getKeyPairs(): {
     organizer: Keypair,
     sponsor: Keypair,
     token: Keypair,
+    captain: Keypair,
+    participant1: Keypair,
+    participant2: Keypair,
+    participant3: Keypair,
 } {
     const adminSecret = Uint8Array.from(require("../keys/admin.json"));
     const organizerSecret = Uint8Array.from(require("../keys/organizer.json"));
     const sponsorSecret = Uint8Array.from(require("../keys/sponsor.json"));
+    const captainSecret = Uint8Array.from(require("../keys/captain.json"));
+    const participant1Secret = Uint8Array.from(require("../keys/participant_1.json"));
+    const participant2Secret =Uint8Array.from(require("../keys/participant_2.json"));
+    const participant3Secret =Uint8Array.from(require("../keys/participant_3.json"));
     const tokenSecret = Uint8Array.from(
         require("../keys/token.json")
     );
-
     const admin = Keypair.fromSecretKey(adminSecret);
     const organizer = Keypair.fromSecretKey(organizerSecret);
     const sponsor = Keypair.fromSecretKey(sponsorSecret);
     const token = Keypair.fromSecretKey(tokenSecret);
+    const captain = Keypair.fromSecretKey(captainSecret);
+    const participant1 = Keypair.fromSecretKey(participant1Secret);
+    const participant2 = Keypair.fromSecretKey(participant2Secret);
+    const participant3 = Keypair.fromSecretKey(participant3Secret);
 
     return {
         admin,
         organizer,
         sponsor,
         token,
+        captain,
+        participant1,
+        participant2,
+        participant3
     };
 }
 
@@ -68,6 +84,17 @@ export function getTournamentPda(
         .GenomeContract as anchor.Program<GenomeContract>;
     return PublicKey.findProgramAddressSync(
         [GENOME_ROOT, TOURNAMENT].concat(seeds),
+        genomeProgram.programId
+    )[0];
+}
+
+export function getTeamPda(
+    seeds: Uint8Array<ArrayBufferLike>[]
+): PublicKey {
+    const genomeProgram = anchor.workspace
+        .GenomeContract as anchor.Program<GenomeContract>;
+    return PublicKey.findProgramAddressSync(
+        [GENOME_ROOT, TEAM].concat(seeds),
         genomeProgram.programId
     )[0];
 }
@@ -122,7 +149,7 @@ export async function airdrop(address: PublicKey, amount: number) {
 }
 
 export async function createGenomeMint(): Promise<{ mint: PublicKey; sponsorAta: PublicKey }> {
-    let { admin, sponsor, organizer, token } = getKeyPairs();
+    let { admin, sponsor, organizer, token, captain, participant1, participant3 } = getKeyPairs();
 
     const mint = await createMint(
         getProvider().connection,
@@ -135,6 +162,7 @@ export async function createGenomeMint(): Promise<{ mint: PublicKey; sponsorAta:
         TOKEN_2022_PROGRAM_ID
     );
     console.log("Genome mint:", mint.toBase58());
+    console.log("Genome token:", token.publicKey.toBase58());
 
     const sponsorAta = await createAssociatedTokenAccount(
         getProvider().connection,
@@ -158,6 +186,39 @@ export async function createGenomeMint(): Promise<{ mint: PublicKey; sponsorAta:
     );
     console.log("Tournament pool ata:", reward_pool_ata.toBase58());
 
+    const captain_ata = await createAssociatedTokenAccount(
+        getProvider().connection,
+        admin,
+        token.publicKey,
+        captain.publicKey,
+        null,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+    console.log("Captain ata:", captain_ata.toBase58());
+
+    const participant1_ata = await createAssociatedTokenAccount(
+        getProvider().connection,
+        admin,
+        token.publicKey,
+        participant1.publicKey,
+        null,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+    console.log("Participant1 ata:", participant1_ata.toBase58());
+
+    const participant3_ata = await  createAssociatedTokenAccount(
+        getProvider().connection,
+        admin,
+        token.publicKey,
+        participant3.publicKey,
+        null,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+    console.log("Participant3 ata:", participant3_ata.toBase58());
+
     let tx = await mintTo(
         getProvider().connection,
         admin,
@@ -170,6 +231,45 @@ export async function createGenomeMint(): Promise<{ mint: PublicKey; sponsorAta:
         TOKEN_2022_PROGRAM_ID
     );
     console.log("Mint to sponsor tx:", tx);
+
+    tx = await mintTo(
+        getProvider().connection,
+        admin,
+        token.publicKey,
+        captain_ata,
+        admin,
+        1000000000000000,
+        [],
+        {},
+        TOKEN_2022_PROGRAM_ID
+    );
+    console.log("Mint to captain tx:", tx);
+
+    tx = await mintTo(
+        getProvider().connection,
+        admin,
+        token.publicKey,
+        participant3_ata,
+        admin,
+        1000000000000000,
+        [],
+        {},
+        TOKEN_2022_PROGRAM_ID
+    );
+    console.log("Mint to participant3 tx:", tx);
+
+    tx = await mintTo(
+        getProvider().connection,
+        admin,
+        token.publicKey,
+        participant1_ata,
+        admin,
+        1000000000000000,
+        [],
+        {},
+        TOKEN_2022_PROGRAM_ID
+    );
+    console.log("Mint to participant1 tx:", tx);
 
     return { mint, sponsorAta };
 }

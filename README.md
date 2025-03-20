@@ -77,6 +77,15 @@ solana-keygen new --outfile keys/admin.json
 solana-keygen new --outfile keys/organizer.json
 solana-keygen new --outfile keys/sponsor.json
 solana-keygen new --outfile keys/token.json
+solana-keygen new --outfile keys/captain.json
+solana-keygen new --outfile keys/participant_1.json
+solana-keygen new --outfile keys/participant_2.json
+solana-keygen new --outfile keys/participant_3.json
 ```
 
-NOTE: Set the Publickey generated for the admin as a Deployer(lib.rs)
+Set the Publickey generated for the admin as a Deployer(lib.rs)
+You can get this key by calling the command:
+
+```sh
+solana address -k keys/admin.json
+```
