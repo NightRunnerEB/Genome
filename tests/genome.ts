@@ -7,9 +7,9 @@ import {
   getKeyPairs,
   createGenomeMint,
   delegateAccount,
-  createInvalidTournament,
   getPrizePoolAta,
   getSponsorAta,
+  checkAnchorError,
 } from "./utils";
 
 describe("Genome Solana Singlechain", () => {
@@ -153,48 +153,78 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Invalid organizerRoyalty", async () => {
-    await createInvalidTournament(
-      txBuilder,
-      { ...tournamentDataMock, organizerRoyalty: new anchor.BN(9999999) },
-      /InvalidRoyalty/
-    );
+    try {
+      await txBuilder.createTournamentSinglechain(
+        organizer,
+        sponsor,
+        mint,
+        { ...tournamentDataMock, organizerRoyalty: new anchor.BN(9999999) }
+      );
+    } catch (error) {
+      checkAnchorError(error, "Invalid royalty")
+    }
   });
 
   it("Invalid entry_fee", async () => {
-    await createInvalidTournament(
-      txBuilder,
-      { ...tournamentDataMock, entryFee: new anchor.BN(1) },
-      /InvalidAdmissionFee/
-    );
+    try {
+      await txBuilder.createTournamentSinglechain(
+        organizer,
+        sponsor,
+        mint,
+        { ...tournamentDataMock, entryFee: new anchor.BN(1) }
+      );
+    } catch (error) {
+      checkAnchorError(error, "Invalid admission fee")
+    }
   });
 
   it("Invalid team limit (minTeams, maxTeams)", async () => {
-    await createInvalidTournament(
-      txBuilder,
-      { ...tournamentDataMock, maxTeams: 100 },
-      /InvalidTeamsCount/
-    );
+    try {
+      await txBuilder.createTournamentSinglechain(
+        organizer,
+        sponsor,
+        mint,
+        { ...tournamentDataMock, maxTeams: 100 }
+      );
+    } catch (error) {
+      checkAnchorError(error, "Invalid teams count")
+    }
 
-    await createInvalidTournament(
-      txBuilder,
-      { ...tournamentDataMock, minTeams: 0 },
-      /InvalidTeamsCount/
-    );
+    try {
+      await txBuilder.createTournamentSinglechain(
+        organizer,
+        sponsor,
+        mint,
+        { ...tournamentDataMock, minTeams: 0 },
+      );
+    } catch (error) {
+      checkAnchorError(error, "Invalid teams count")
+    }
   });
 
   it("Invalid prize_pool param", async () => {
-    await createInvalidTournament(
-      txBuilder,
-      { ...tournamentDataMock, sponsorPool: new anchor.BN(10) },
-      /InvalidSponsorPool/
-    );
+    try {
+      await txBuilder.createTournamentSinglechain(
+        organizer,
+        sponsor,
+        mint,
+        { ...tournamentDataMock, sponsorPool: new anchor.BN(10) },
+      );
+    } catch (error) {
+      checkAnchorError(error, "Invalid sponsor pool")
+    }
   });
 
   it("Invalid tournament capacity", async () => {
-    await createInvalidTournament(
-      txBuilder,
-      { ...tournamentDataMock, maxTeams: 100, teamSize: 40 },
-      /MaxPlayersExceeded/
-    );
+    try {
+      await txBuilder.createTournamentSinglechain(
+        organizer,
+        sponsor,
+        mint,
+        { ...tournamentDataMock, maxTeams: 100, teamSize: 40 },
+      );
+    } catch (error) {
+      checkAnchorError(error, "Max players exceeded(3200)")
+    }
   });
 });

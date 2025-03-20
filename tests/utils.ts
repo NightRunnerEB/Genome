@@ -193,21 +193,10 @@ export async function delegateAccount(sponsorAta: PublicKey): Promise<String> {
   );
 }
 
-export async function createInvalidTournament(
-  txBuilder: any,
-  tournamentData: any,
-  expectedRegex: RegExp
-): Promise<void> {
-  let { sponsor, organizer, token } = getKeyPairs();
-  try {
-    await txBuilder.createTournamentSinglechain(
-      organizer,
-      sponsor,
-      token.publicKey,
-      tournamentData
-    );
-    assert.fail("An error was expected, but the transaction was successful");
-  } catch (err: any) {
-    assert.match(err.toString(), expectedRegex);
+export function checkAnchorError(error: any, errMsg: string) {
+  if (error instanceof anchor.AnchorError) {
+      assert.equal((error as anchor.AnchorError).error.errorMessage, errMsg);
+  } else {
+      assert.fail(error);
   }
 }

@@ -41,7 +41,7 @@ To run tests, use the following command:
 1. Install dependencies:
 
     ```sh
-    npm install
+    yarn install
     ```
 
 2. Run the test suite:
@@ -68,16 +68,6 @@ The test suite covers:
 ## Usage
 
 ### Setting Up
-
-Before running the program, generate the necessary keypairs:
-
-```sh
-mkdir -p keys
-solana-keygen new --outfile keys/admin.json
-solana-keygen new --outfile keys/organizer.json
-solana-keygen new --outfile keys/sponsor.json
-solana-keygen new --outfile keys/token.json
-```
 
 NOTE: Set the Publickey generated for the admin as a Deployer(lib.rs)
 NOTE: Do NOT use any keypairs which were published in gitlab for production
