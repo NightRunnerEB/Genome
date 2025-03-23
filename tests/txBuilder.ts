@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { GenomeContract } from "../target/types/genome_contract";
-import { getGenomePda, getTournamentPda, getTeamPda } from "./utils";
+import { getGonfigPda, getTournamentPda, getTeamPda } from "./utils";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export class TxBuilder {
@@ -67,7 +67,7 @@ export class TxBuilder {
   }
 
   async getConfig() {
-    let configPda = getGenomePda();
+    let configPda = getGonfigPda();
     const config = await this.program.account.genomeConfig.fetch(configPda);
     return {
       admin: config.admin,

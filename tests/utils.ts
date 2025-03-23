@@ -68,7 +68,7 @@ export function getKeyPairs(): {
   };
 }
 
-export function getGenomePda(): PublicKey {
+export function getGonfigPda(): PublicKey {
   const genomeProgram = anchor.workspace
     .GenomeContract as anchor.Program<GenomeContract>;
   return PublicKey.findProgramAddressSync(
