@@ -11,12 +11,12 @@ import {
   getSponsorAta,
   checkAnchorError,
 } from "./utils";
-import { configData, registerParams1, registerParams2, registerParams3, tournamentDataMock } from "./mockData";
+import { configData, registerParams1, registerParams2, registerParams3, tournamentDataMock } from "./config";
 
 describe("Genome Solana Singlechain", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const { admin, organizer, sponsor, token, captain, participant1, participant2, participant3 } = getKeyPairs();
+  const { admin, organizer, sponsor, captain, participant1, participant2, participant3 } = getKeyPairs();
   let mint: PublicKey;
   let sponsorAta: PublicKey;
   const txBuilder = new TxBuilder();
@@ -86,11 +86,17 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Register tournament - Captain + Teammates", async () => {
+    const tournamentAccount = await txBuilder.getTournament(0);
+    const prizePoolAtaBefore = await getPrizePoolAta(mint, tournamentAccount.tournamentPda);
     await txBuilder.registerTournament(captain, mint, registerParams1);
     const teamAccount = await txBuilder.getTeam(0, captain.publicKey);
+
     assert.ok(teamAccount);
     assert.equal(teamAccount.captain.toBase58(), captain.publicKey.toBase58());
     assert.equal(teamAccount.participants.length, registerParams1.teammates.length + 1);
+
+    const prizePoolAtaAfter = await getPrizePoolAta(mint, tournamentAccount.tournamentPda);
+    assert.equal(prizePoolAtaAfter.amount - prizePoolAtaBefore.amount, tournamentAccount.entryFee.toNumber() * (registerParams1.teammates.length + 1));
   });
 
   it("Register invalid tournament - Already registered", async () => {
@@ -102,10 +108,15 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Register tournament - Additional participant", async () => {
+    const tournamentAccount = await txBuilder.getTournament(0);
+    const prizePoolAtaBefore = await getPrizePoolAta(mint, tournamentAccount.tournamentPda);
     await txBuilder.registerTournament(participant3, mint, registerParams3);
     const teamAccount = await txBuilder.getTeam(0, captain.publicKey);
     assert.ok(teamAccount);
     assert.equal(teamAccount.participants.length, registerParams1.teammates.length + 2);
+
+    const prizePoolAtaAfter = await getPrizePoolAta(mint, tournamentAccount.tournamentPda);
+    assert.equal(prizePoolAtaAfter.amount - prizePoolAtaBefore.amount, tournamentAccount.entryFee.toNumber() * (registerParams3.teammates.length + 1));
   });
 
   it("Invalid organizerRoyalty", async () => {
