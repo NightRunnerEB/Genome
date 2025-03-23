@@ -1,5 +1,3 @@
-use std::mem;
-
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
     transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
@@ -96,7 +94,7 @@ pub struct RegisterParticipant<'info> {
     #[account(
         init_if_needed,
         payer = participant,
-        space = 8 + Team::INIT_SPACE + mem::size_of::<ParticipantInfo>()*tournament.team_size as usize,
+        space = 8 + Team::INIT_SPACE + ParticipantInfo::INIT_SPACE * tournament.team_size as usize,
         seeds = [GENOME_ROOT, TEAM, register_params.tournament_id.to_le_bytes().as_ref(), register_params.captain.as_ref()],
         bump
     )]
