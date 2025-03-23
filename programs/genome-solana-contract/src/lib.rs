@@ -34,7 +34,7 @@ pub mod genome_contract {
     }
 
     pub fn create_tournament(
-        ctx: Context<CreateTournamentSinglechain>,
+        ctx: Context<CreateTournament>,
         tournament_data: TournamentData,
     ) -> Result<()> {
         instructions::handle_create_tournament(ctx, tournament_data)

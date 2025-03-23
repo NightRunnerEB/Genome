@@ -11,7 +11,7 @@ use crate::{
 };
 
 pub fn handle_create_tournament(
-    ctx: Context<CreateTournamentSinglechain>,
+    ctx: Context<CreateTournament>,
     tournament_data: TournamentData,
 ) -> Result<()> {
     let tournament = &mut ctx.accounts.tournament;
@@ -54,7 +54,7 @@ pub fn handle_create_tournament(
 
 #[derive(Accounts)]
 #[instruction(tournament_data: TournamentData)]
-pub struct CreateTournamentSinglechain<'info> {
+pub struct CreateTournament<'info> {
     #[account(mut)]
     organizer: Signer<'info>,
     /// CHECKED
