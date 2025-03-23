@@ -3,7 +3,6 @@
 mod data;
 mod error;
 mod instructions;
-mod team;
 mod utils;
 
 use anchor_lang::prelude::*;
@@ -17,7 +16,7 @@ use crate::{
 declare_id!("E8Pa2NFPqUCqZ9PUweRxyMzHcHphyGWwzx7VhDc5dPyv");
 
 #[cfg(feature = "localnet")]
-const DEPLOYER: Pubkey = pubkey!("CuLvsB5CZiPGVGVGZc31tp9TQ6tHeAQXSgsX9NJqWaU2");
+const DEPLOYER: Pubkey = pubkey!("6hhbwjqfCbFshTUWGdaxiCtnqocnruwdR3pWtU4sR5b1");
 
 const GENOME_ROOT: &[u8] = b"genome";
 const CONFIG: &[u8] = b"config";
@@ -42,7 +41,7 @@ pub mod genome_contract {
     }
 
     pub fn register_tournament(
-        ctx: Context<RegisterParticipantToTournamentSinglechain>,
+        ctx: Context<RegisterParticipant>,
         register_params: RegisterParams,
     ) -> Result<()> {
         instructions::handle_register_tournament(ctx, register_params)

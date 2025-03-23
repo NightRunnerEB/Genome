@@ -7,9 +7,8 @@ use anchor_spl::token_interface::{
 use growable_bloom_filter::GrowableBloom as Bloom;
 
 use crate::{
-    data::{BloomFilter, GenomeConfig, Tournament, TournamentStatus},
+    data::{BloomFilter, GenomeConfig, Tournament, TournamentStatus, ParticipantInfo, Team},
     error::TournamentError,
-    team::{ParticipantInfo, Team},
     BLOOM, CONFIG, GENOME_ROOT, TEAM, TOURNAMENT,
 };
 
