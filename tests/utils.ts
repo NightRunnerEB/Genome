@@ -15,10 +15,10 @@ import { GenomeContract } from "../target/types/genome_contract";
 import { utf8 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { assert } from "chai";
 
-export const GENOME_ROOT = utf8.encode("genome");
-export const CONFIG = utf8.encode("config");
-export const TOURNAMENT = utf8.encode("tournament");
-export const TEAM = utf8.encode("team");
+const GENOME_ROOT = utf8.encode("genome");
+const CONFIG = utf8.encode("config");
+const TOURNAMENT = utf8.encode("tournament");
+const TEAM = utf8.encode("team");
 
 export function getProvider() {
   const provider = anchor.AnchorProvider.env();
