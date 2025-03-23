@@ -49,17 +49,17 @@ pub struct Tournament {
     pub max_teams: u16,
     pub status: TournamentStatus,
     pub bump: u8,
-    pub finish_metadata: FinishTournamentMetadata,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Default, Clone, InitSpace)]
+#[account]
+#[derive(InitSpace)]
 pub struct FinishTournamentMetadata {
     #[max_len(0)]
-    pub winners: Vec<Pubkey>,
+    winners: Vec<Pubkey>,
     #[max_len(0)]
-    pub rewarded_winners: Vec<bool>,
-    pub remaining_prize_pool: u64,
-    pub total_prize_pool: u64,
+    rewarded_winners: Vec<bool>,
+    remaining_prize_pool: u64,
+    total_prize_pool: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, InitSpace)]
