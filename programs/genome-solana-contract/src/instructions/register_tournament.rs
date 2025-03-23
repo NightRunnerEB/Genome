@@ -129,7 +129,6 @@ pub struct RegisterParams {
     teammates: Vec<Pubkey>,
 }
 
-#[derive(Debug)]
 #[event]
 pub struct ParticipantRegistered {
     participant: Pubkey,
