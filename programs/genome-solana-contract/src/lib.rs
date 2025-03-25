@@ -3,7 +3,6 @@
 mod data;
 mod error;
 mod instructions;
-mod utils;
 
 use anchor_lang::prelude::*;
 use instructions::*;
