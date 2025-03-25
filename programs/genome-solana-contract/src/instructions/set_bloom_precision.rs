@@ -1,4 +1,4 @@
-use crate::{data::GenomeConfig, TournamentError, CONFIG, DEPLOYER, GENOME_ROOT};
+use crate::{data::GenomeConfig, TournamentError, CONFIG, GENOME_ROOT};
 use anchor_lang::prelude::*;
 
 const MIN_PRECISION: f64 = 0.0;
@@ -6,7 +6,7 @@ const MAX_PRECISION: f64 = 1.0;
 
 #[derive(Accounts)]
 pub struct SetBloomPrecision<'info> {
-    #[account(mut, address = DEPLOYER @ TournamentError::InvalidAdmin)]
+    #[account(mut, address = config.admin @ TournamentError::InvalidAdmin)]
     pub admin: Signer<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     pub config: Account<'info, GenomeConfig>,
