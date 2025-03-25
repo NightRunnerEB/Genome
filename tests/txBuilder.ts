@@ -108,10 +108,10 @@ export class TxBuilder {
   }
 
   async getTeam(
-    tournamen_id: number,
+    tournamentNonce: number,
     captain: PublicKey
   ) {
-    const nonceBuffer = new Uint8Array(new Uint32Array([tournamen_id]).buffer);
+    const nonceBuffer = new Uint8Array(new Uint32Array([tournamentNonce]).buffer);
     let teamPda = getTeamPda([nonceBuffer, captain.toBuffer()]);
     const team = await this.program.account.team.fetch(teamPda);
     return {

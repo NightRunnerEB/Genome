@@ -92,7 +92,7 @@ Initialize Genome Program using `genomeConfig` in `migrations/config.ts`
 
 ```sh
 anchor run initialize -- <path-to-deployer-keypair> <path-to-admin-keypair> <plaftormWallet>
-# Example: anchor run initialize -- keys/admin.json keys/admin.json ADMimZiEmRJczgEvYqGQXoMsYJd2vXpeqJxyGDJh5J4
+# Example: anchor run initialize -- keys/admin.json keys/admin.json 9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe
 ```
 
 To ensure genomeConfig is set properly
@@ -108,7 +108,7 @@ NOTE: Before running it, ensure you provide desired values in `migrations/config
 NOTE: Before running it, genome token should be created
 
 ```sh
-spl-token create-token -u <network> <path-to-genome-keypair>
+spl-token create-token -u <network> <path-to-token-keypair>
 # Example: spl-token create-token -u localhost keys/token.json
 ```
 
@@ -116,5 +116,33 @@ Create tournament using `tournamentData` in `migrations/config.ts`
 
 ```sh
 anchor run create-tournament -- <path-to-admin-keypair> <sponsorAddress> <mintAddress>
-# Example: anchor run create-tournament -- keys/admin.json  7NukBTvEvJytba1bjBfTUqeijevxQMkRsmbse894WZMS 6F7Tn3YPcArLG6G2FoKGtkPYrwrQqdJeA7SQ3i5Uy1py
+# Example: anchor run create-tournament -- keys/organizer.json 5VBMEsKmHqTRzeob6KVBLLZp46fBaYkr5hY7yDpp7ZDZ 7eZ3ew7pd7uCqfbsWvbFWxKU9va5BG4iV87oYdgZ2XS2
+```
+
+Create tournament using `tournamentData` in `migrations/config.ts`
+
+```sh
+anchor run create-tournament -- <path-to-admin-keypair> <sponsorAddress> <mintAddress>
+# Example: anchor run create-tournament -- keys/organizer.json 5VBMEsKmHqTRzeob6KVBLLZp46fBaYkr5hY7yDpp7ZDZ 7eZ3ew7pd7uCqfbsWvbFWxKU9va5BG4iV87oYdgZ2XS2
+```
+
+#### Register Tournament
+
+```sh
+anchor run register-tournament -- <path-to-participant-keypair> <mintAddress> <tournamentId> <captainAddress> \[<teammate1Address> <teammate2Address> ...\]
+# Example: anchor run register-tournament -- /Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/captain.json 7eZ3ew7pd7uCqfbsWvbFWxKU9va5BG4iV87oYdgZ2XS2 0 HNo14Jvj1gQ7D8GCnTrKqe1z9BQbuDw8ZtBAcNB2Ud58 Bz8EVNHFHNjx78Vy4GLUaEoL7JDwG69ehD79oT19ZoQY FNAjhsmTvXzJ16931iFYe3w3Rv63SkUBbjTJX7M3BZ1K
+```
+
+```sh
+# Example: anchor run setup-genome -- \
+/Users/evgeniybukharev/.config/solana/id.json \
+/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/token.json \
+/Users/evgeniybukharev/.config/solana/id.json \
+/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/sponsor.json \
+/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/captain.json \
+/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/participant_1.json \
+/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/participant_2.json \
+/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/participant_3.json \
+/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/admin.json \
+/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/organizer.json
 ```

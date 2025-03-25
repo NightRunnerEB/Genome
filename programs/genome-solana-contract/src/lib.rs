@@ -16,7 +16,7 @@ use crate::{
 declare_id!("E8Pa2NFPqUCqZ9PUweRxyMzHcHphyGWwzx7VhDc5dPyv");
 
 #[cfg(feature = "localnet")]
-const DEPLOYER: Pubkey = pubkey!("6hhbwjqfCbFshTUWGdaxiCtnqocnruwdR3pWtU4sR5b1");
+const DEPLOYER: Pubkey = pubkey!("2WXoMuu6tB48KYHuoUAsNP4dR9c3ardNSQp65Ln8ieu1");
 
 const GENOME_ROOT: &[u8] = b"genome";
 const CONFIG: &[u8] = b"config";

@@ -18,6 +18,7 @@ keys:
 	$(SOLANA_KEYGEN) new --outfile $(KEYS_DIR)/participant_1.json
 	$(SOLANA_KEYGEN) new --outfile $(KEYS_DIR)/participant_2.json
 	$(SOLANA_KEYGEN) new --outfile $(KEYS_DIR)/participant_3.json
+	$(SOLANA_KEYGEN) new --outfile $(KEYS_DIR)/platform_wallet.json
 
 # Clean up generated keys
 clean:
