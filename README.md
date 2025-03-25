@@ -112,11 +112,21 @@ spl-token create-token -u <network> <path-to-token-keypair>
 # Example: spl-token create-token -u localhost keys/token.json
 ```
 
-Create tournament using `tournamentData` in `migrations/config.ts`
+You also need to set up and top up all wallets.
 
 ```sh
-anchor run create-tournament -- <path-to-admin-keypair> <sponsorAddress> <mintAddress>
-# Example: anchor run create-tournament -- keys/organizer.json 5VBMEsKmHqTRzeob6KVBLLZp46fBaYkr5hY7yDpp7ZDZ 7eZ3ew7pd7uCqfbsWvbFWxKU9va5BG4iV87oYdgZ2XS2
+anchor setup-genome -- <payer-keypair> <mint-keypair> <authority-keypair> <sponsor-keypair> <captain-keypair> <participant1-keypair> <participant2-keypair> <participant3-keypair> <admin-keypair> <organizer-keypair> 
+# Example: anchor run setup-genome -- \
+/Users/user/.config/solana/id.json \
+keys/token.json \
+/Users/user/.config/solana/id.json \
+keys/sponsor.json \
+keys/captain.json \
+keys/participant_1.json \
+keys/participant_2.json \
+keys/participant_3.json \
+keys/admin.json \
+keys/organizer.json
 ```
 
 Create tournament using `tournamentData` in `migrations/config.ts`
@@ -131,18 +141,4 @@ anchor run create-tournament -- <path-to-admin-keypair> <sponsorAddress> <mintAd
 ```sh
 anchor run register-tournament -- <path-to-participant-keypair> <mintAddress> <tournamentId> <captainAddress> \[<teammate1Address> <teammate2Address> ...\]
 # Example: anchor run register-tournament -- /Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/captain.json 7eZ3ew7pd7uCqfbsWvbFWxKU9va5BG4iV87oYdgZ2XS2 0 HNo14Jvj1gQ7D8GCnTrKqe1z9BQbuDw8ZtBAcNB2Ud58 Bz8EVNHFHNjx78Vy4GLUaEoL7JDwG69ehD79oT19ZoQY FNAjhsmTvXzJ16931iFYe3w3Rv63SkUBbjTJX7M3BZ1K
-```
-
-```sh
-# Example: anchor run setup-genome -- \
-/Users/evgeniybukharev/.config/solana/id.json \
-/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/token.json \
-/Users/evgeniybukharev/.config/solana/id.json \
-/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/sponsor.json \
-/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/captain.json \
-/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/participant_1.json \
-/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/participant_2.json \
-/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/participant_3.json \
-/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/admin.json \
-/Users/evgeniybukharev/Desktop/genome-solana-contracts-2/keys/organizer.json
 ```
