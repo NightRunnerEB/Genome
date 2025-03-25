@@ -4,6 +4,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { GenomeContract } from "../target/types/genome_contract";
 import config from "./config";
 import { prettify } from "./utils";
+import { getGenomePda } from "../tests/utils";
 
 async function main() {
   const deployerPath = process.argv[2];
@@ -45,6 +46,10 @@ async function initialize(
   let provider = anchor.AnchorProvider.env();
   let txSignature = await provider.sendAndConfirm(tx, [deployer]);
   console.log(`Initialize tx: ${txSignature}`);
+
+  let configPda = getGenomePda();
+  const configData = await program.account.genomeConfig.fetch(configPda);
+  console.log(`GenomeConfig = ${prettify(configData)}`);
 }
 
 main()

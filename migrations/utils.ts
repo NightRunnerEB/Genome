@@ -1,4 +1,11 @@
+import * as anchor from "@coral-xyz/anchor";
 import { BN } from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
+import { GenomeContract } from "../target/types/genome_contract";
+import { utf8 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
+
+const GENOME_ROOT = utf8.encode("genome");
+const CONFIG = utf8.encode("config");
 
 /**
  * Make object pretty for logging
@@ -20,4 +27,13 @@ export function prettify(obj: any): string {
   }
 
   return JSON.stringify(prettyObj, null, 2);
+}
+
+export function getGonfigPda(): PublicKey {
+  const genomeProgram = anchor.workspace
+    .GenomeContract as anchor.Program<GenomeContract>;
+  return PublicKey.findProgramAddressSync(
+    [GENOME_ROOT, CONFIG],
+    genomeProgram.programId
+  )[0];
 }
