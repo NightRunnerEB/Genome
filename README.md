@@ -100,7 +100,6 @@ anchor run setup-genome -- \
   <operator-pubkey> \
   <admin-pubkey> \
   <organizer-pubkey>
-```
 
 Example: 
   anchor run setup-genome -- \
@@ -111,6 +110,7 @@ Example:
   6Agqn5YD4fAncrnB9VrvwTfaufw2Tx1pphGca79uWruT \
   4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB \
   ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz
+```
 
 Initialize Genome Program
 
