@@ -1,24 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import {
-  getAssociatedTokenAddress,
-  getAccount,
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  Account as SplTokenAccount,
-  createAssociatedTokenAccount,
-  approveChecked,
-  mintTo,
-  createMint,
-} from "@solana/spl-token";
 import { GenomeContract } from "../target/types/genome_contract";
-import { utf8 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { assert } from "chai";
-
-export const GENOME_ROOT = utf8.encode("genome");
-export const CONFIG = utf8.encode("config");
-export const ROLE = utf8.encode("role");
-export const TOKEN = utf8.encode("token");
 
 export function getProvider() {
   const provider = anchor.AnchorProvider.env();
@@ -74,53 +57,30 @@ export function getKeyPairs(): {
 export function getGenomePda(): PublicKey {
   const genomeProgram = anchor.workspace
     .GenomeContract as anchor.Program<GenomeContract>;
+  const genomeRootArray = JSON.parse(genomeProgram.idl.constants[1].value);
+  const genomeRootBuffer = Buffer.from(genomeRootArray);
+  const configArray = JSON.parse(genomeProgram.idl.constants[0].value);
+  const configBuffer = Buffer.from(configArray);
   return PublicKey.findProgramAddressSync(
-    [GENOME_ROOT, CONFIG],
+    [genomeRootBuffer, configBuffer],
     genomeProgram.programId
   )[0];
 }
 
 export function getUserRolePda(
-  seeds: Uint8Array<ArrayBufferLike>
+  seed: any
 ): PublicKey {
   const genomeProgram = anchor.workspace
     .GenomeContract as anchor.Program<GenomeContract>;
+  const genomeRootArray = JSON.parse(genomeProgram.idl.constants[1].value);
+  const genomeRootBuffer = Buffer.from(genomeRootArray);
+  const roleArray = JSON.parse(genomeProgram.idl.constants[2].value);
+  const roleBuffer = Buffer.from(roleArray);
+  const seedBuffer = Buffer.from(seed);
   return PublicKey.findProgramAddressSync(
-    [GENOME_ROOT, ROLE].concat(seeds),
+    [genomeRootBuffer, roleBuffer, seedBuffer],
     genomeProgram.programId
   )[0];
-}
-
-export function getTokenInfoPda(
-  seeds: Uint8Array<ArrayBufferLike>
-): PublicKey {
-  const genomeProgram = anchor.workspace
-    .GenomeContract as anchor.Program<GenomeContract>;
-  return PublicKey.findProgramAddressSync(
-    [GENOME_ROOT, TOKEN].concat(seeds),
-    genomeProgram.programId
-  )[0];
-}
-
-export async function getPrizePoolAta(
-  mint: PublicKey,
-  authority: PublicKey
-): Promise<SplTokenAccount> {
-  const prizePoolAta = await getAssociatedTokenAddress(
-    mint,
-    authority,
-    true,
-    TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-
-  const provider = getProvider();
-  return getAccount(
-    provider.connection,
-    prizePoolAta,
-    undefined,
-    TOKEN_PROGRAM_ID
-  );
 }
 
 export async function airdrop(address: PublicKey, amount: number) {
@@ -137,37 +97,6 @@ export async function airdrop(address: PublicKey, amount: number) {
     blockhash,
     lastValidBlockHeight,
   });
-}
-
-export async function createGenomeMint(): Promise<{
-  assetMint: PublicKey
-}> {
-  let { admin, organizer, token } = getKeyPairs();
-
-  const assetMint = await createMint(
-    getProvider().connection,
-    admin,
-    admin.publicKey,
-    null,
-    6,
-    token,
-    undefined,
-    TOKEN_PROGRAM_ID
-  );
-  console.log("Genome mint:", assetMint.toBase58());
-
-  const reward_pool_ata = await createAssociatedTokenAccount(
-    getProvider().connection,
-    admin,
-    token.publicKey,
-    organizer.publicKey,
-    undefined,
-    TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-  console.log("Tournament pool ata:", reward_pool_ata.toBase58());
-
-  return { assetMint };
 }
 
 export function checkAnchorError(error: any, errMsg: string) {

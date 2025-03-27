@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { GenomeContract } from "../target/types/genome_contract";
-import { getGenomePda, getTokenInfoPda, getUserRolePda } from "./utils";
+import { getGenomePda, getUserRolePda } from "./utils";
 
 export class TxBuilder {
   public program: anchor.Program<GenomeContract>;
