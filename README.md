@@ -84,14 +84,14 @@ Before testing the program, you need to create tokens and set up all accounts. T
 
 Creating a Genome token:
 
-```sh
+```rs
 spl-token create-token -u <network> <path-to-nome-keypair>
-# Example: spl-token create-token -u localhost keys/nome.json
+// Example: spl-token create-token -u localhost keys/nome.json
 ```
 
 Setting up wallets:
 
-```sh
+```rs
 anchor run setup-genome -- \
   <deployer-pubkey> \
   <verifier1-pubkey> \
@@ -101,7 +101,7 @@ anchor run setup-genome -- \
   <admin-pubkey> \
   <organizer-pubkey>
 
-Example: 
+/* Example: 
   anchor run setup-genome -- \
   HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7 \
   FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
@@ -110,11 +110,12 @@ Example:
   6Agqn5YD4fAncrnB9VrvwTfaufw2Tx1pphGca79uWruT \
   4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB \
   ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz
+*/
 ```
 
 Initialize Genome Program
 
-```sh
+```rs
 anchor run initialize -- \
 <path-to-deplyer-keypair> \
 <admin-pubkey> \
@@ -126,7 +127,7 @@ anchor run initialize -- \
  ..
 ]
 
-Example:
+/* Example:
 anchor run initialize -- \
 keys/deployer.json \
 4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB \
@@ -134,20 +135,21 @@ keys/deployer.json \
 1 10 10 0 2 20 0.000065 5000 \
 FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
 9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL
+*/
 ```
 
 ### Grant/Revoke Role
 
 Grant:
 
-```sh
+```rs
 anchor run grant-role -- <path-to-admin-keypair> <user-pubkey> <role>
-#Example: anchor run grant-role -- keys/admin.json GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7 verifier
+// Example: anchor run grant-role -- keys/admin.json GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7 verifier
 ```
 
 Revoke:
 
-```sh
+```rs
 anchor run revoke-role -- <path-to-admin-keypair> <user-pubkey>
-#Example: anchor run revoke-role -- keys/admin.json GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7
+// Example: anchor run revoke-role -- keys/admin.json GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7
 ```
