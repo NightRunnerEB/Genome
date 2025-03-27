@@ -50,37 +50,6 @@ export class TxBuilder {
       .rpc();
   }
 
-  async approveToken(
-    operator: Keypair,
-    token: Keypair,
-    minSponsorPool: any,
-    minEntryFee: any
-  ): Promise<string> {
-    return this.program.methods
-      .approveToken(minSponsorPool, minEntryFee)
-      .accounts({
-        operator: operator.publicKey,
-        assetMint: token.publicKey
-      })
-      .signers([operator])
-      .rpc();
-  }
-
-  async banToken(
-    operator: Keypair,
-    token: Keypair,
-    isBanned: boolean
-  ): Promise<string> {
-    return this.program.methods
-      .banToken()
-      .accounts({
-        operator: operator.publicKey,
-        assetMint: token.publicKey
-      })
-      .signers([operator])
-      .rpc();
-  }
-
   async getConfig() {
     let configPda = getGenomePda();
     const config = await this.program.account.genomeConfig.fetch(configPda);
@@ -97,18 +66,6 @@ export class TxBuilder {
       maxOrganizerFee: config.maxOrganizerFee,
       nomeMint: config.nomeMint,
     };
-  }
-
-  async getTokenInfo(token: PublicKey) {
-    let tokenInfoPda = getTokenInfoPda(token.toBuffer());
-    const tokenInfo = await this.program.account.tokenInfo.fetch(
-      tokenInfoPda
-    );
-    return {
-      assetMint: tokenInfo.assetMint,
-      minSponsorPool: tokenInfo.minSponsorPool,
-      minEntryPool: tokenInfo.minEntryFee,
-    }
   }
 
   async getUserRole(user: PublicKey) {

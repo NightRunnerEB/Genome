@@ -3,17 +3,15 @@
 mod data;
 mod error;
 
-use std::mem;
-
 use anchor_lang::{
     prelude::*,
     solana_program::{program::invoke, system_instruction},
 };
 
-use data::{GenomeConfig, Role, RoleInfo, TokenInfo};
+use data::{GenomeConfig, Role, RoleInfo};
 use error::TournamentError;
 
-declare_id!("G4nqiWUsV9ho8CTBT1SQE5CHQTcAhpy4viPip95MziLk");
+declare_id!("E8Pa2NFPqUCqZ9PUweRxyMzHcHphyGWwzx7VhDc5dPyv");
 
 #[cfg(feature = "localnet")]
 const DEPLOYER: Pubkey = pubkey!("HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7");
@@ -21,7 +19,6 @@ const DEPLOYER: Pubkey = pubkey!("HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7")
 const GENOME_ROOT: &[u8] = b"genome";
 const CONFIG: &[u8] = b"config";
 const ROLE: &[u8] = b"role";
-const TOKEN: &[u8] = b"token";
 
 #[program]
 mod genome_contract {
@@ -42,12 +39,7 @@ mod genome_contract {
                 let new_capacity = current_capacity + 1;
 
                 let new_size = 8 + GenomeConfig::INIT_SPACE + (new_capacity * 32);
-                realloc(
-                    config.to_account_info(),
-                    ctx.accounts.admin.to_account_info(),
-                    new_size,
-                    true,
-                )?;
+                realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_size)?;
             }
             config.verifier_addresses.push(verifier_to_add);
         }
@@ -70,39 +62,18 @@ mod genome_contract {
         }
         Ok(())
     }
-
-    pub fn approve_token(
-        ctx: Context<ApproveToken>,
-        min_sponsor_pool: u64,
-        min_entry_fee: u64,
-    ) -> Result<()> {
-        let info = &mut ctx.accounts.token_info;
-        info.asset_mint = ctx.accounts.asset_mint.key();
-        info.min_sponsor_pool = min_sponsor_pool;
-        info.min_entry_fee = min_entry_fee;
-
-        Ok(())
-    }
-
-    pub fn ban_token(_ctx: Context<BanToken>) -> Result<()> {
-        Ok(())
-    }
 }
 
 fn realloc<'info>(
     account: AccountInfo<'info>,
     payer: AccountInfo<'info>,
     space: usize,
-    claim_extra_lamports: bool,
 ) -> Result<()> {
     let rent_lamports = Rent::get()?.minimum_balance(space);
     let current_lamports = account.lamports();
     account.realloc(space, false)?;
     if rent_lamports > current_lamports {
         system_transfer(payer, account, rent_lamports - current_lamports)?;
-    } else if claim_extra_lamports {
-        account.sub_lamports(current_lamports - rent_lamports)?;
-        payer.add_lamports(current_lamports - rent_lamports)?;
     }
     Ok(())
 }
@@ -118,12 +89,12 @@ fn system_transfer<'a>(from: AccountInfo<'a>, to: AccountInfo<'a>, amount: u64) 
 #[derive(Accounts)]
 #[instruction(config_params: GenomeConfig)]
 pub struct Initialize<'info> {
-    #[account(mut, address = DEPLOYER @ TournamentError::InvalidAdmin)]
+    #[account(mut, address = DEPLOYER @ TournamentError::InvalidRole)]
     deployer: Signer<'info>,
     #[account(
         init,
         payer = deployer,
-        space = 8 + GenomeConfig::INIT_SPACE + config_params.verifier_addresses.len() * mem ::size_of::<Pubkey>(),
+        space = 8 + GenomeConfig::INIT_SPACE + config_params.verifier_addresses.len() * 32,
         seeds = [GENOME_ROOT, CONFIG],
         bump
     )]
@@ -133,7 +104,7 @@ pub struct Initialize<'info> {
 
 #[derive(Accounts)]
 pub struct GrantRole<'info> {
-    #[account(signer, mut, address = config.admin @ TournamentError::InvalidAdmin )]
+    #[account(signer, mut, address = config.admin @ TournamentError::InvalidRole)]
     pub admin: Signer<'info>,
     /// CHECK:
     pub user: AccountInfo<'info>,
@@ -151,7 +122,7 @@ pub struct GrantRole<'info> {
 
 #[derive(Accounts)]
 pub struct RevokeRole<'info> {
-    #[account(mut, signer, address = config.admin @ TournamentError::InvalidAdmin)]
+    #[account(mut, signer, address = config.admin @ TournamentError::InvalidRole)]
     pub admin: Signer<'info>,
     /// CHECK:
     pub user: AccountInfo<'info>,
@@ -164,48 +135,4 @@ pub struct RevokeRole<'info> {
         close = admin
     )]
     pub role_info: Account<'info, RoleInfo>,
-}
-
-#[derive(Accounts)]
-pub struct ApproveToken<'info> {
-    #[account(mut)]
-    pub operator: Signer<'info>,
-    /// CHECKED
-    pub asset_mint: AccountInfo<'info>,
-    #[account(
-        seeds = [GENOME_ROOT, ROLE, operator.key().as_ref()],
-        bump,
-        constraint = role_info.role == Role::Operator @ TournamentError::InvalidRole
-    )]
-    pub role_info: Account<'info, RoleInfo>,
-    #[account(
-        init_if_needed,
-        payer = operator,
-        space = 8 + TokenInfo::INIT_SPACE,
-        seeds = [GENOME_ROOT, TOKEN, asset_mint.key().as_ref()],
-        bump
-    )]
-    pub token_info: Account<'info, TokenInfo>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct BanToken<'info> {
-    #[account(mut)]
-    pub operator: Signer<'info>,
-    /// CHECKED
-    pub asset_mint: AccountInfo<'info>,
-    #[account(
-        seeds = [GENOME_ROOT, ROLE, operator.key().as_ref()],
-        bump,
-        constraint = role_info.role == Role::Operator @ TournamentError::InvalidRole
-    )]
-    pub role_info: Account<'info, RoleInfo>,
-    #[account(
-        mut,
-        seeds = [GENOME_ROOT, TOKEN, asset_mint.key().as_ref()],
-        bump,
-        close = operator
-    )]
-    pub token_info: Account<'info, TokenInfo>,
 }

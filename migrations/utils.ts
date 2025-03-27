@@ -1,13 +1,4 @@
-import * as anchor from "@coral-xyz/anchor";
 import { BN } from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
-import { GenomeContract } from "../target/types/genome_contract";
-import { utf8 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
-
-const GENOME_ROOT = utf8.encode("genome");
-const CONFIG = utf8.encode("config");
-export const ROLE = utf8.encode("role");
-export const TOKEN = utf8.encode("token");
 
 /**
  * Make object pretty for logging

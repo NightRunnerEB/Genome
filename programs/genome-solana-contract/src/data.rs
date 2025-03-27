@@ -4,6 +4,7 @@ use anchor_lang::prelude::*;
 #[derive(InitSpace)]
 pub struct GenomeConfig {
     pub admin: Pubkey,
+    pub tournament_nonce: u32,
     #[max_len(0)]
     pub verifier_addresses: Vec<Pubkey>,
     pub consensus_rate: f64,
@@ -12,17 +13,8 @@ pub struct GenomeConfig {
     pub false_precision: f64,
     pub platform_fee: u64,
     pub max_organizer_fee: u64,
-    pub tournament_nonce: u32,
     pub min_teams: u16,
     pub max_teams: u16,
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct TokenInfo {
-    pub asset_mint: Pubkey,
-    pub min_sponsor_pool: u64,
-    pub min_entry_fee: u64,
 }
 
 #[account]

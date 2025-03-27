@@ -19,12 +19,14 @@ async function main() {
     minTeamsStr,
     maxTeamsStr,
     falsePrecisionStr,
-    maxOrganizerFeeStr
+    maxOrganizerFeeStr,
+    ...verifiersAddresses
   ] = args;
 
   const deployer = await getKeypairFromFile(deployerPath);
   const admin = new web3.PublicKey(adminAddress);
   const platformWallet = new web3.PublicKey(platformWalletStr);
+  const verifiers = verifiersAddresses.map(v => new anchor.web3.PublicKey(v));
 
   const genomeConfig: any = {
     tournamentNonce: parseInt(tournamentNonceStr),
@@ -37,7 +39,7 @@ async function main() {
     maxOrganizerFee: new BN(maxOrganizerFeeStr),
     admin: admin,
     platformWallet,
-    verifierAddresses: []
+    verifierAddresses: verifiers
   };
 
   console.log(`Deployer: ${deployer.publicKey.toBase58()}`);
