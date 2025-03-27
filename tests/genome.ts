@@ -140,16 +140,13 @@ describe("Genome Solana Singlechain", () => {
     }
   });
 
-  it("Approve Token", async () => {
+  it("Create a Tournament with approved token", async () => {
     const minSponsorPool = new anchor.BN(1000);
     const minEntryPool = new anchor.BN(100);
     let tx = await txBuilder.approveToken(operator, token, minSponsorPool, minEntryPool);
-    console.log("Approve Token tx: ", tx);
-  });
 
-  it("Create a Tournament", async () => {
     const sponsorAtaBefore = await getSponsorAta(sponsorAta);
-    let tx = await txBuilder.createTournament(organizer, sponsor, assetMint, tournamentDataMock);
+    tx = await txBuilder.createTournament(organizer, sponsor, assetMint, tournamentDataMock);
     console.log("Initialize createTournament tx: ", tx);
 
     const sponsorAtaAfter = await getSponsorAta(sponsorAta);
@@ -171,6 +168,14 @@ describe("Genome Solana Singlechain", () => {
 
     const prizePoolAta = await getPrizePoolAta(assetMint, tournamentAccount.tournamentPda);
     assert.equal(sponsorAtaBefore.amount - sponsorAtaAfter.amount, prizePoolAta.amount);
+  });
+
+  it("Create a Tournament by a non-organizer", async () => {
+    try {
+      await txBuilder.createTournament(operator, sponsor, assetMint, tournamentDataMock);
+    } catch (error) {
+      checkAnchorError(error, "Invalid role is provided");
+    }
   });
 
   it("Invalid organizer fee", async () => {

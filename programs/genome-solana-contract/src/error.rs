@@ -14,7 +14,7 @@ pub(crate) enum TournamentError {
     InvalidOrginizerFee,
     #[msg("Invalid admin account is provided")]
     InvalidAdmin,
-    #[msg("Invalid role account is provided")]
+    #[msg("Invalid role is provided")]
     InvalidRole,
     #[msg("Serialization error")]
     SerializationError,

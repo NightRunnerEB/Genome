@@ -196,6 +196,12 @@ pub struct CreateTournament<'info> {
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     config: Account<'info, GenomeConfig>,
     #[account(
+        seeds = [GENOME_ROOT, ROLE, organizer.key().as_ref()],
+        bump,
+        constraint = role_info.role == Role::Organizer @ TournamentError::InvalidRole
+    )]
+    pub role_info: Account<'info, RoleInfo>,
+    #[account(
         init,
         payer = organizer,
         space = 8 + Tournament::INIT_SPACE,
