@@ -1,8 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { GenomeContract } from "../target/types/genome_contract";
-import { getGenomePda, getTokenInfoPda, getTournamentPda, getUserRolePda } from "./utils";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getGenomePda, getTokenInfoPda, getUserRolePda } from "./utils";
 
 export class TxBuilder {
   public program: anchor.Program<GenomeContract>;
@@ -19,24 +18,6 @@ export class TxBuilder {
         admin: deployer.publicKey,
       })
       .signers([deployer])
-      .rpc();
-  }
-
-  async createTournament(
-    organizer: Keypair,
-    sponsor: Keypair,
-    mint: PublicKey,
-    params: any
-  ): Promise<string> {
-    return this.program.methods
-      .createTournament(params)
-      .accounts({
-        organizer: organizer.publicKey,
-        sponsor: sponsor.publicKey,
-        mint: mint,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .signers([organizer])
       .rpc();
   }
 
@@ -115,30 +96,6 @@ export class TxBuilder {
       maxTeams: config.maxTeams,
       maxOrganizerFee: config.maxOrganizerFee,
       nomeMint: config.nomeMint,
-    };
-  }
-
-  async getTournament(tournamentNonce: number) {
-    const nonceBuffer = new Uint8Array(
-      new Uint32Array([tournamentNonce]).buffer
-    );
-    let tournamentPda = getTournamentPda(nonceBuffer);
-    const tournament = await this.program.account.tournament.fetch(
-      tournamentPda
-    );
-    return {
-      id: tournament.id,
-      organizer: tournament.organizer,
-      sponsorPool: tournament.sponsorPool,
-      organizerFee: tournament.organizerFee,
-      entryFee: tournament.entryFee,
-      status: tournament.status,
-      teamSize: tournament.teamSize,
-      minTeams: tournament.minTeams,
-      maxTeams: tournament.maxTeams,
-      teamCount: tournament.teamCount,
-      assetMint: tournament.assetMint,
-      tournamentPda: tournamentPda,
     };
   }
 

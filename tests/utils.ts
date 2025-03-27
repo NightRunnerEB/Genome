@@ -85,17 +85,6 @@ export function getGenomePda(): PublicKey {
   )[0];
 }
 
-export function getTournamentPda(
-  seeds: Uint8Array<ArrayBufferLike>
-): PublicKey {
-  const genomeProgram = anchor.workspace
-    .GenomeContract as anchor.Program<GenomeContract>;
-  return PublicKey.findProgramAddressSync(
-    [GENOME_ROOT, TOURNAMENT].concat(seeds),
-    genomeProgram.programId
-  )[0];
-}
-
 export function getUserRolePda(
   seeds: Uint8Array<ArrayBufferLike>
 ): PublicKey {
