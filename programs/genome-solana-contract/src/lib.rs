@@ -42,7 +42,11 @@ mod genome_contract {
                 let new_capacity = current_capacity + 1;
 
                 let new_size = 8 + GenomeConfig::INIT_SPACE + (new_capacity * 32);
-                realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_size)?;
+                realloc(
+                    config.to_account_info(),
+                    ctx.accounts.admin.to_account_info(),
+                    new_size,
+                )?;
             }
             config.verifier_addresses.push(verifier_to_add);
         }
@@ -115,7 +119,7 @@ pub struct GrantRole<'info> {
     pub config: Box<Account<'info, GenomeConfig>>,
     #[account(
         init_if_needed,
-        payer = admin, 
+        payer = admin,
         space = 8 + RoleInfo::INIT_SPACE,
         seeds = [GENOME_ROOT, ROLE, user.key().as_ref()], bump
     )]
