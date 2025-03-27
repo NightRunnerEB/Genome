@@ -81,6 +81,14 @@ describe("Genome Solana Singlechain", () => {
     assert.ok(userRole.role.organizer);
   });
 
+  it("Grant Role by non-admin", async () => {
+    try {
+      await txBuilder.grantRole(operator, organizer, { organizer: {} })
+    } catch (error) {
+        checkAnchorError(error, "Invalid role");
+    }
+  });
+
   it("Revoke Role", async () => {
     let tx = await txBuilder.revokeRole(admin, operator);
     console.log("Revoke operator role tx: ", tx);
