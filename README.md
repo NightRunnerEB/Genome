@@ -110,7 +110,6 @@ anchor run setup-genome -- \
   <admin-pubkey> \
   <organizer-pubkey>
 
-: << 'COMMENT'
 Example: 
   anchor run setup-genome -- \
   /Users/user/.config/solana/id.json \
@@ -126,7 +125,6 @@ Example:
   6Agqn5YD4fAncrnB9VrvwTfaufw2Tx1pphGca79uWruT \
   4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB \
   ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz
-COMMENT
 ```
 
 Initialize Genome Program
@@ -139,14 +137,12 @@ anchor run initialize -- \
 <tournamentNonce> <platformFee> <minEntryFee> <minSponsorPool> <minTeams> <maxTeams> <falsePrecision> <maxOrganizerFee>
 
 
-: << 'COMMENT'
 Example:
 anchor run initialize -- \
 keys/deployer.json \
 4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB \
 9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe \
 1 10 10 0 2 20 0.000065 5000
-COMMENT
 ```
 
 To ensure genomeConfig is set properly
@@ -191,12 +187,10 @@ anchor run create-tournament -- \
 <token-publickey> \
 <organizerFee> <sponsorPool> <entryFee> <teamSize> <minTeams> <maxTeams>
 
-: << 'COMMENT'
 # Example:
 anchor run create-tournament -- \
 keys/organizer.json \
 7NukBTvEvJytba1bjBfTUqeijevxQMkRsmbse894WZMS \
 6F7Tn3YPcArLG6G2FoKGtkPYrwrQqdJeA7SQ3i5Uy1py \
 100 1000 20 10 4 10
-COMMENT
 ```
