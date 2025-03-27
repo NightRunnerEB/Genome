@@ -16,8 +16,11 @@ declare_id!("E8Pa2NFPqUCqZ9PUweRxyMzHcHphyGWwzx7VhDc5dPyv");
 #[cfg(feature = "localnet")]
 const DEPLOYER: Pubkey = pubkey!("HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7");
 
+#[constant]
 const GENOME_ROOT: &[u8] = b"genome";
+#[constant]
 const CONFIG: &[u8] = b"config";
+#[constant]
 const ROLE: &[u8] = b"role";
 
 #[program]
