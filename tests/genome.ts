@@ -85,7 +85,7 @@ describe("Genome Solana Singlechain", () => {
     try {
       await txBuilder.grantRole(operator, organizer, { organizer: {} })
     } catch (error) {
-        checkAnchorError(error, "Invalid role");
+        checkAnchorError(error, "Not Allowed");
     }
   });
 

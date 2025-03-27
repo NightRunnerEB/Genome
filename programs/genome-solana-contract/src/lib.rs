@@ -96,7 +96,7 @@ fn system_transfer<'a>(from: AccountInfo<'a>, to: AccountInfo<'a>, amount: u64) 
 #[derive(Accounts)]
 #[instruction(config_params: GenomeConfig)]
 pub struct Initialize<'info> {
-    #[account(mut, address = DEPLOYER @ TournamentError::InvalidRole)]
+    #[account(mut, address = DEPLOYER @ TournamentError::NotAllowed)]
     deployer: Signer<'info>,
     #[account(
         init,
@@ -111,7 +111,7 @@ pub struct Initialize<'info> {
 
 #[derive(Accounts)]
 pub struct GrantRole<'info> {
-    #[account(signer, mut, address = config.admin @ TournamentError::InvalidRole)]
+    #[account(signer, mut, address = config.admin @ TournamentError::NotAllowed)]
     pub admin: Signer<'info>,
     /// CHECK:
     pub user: AccountInfo<'info>,
@@ -129,7 +129,7 @@ pub struct GrantRole<'info> {
 
 #[derive(Accounts)]
 pub struct RevokeRole<'info> {
-    #[account(mut, signer, address = config.admin @ TournamentError::InvalidRole)]
+    #[account(mut, signer, address = config.admin @ TournamentError::NotAllowed)]
     pub admin: Signer<'info>,
     /// CHECK:
     pub user: AccountInfo<'info>,
