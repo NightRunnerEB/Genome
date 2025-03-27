@@ -17,7 +17,6 @@ import { assert } from "chai";
 
 export const GENOME_ROOT = utf8.encode("genome");
 export const CONFIG = utf8.encode("config");
-export const TOURNAMENT = utf8.encode("tournament");
 export const ROLE = utf8.encode("role");
 export const TOKEN = utf8.encode("token");
 
@@ -31,7 +30,6 @@ export function getProvider() {
 export function getKeyPairs(): {
   admin: Keypair,
   organizer: Keypair,
-  sponsor: Keypair,
   deployer: Keypair,
   token: Keypair,
   verifier1: Keypair,
@@ -42,7 +40,6 @@ export function getKeyPairs(): {
 } {
   const adminSecret = Uint8Array.from(require("../keys/admin.json"));
   const organizerSecret = Uint8Array.from(require("../keys/organizer.json"));
-  const sponsorSecret = Uint8Array.from(require("../keys/sponsor.json"));
   const deployerSecret = Uint8Array.from(require("../keys/deployer.json"));
   const tokenSecret = Uint8Array.from(require("../keys/token.json"));
   const verifier1Secret = Uint8Array.from(require("../keys/verifier1.json"));
@@ -53,7 +50,6 @@ export function getKeyPairs(): {
 
   const admin = Keypair.fromSecretKey(adminSecret);
   const organizer = Keypair.fromSecretKey(organizerSecret);
-  const sponsor = Keypair.fromSecretKey(sponsorSecret);
   const deployer = Keypair.fromSecretKey(deployerSecret);
   const token = Keypair.fromSecretKey(tokenSecret);
   const verifier1 = Keypair.fromSecretKey(verifier1Secret);
@@ -65,7 +61,6 @@ export function getKeyPairs(): {
   return {
     admin,
     organizer,
-    sponsor,
     deployer,
     token,
     verifier1,
@@ -128,18 +123,6 @@ export async function getPrizePoolAta(
   );
 }
 
-export async function getSponsorAta(
-  sponsorPoolAta: PublicKey
-): Promise<SplTokenAccount> {
-  const provider = getProvider();
-  return getAccount(
-    provider.connection,
-    sponsorPoolAta,
-    undefined,
-    TOKEN_PROGRAM_ID
-  );
-}
-
 export async function airdrop(address: PublicKey, amount: number) {
   const provider = getProvider();
 
@@ -157,10 +140,9 @@ export async function airdrop(address: PublicKey, amount: number) {
 }
 
 export async function createGenomeMint(): Promise<{
-  assetMint: PublicKey;
-  sponsorAta: PublicKey;
+  assetMint: PublicKey
 }> {
-  let { admin, sponsor, organizer, token } = getKeyPairs();
+  let { admin, organizer, token } = getKeyPairs();
 
   const assetMint = await createMint(
     getProvider().connection,
@@ -174,17 +156,6 @@ export async function createGenomeMint(): Promise<{
   );
   console.log("Genome mint:", assetMint.toBase58());
 
-  const sponsorAta = await createAssociatedTokenAccount(
-    getProvider().connection,
-    admin,
-    token.publicKey,
-    sponsor.publicKey,
-    undefined,
-    TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-  console.log("Sponsor genome ata:", sponsorAta.toBase58());
-
   const reward_pool_ata = await createAssociatedTokenAccount(
     getProvider().connection,
     admin,
@@ -196,38 +167,7 @@ export async function createGenomeMint(): Promise<{
   );
   console.log("Tournament pool ata:", reward_pool_ata.toBase58());
 
-  let tx = await mintTo(
-    getProvider().connection,
-    admin,
-    token.publicKey,
-    sponsorAta,
-    admin,
-    1000000000000000,
-    [],
-    {},
-    TOKEN_PROGRAM_ID
-  );
-  console.log("Mint to sponsor tx:", tx);
-
-  return { assetMint, sponsorAta };
-}
-
-export async function delegateAccount(sponsorAta: PublicKey): Promise<String> {
-  let provider = getProvider();
-  let { admin, sponsor, organizer, token } = getKeyPairs();
-  return approveChecked(
-    provider.connection,
-    admin,
-    token.publicKey,
-    sponsorAta,
-    organizer.publicKey,
-    sponsor,
-    1e8,
-    6,
-    [],
-    {},
-    TOKEN_PROGRAM_ID
-  );
+  return { assetMint };
 }
 
 export function checkAnchorError(error: any, errMsg: string) {
