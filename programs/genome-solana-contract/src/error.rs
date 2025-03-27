@@ -4,16 +4,18 @@ use anchor_lang::prelude::*;
 pub(crate) enum TournamentError {
     #[msg("Max players exceeded(3200)")]
     MaxPlayersExceeded,
-    #[msg("Invalid admission fee")]
-    InvalidAdmissionFee,
+    #[msg("Invalid entry fee")]
+    InvalidEntryFee,
     #[msg("Invalid sponsor pool")]
     InvalidSponsorPool,
     #[msg("Invalid teams count")]
     InvalidTeamsCount,
-    #[msg("Invalid royalty")]
-    InvalidRoyalty,
+    #[msg("Invalid organizer fee")]
+    InvalidOrginizerFee,
     #[msg("Invalid admin account is provided")]
     InvalidAdmin,
+    #[msg("Invalid role account is provided")]
+    InvalidRole,
     #[msg("Serialization error")]
     SerializationError,
 }

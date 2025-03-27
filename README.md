@@ -76,31 +76,127 @@ NOTE: Do NOT use any keypairs which were published in gitlab for production
 
 #### Initialize Genome Program
 
-NOTE: Before running it, ensure you provide desired values in `migrations/config.ts` on field `genomeConfig`
+NOTE: Перед запуском программы необходимо создать токены и настроить все акканты. Это можно сделать следующим способом:
 
-Initialize Genome Program using `genomeConfig` in `migrations/config.ts`
+Создание токена турнира
+
 ```sh
-anchor run initialize -- <path-to-deployer-keypair> <path-to-admin-keypair> <plaftormWallet>
-# Example: anchor run initialize -- keys/admin.json keys/admin.json ADMimZiEmRJczgEvYqGQXoMsYJd2vXpeqJxyGDJh5J4
+spl-token create-token -u <network> <path-to-token-keypair>
+# Example: spl-token create-token -u localhost keys/token.json
+```
+
+Создание genome токена
+
+```sh
+spl-token create-token -u <network> <path-to-nome-keypair>
+# Example: spl-token create-token -u localhost keys/nome.json
+```
+
+Настройка кошельков:
+
+```sh
+anchor run setup-genome -- \
+  <path-to-authority-keypair> \
+  <path-to-payer-keypair> \
+  <assetMint> \
+  <nomeMint> \
+  <sponsor-pubkey> \
+  <captain-pubkey> \
+  <deployer-pubkey> \
+  <verifier1-pubkey> \
+  <verifier2-pubkey> \
+  <verifier3-pubkey> \
+  <operator-pubkey> \
+  <admin-pubkey> \
+  <organizer-pubkey>
+
+: << 'COMMENT'
+Example: 
+  anchor run setup-genome -- \
+  /Users/user/.config/solana/id.json \
+  /Users/user/.config/solana/id.json \
+  6F7Tn3YPcArLG6G2FoKGtkPYrwrQqdJeA7SQ3i5Uy1py \
+  Btzv5f2fxbF5FKSjbEhCxkusvdxridtRGwKWkp1C77dJ \
+  7NukBTvEvJytba1bjBfTUqeijevxQMkRsmbse894WZMS \
+  HNo14Jvj1gQ7D8GCnTrKqe1z9BQbuDw8ZtBAcNB2Ud58 \
+  HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7 \
+  FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
+  9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL \
+  GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7 \
+  6Agqn5YD4fAncrnB9VrvwTfaufw2Tx1pphGca79uWruT \
+  4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB \
+  ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz
+COMMENT
+```
+
+Initialize Genome Program
+
+```sh
+anchor run initialize -- \
+<path-to-deplyer-keypair> \
+<admin-pubkey> \
+<platformWallet> \
+<tournamentNonce> <platformFee> <minEntryFee> <minSponsorPool> <minTeams> <maxTeams> <falsePrecision> <maxOrganizerFee>
+
+
+: << 'COMMENT'
+Example:
+anchor run initialize -- \
+keys/deployer.json \
+4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB \
+9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe \
+1 10 10 0 2 20 0.000065 5000
+COMMENT
 ```
 
 To ensure genomeConfig is set properly
+
 ```sh
 anchor account genome_contract.GenomeConfig <genomeConfig-address>
 # Example: anchor account genome_contract.GenomeConfig JDwp8jxWr1ZTVrij5tRevrcgnfnPF8ZcmYgAYBch7UYb
 ```
 
-#### Create Tournament
+#### Approve/Ban Token
 
-NOTE: Before running it, ensure you provide desired values in `migrations/config.ts` on field `tournamentData` <br>
-NOTE: Before running it, genome token should be created
+Approve:
+
 ```sh
-spl-token create-token -u <network> <path-to-genome-keypair>
-# Example: spl-token create-token -u localhost keys/token.json
+anchor run approve-token -- <path-to-operator-keypair> <asset-mint> <minSponsorPool> <minEntryFee>
+
+#Example: anchor run approve-token -- keys/operator.json 6F7Tn3YPcArLG6G2FoKGtkPYrwrQqdJeA7SQ3i5Uy1py 1000 100
 ```
 
-Create tournament using `tournamentData` in `migrations/config.ts`
+Ban:
+
 ```sh
-anchor run create-tournament -- <path-to-admin-keypair> <sponsorAddress> <mintAddress>
-# Example: anchor run create-tournament -- keys/admin.json  7NukBTvEvJytba1bjBfTUqeijevxQMkRsmbse894WZMS 6F7Tn3YPcArLG6G2FoKGtkPYrwrQqdJeA7SQ3i5Uy1py
+anchor run ban-token -- <path-to-operator-keypair> <asset-mint>
+
+#Example: anchor run ban-token -- keys/operator.json 6F7Tn3YPcArLG6G2FoKGtkPYrwrQqdJeA7SQ3i5Uy1py
+```
+
+### Grant/Revoke Role
+
+```sh
+anchor run grant-role -- <admin-keypair> <user-pubkey> <role>
+
+#Example: anchor run grant-role -- keys/admin.json GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7 verifier
+```
+
+#### Create Tournament
+
+```sh
+anchor run create-tournament -- \
+<organizer-keypair> \
+<sponsor-publickey> \
+<token-publickey> \
+<organizerFee> <sponsorPool> <entryFee> <teamSize> <minTeams> <maxTeams>
+
+: << 'COMMENT'
+# Example:
+anchor run create-tournament -- \
+keys/organizer.json \
+7NukBTvEvJytba1bjBfTUqeijevxQMkRsmbse894WZMS \
+6F7Tn3YPcArLG6G2FoKGtkPYrwrQqdJeA7SQ3i5Uy1py \
+100 1000 20 10 4 10
+COMMENT
 ```

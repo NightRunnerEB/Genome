@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { GenomeContract } from "../target/types/genome_contract";
-import { getGenomePda, getTournamentPda } from "./utils";
+import { getGenomePda, getTokenInfoPda, getTournamentPda, getUserRolePda } from "./utils";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export class TxBuilder {
@@ -12,17 +12,17 @@ export class TxBuilder {
       .GenomeContract as anchor.Program<GenomeContract>;
   }
 
-  async initialize(admin: Keypair, configData: any): Promise<string> {
+  async initialize(deployer: Keypair, configData: any): Promise<string> {
     return this.program.methods
       .initialize(configData)
       .accounts({
-        admin: admin.publicKey,
+        admin: deployer.publicKey,
       })
-      .signers([admin])
+      .signers([deployer])
       .rpc();
   }
 
-  async createTournamentSinglechain(
+  async createTournament(
     organizer: Keypair,
     sponsor: Keypair,
     mint: PublicKey,
@@ -40,20 +40,81 @@ export class TxBuilder {
       .rpc();
   }
 
+  async grantRole(
+    admin: Keypair,
+    user: Keypair,
+    params: any
+  ): Promise<string> {
+    return this.program.methods
+      .grantRole(params)
+      .accounts({
+        admin: admin.publicKey,
+        user: user.publicKey
+      })
+      .signers([admin])
+      .rpc();
+  }
+
+  async revokeRole(
+    admin: Keypair,
+    user: Keypair,
+  ): Promise<string> {
+    return this.program.methods
+      .revokeRole()
+      .accounts({
+        admin: admin.publicKey,
+        user: user.publicKey
+      })
+      .signers([admin])
+      .rpc();
+  }
+
+  async approveToken(
+    operator: Keypair,
+    token: Keypair,
+    minSponsorPool: any,
+    minEntryFee: any
+  ): Promise<string> {
+    return this.program.methods
+      .approveToken(minSponsorPool, minEntryFee)
+      .accounts({
+        operator: operator.publicKey,
+        assetMint: token.publicKey
+      })
+      .signers([operator])
+      .rpc();
+  }
+
+  async banToken(
+    operator: Keypair,
+    token: Keypair,
+    isBanned: boolean
+  ): Promise<string> {
+    return this.program.methods
+      .banToken()
+      .accounts({
+        operator: operator.publicKey,
+        assetMint: token.publicKey
+      })
+      .signers([operator])
+      .rpc();
+  }
+
   async getConfig() {
     let configPda = getGenomePda();
     const config = await this.program.account.genomeConfig.fetch(configPda);
     return {
       admin: config.admin,
+      verifierAddresses: config.verifierAddresses,
+      consensusRate: config.consensusRate,
       tournamentNonce: config.tournamentNonce,
-      platformFee: config.platformFee.toNumber(),
+      platformFee: config.platformFee,
       platformWallet: config.platformWallet,
       falsePrecision: config.falsePrecision,
-      minEntryFee: config.minEntryFee.toNumber(),
-      minSponsorPool: config.minSponsorPool.toNumber(),
       minTeams: config.minTeams,
       maxTeams: config.maxTeams,
-      maxOrganizerRoyalty: config.maxOrganizerRoyalty.toNumber(),
+      maxOrganizerFee: config.maxOrganizerFee,
+      nomeMint: config.nomeMint,
     };
   }
 
@@ -68,17 +129,38 @@ export class TxBuilder {
     return {
       id: tournament.id,
       organizer: tournament.organizer,
-      sponsor: tournament.sponsor,
       sponsorPool: tournament.sponsorPool,
-      organizerRoyalty: tournament.organizerRoyalty,
+      organizerFee: tournament.organizerFee,
       entryFee: tournament.entryFee,
       status: tournament.status,
       teamSize: tournament.teamSize,
       minTeams: tournament.minTeams,
       maxTeams: tournament.maxTeams,
       teamCount: tournament.teamCount,
-      token: tournament.token,
+      assetMint: tournament.assetMint,
       tournamentPda: tournamentPda,
     };
+  }
+
+  async getTokenInfo(token: PublicKey) {
+    let tokenInfoPda = getTokenInfoPda(token.toBuffer());
+    const tokenInfo = await this.program.account.tokenInfo.fetch(
+      tokenInfoPda
+    );
+    return {
+      assetMint: tokenInfo.assetMint,
+      minSponsorPool: tokenInfo.minSponsorPool,
+      minEntryPool: tokenInfo.minEntryFee,
+    }
+  }
+
+  async getUserRole(user: PublicKey) {
+    let userRolePda = getUserRolePda(user.toBuffer());
+    const userRole = await this.program.account.roleInfo.fetch(
+      userRolePda
+    );
+    return {
+      role: userRole.role
+    }
   }
 }

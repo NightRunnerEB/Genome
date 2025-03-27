@@ -6,7 +6,7 @@ use anchor_lang::{
 use growable_bloom_filter::GrowableBloom as Bloom;
 
 use crate::{
-    data::{BloomFilter, GenomeConfig, Tournament, TournamentData},
+    data::{BloomFilter, GenomeConfig, TokenInfo, Tournament, TournamentData},
     error::TournamentError,
 };
 
@@ -24,21 +24,25 @@ pub fn calculate_bloom_memory(players_count: u16, false_precision: f64) -> Resul
     Ok(memory)
 }
 
-pub fn validate_params(params: &TournamentData, config: &GenomeConfig) -> Result<()> {
+pub fn validate_params(
+    params: &TournamentData,
+    config: &GenomeConfig,
+    token_info: &TokenInfo,
+) -> Result<()> {
     require!(
-        params.organizer_royalty <= config.max_organizer_royalty,
-        TournamentError::InvalidRoyalty
+        params.organizer_fee <= config.max_organizer_fee,
+        TournamentError::InvalidOrginizerFee
     );
     require!(
-        params.entry_fee >= config.min_entry_fee,
-        TournamentError::InvalidAdmissionFee
+        params.entry_fee >= token_info.min_entry_fee,
+        TournamentError::InvalidEntryFee
     );
     require!(
         params.min_teams >= config.min_teams && params.max_teams <= config.max_teams,
         TournamentError::InvalidTeamsCount
     );
     require!(
-        params.sponsor_pool >= config.min_sponsor_pool,
+        params.sponsor_pool >= token_info.min_sponsor_pool,
         TournamentError::InvalidSponsorPool
     );
     Ok(())

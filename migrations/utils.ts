@@ -6,6 +6,8 @@ import { utf8 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 
 const GENOME_ROOT = utf8.encode("genome");
 const CONFIG = utf8.encode("config");
+export const ROLE = utf8.encode("role");
+export const TOKEN = utf8.encode("token");
 
 /**
  * Make object pretty for logging
@@ -27,13 +29,4 @@ export function prettify(obj: any): string {
   }
 
   return JSON.stringify(prettyObj, null, 2);
-}
-
-export function getGonfigPda(): PublicKey {
-  const genomeProgram = anchor.workspace
-    .GenomeContract as anchor.Program<GenomeContract>;
-  return PublicKey.findProgramAddressSync(
-    [GENOME_ROOT, CONFIG],
-    genomeProgram.programId
-  )[0];
 }
