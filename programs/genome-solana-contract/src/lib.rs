@@ -242,10 +242,10 @@ pub struct CreateTournament<'info> {
 pub struct GrantRole<'info> {
     #[account(signer, mut, address = config.admin @ TournamentError::InvalidAdmin )]
     pub admin: Signer<'info>,
-    #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
-    pub config: Box<Account<'info, GenomeConfig>>,
     /// CHECK:
     pub user: AccountInfo<'info>,
+    #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
+    pub config: Box<Account<'info, GenomeConfig>>,
     #[account(
         init_if_needed,
         payer = admin, 
@@ -260,10 +260,10 @@ pub struct GrantRole<'info> {
 pub struct RevokeRole<'info> {
     #[account(mut, signer, address = config.admin @ TournamentError::InvalidAdmin)]
     pub admin: Signer<'info>,
-    #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
-    pub config: Account<'info, GenomeConfig>,
     /// CHECK:
     pub user: AccountInfo<'info>,
+    #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
+    pub config: Account<'info, GenomeConfig>,
     #[account(
         mut,
         seeds = [GENOME_ROOT, ROLE, user.key().as_ref()],
@@ -300,6 +300,8 @@ pub struct ApproveToken<'info> {
 pub struct BanToken<'info> {
     #[account(mut)]
     pub operator: Signer<'info>,
+    /// CHECKED
+    pub asset_mint: AccountInfo<'info>,
     #[account(
         seeds = [GENOME_ROOT, ROLE, operator.key().as_ref()],
         bump,
@@ -313,6 +315,4 @@ pub struct BanToken<'info> {
         close = operator
     )]
     pub token_info: Account<'info, TokenInfo>,
-    /// CHECKED
-    pub asset_mint: AccountInfo<'info>,
 }
