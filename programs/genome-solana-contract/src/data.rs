@@ -23,7 +23,7 @@ pub(crate) struct RoleInfo {
     pub(crate) role: Role,
 }
 
-#[derive(PartialEq, Eq, AnchorSerialize, AnchorDeserialize, Clone, InitSpace, Default)]
+#[derive(PartialEq, AnchorSerialize, AnchorDeserialize, Clone, InitSpace, Default)]
 pub(crate) enum Role {
     #[default]
     None,
