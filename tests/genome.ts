@@ -10,7 +10,7 @@ import {
 describe("Genome Solana Singlechain", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const { admin, deployer, platform, organizer, nome, verifier1, verifier2, verifier3, operator } = getKeyPairs();
+  const { admin, deployer, platform, organizer, nome, verifier1, verifier2, operator } = getKeyPairs();
   const txBuilder = new TxBuilder();
 
   const configData = {
@@ -24,12 +24,12 @@ describe("Genome Solana Singlechain", () => {
     falsePrecision: 0.000065,
     maxOrganizerFee: new anchor.BN(5000),
     consensusRate: 66.0,
-    verifierAddresses: [verifier1.publicKey, verifier2.publicKey]
+    verifierAddresses: [verifier1.publicKey]
   };
 
   before(async () => {
     await Promise.all(
-      [admin, deployer, organizer, operator, verifier1, verifier2, verifier3].map(
+      [admin, deployer, organizer, operator, verifier1, verifier2].map(
         async (keypair) => await airdrop(keypair.publicKey, 10)
       )
     );
@@ -63,13 +63,13 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Add new Vefifier", async () => {
-    let tx = await txBuilder.grantRole(admin, verifier3, { verifier: {} })
+    let tx = await txBuilder.grantRole(admin, verifier2, { verifier: {} })
     console.log("Add new Vefifier tx: ", tx);
 
     const config = await txBuilder.getConfig();
-    const userRole = await txBuilder.getUserRole(verifier3.publicKey);
+    const userRole = await txBuilder.getUserRole(verifier2.publicKey);
     assert.ok(userRole.role.verifier);
-    assert.ok(config.verifierAddresses.map((pk) => pk.toString()).includes(verifier3.publicKey.toString()));
+    assert.ok(config.verifierAddresses.map((pk) => pk.toString()).includes(verifier2.publicKey.toString()));
   });
 
   it("Grant Organizer Role", async () => {
@@ -97,16 +97,15 @@ describe("Genome Solana Singlechain", () => {
       checkAnchorError(error, "Account does not exist");
     }
 
-    tx = await txBuilder.revokeRole(admin, verifier3.publicKey);
+    tx = await txBuilder.revokeRole(admin, verifier2.publicKey);
     console.log("Revoke verifier role tx: ", tx);
     try {
-      await txBuilder.getUserRole(verifier3.publicKey);
+      await txBuilder.getUserRole(verifier2.publicKey);
     } catch (error) {
       checkAnchorError(error, "Account does not exist");
     }
     const config = await txBuilder.getConfig();
     assert.ok(config.verifierAddresses.map((pk) => pk.toString()).includes(verifier1.publicKey.toString()));
-    assert.ok(config.verifierAddresses.map((pk) => pk.toString()).includes(verifier2.publicKey.toString()));
-    assert.ok(!config.verifierAddresses.map((pk) => pk.toString()).includes(verifier3.publicKey.toString()));
+    assert.ok(!config.verifierAddresses.map((pk) => pk.toString()).includes(verifier2.publicKey.toString()));
   });
 });

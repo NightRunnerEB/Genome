@@ -17,7 +17,6 @@ export function getKeyPairs(): {
   deployer: Keypair,
   verifier1: Keypair,
   verifier2: Keypair,
-  verifier3: Keypair,
   operator: Keypair,
   nome: Keypair
 } {
@@ -27,7 +26,6 @@ export function getKeyPairs(): {
   const deployerSecret = Uint8Array.from(require("../keys/deployer.json"));
   const verifier1Secret = Uint8Array.from(require("../keys/verifier1.json"));
   const verifier2Secret = Uint8Array.from(require("../keys/verifier2.json"));
-  const verifier3Secret = Uint8Array.from(require("../keys/verifier3.json"));
   const operatorSecret = Uint8Array.from(require("../keys/operator.json"));
   const nomeSecret = Uint8Array.from(require("../keys/nome.json"));
 
@@ -37,7 +35,6 @@ export function getKeyPairs(): {
   const deployer = Keypair.fromSecretKey(deployerSecret);
   const verifier1 = Keypair.fromSecretKey(verifier1Secret);
   const verifier2 = Keypair.fromSecretKey(verifier2Secret);
-  const verifier3 = Keypair.fromSecretKey(verifier3Secret);
   const operator = Keypair.fromSecretKey(operatorSecret);
   const nome = Keypair.fromSecretKey(nomeSecret);
 
@@ -48,7 +45,6 @@ export function getKeyPairs(): {
     deployer,
     verifier1,
     verifier2,
-    verifier3,
     operator,
     nome
   };
