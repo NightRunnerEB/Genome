@@ -1,7 +1,8 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { GenomeContract } from "../target/types/genome_contract";
 import { assert } from "chai";
+
+import { GenomeContract } from "../target/types/genome_contract";
 
 export function getProvider() {
   const provider = anchor.AnchorProvider.env();

@@ -1,5 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, Keypair } from "@solana/web3.js";
+
 import { GenomeContract } from "../target/types/genome_contract";
 import { getConfigPda, getUserRolePda } from "./utils";
 

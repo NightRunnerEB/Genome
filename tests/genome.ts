@@ -1,5 +1,6 @@
-import * as assert from "assert";
 import * as anchor from "@coral-xyz/anchor";
+import * as assert from "assert";
+
 import { TxBuilder } from "./txBuilder";
 import {
   airdrop,
