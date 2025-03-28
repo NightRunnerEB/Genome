@@ -105,6 +105,8 @@ describe("Genome Solana Singlechain", () => {
       checkAnchorError(error, "Account does not exist");
     }
     const config = await txBuilder.getConfig();
+    assert.ok(config.verifierAddresses.map((pk) => pk.toString()).includes(verifier1.publicKey.toString()));
+    assert.ok(config.verifierAddresses.map((pk) => pk.toString()).includes(verifier2.publicKey.toString()));
     assert.ok(!config.verifierAddresses.map((pk) => pk.toString()).includes(verifier3.publicKey.toString()));
   });
 });
