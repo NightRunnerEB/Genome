@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
-import { GenomeContract } from "../target/types/genome_contract";
+import { getProgram } from "./utils";
 
 async function main() {
     const adminKeypairPath = process.argv[2];
@@ -12,9 +12,7 @@ async function main() {
     console.log(`admin: ${admin.publicKey.toBase58()}`);
     console.log(`user: ${user.toBase58()}`);
 
-    const provider = anchor.AnchorProvider.env();
-    anchor.setProvider(provider);
-    const program = anchor.workspace.GenomeContract as anchor.Program<GenomeContract>;
+    const program = getProgram();
 
     const tx = await program.methods
         .revokeRole()

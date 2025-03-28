@@ -1,10 +1,7 @@
-import { web3 } from "@coral-xyz/anchor";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 import * as anchor from "@coral-xyz/anchor";
-import { GenomeContract } from "../target/types/genome_contract";
-import { prettify } from "./utils";
+import { getProgram, prettify } from "./utils";
 import { getConfigPda } from "../tests/utils";
-import { BN } from "@coral-xyz/anchor";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -24,19 +21,19 @@ async function main() {
   ] = args;
 
   const deployer = await getKeypairFromFile(deployerPath);
-  const admin = new web3.PublicKey(adminAddress);
-  const platformWallet = new web3.PublicKey(platformWalletStr);
+  const admin = new anchor.web3.PublicKey(adminAddress);
+  const platformWallet = new anchor.web3.PublicKey(platformWalletStr);
   const verifiers = verifiersAddresses.map(v => new anchor.web3.PublicKey(v));
 
   const genomeConfig: any = {
     tournamentNonce: parseInt(tournamentNonceStr),
-    platformFee: new BN(platformFeeStr),
-    minEntryFee: new BN(minEntryFeeStr),
-    minSponsorPool: new BN(minSponsorPoolStr),
+    platformFee: new anchor.BN(platformFeeStr),
+    minEntryFee: new anchor.BN(minEntryFeeStr),
+    minSponsorPool: new anchor.BN(minSponsorPoolStr),
     minTeams: parseInt(minTeamsStr),
     maxTeams: parseInt(maxTeamsStr),
     falsePrecision: parseFloat(falsePrecisionStr),
-    maxOrganizerFee: new BN(maxOrganizerFeeStr),
+    maxOrganizerFee: new anchor.BN(maxOrganizerFeeStr),
     admin: admin,
     platformWallet,
     verifierAddresses: verifiers
@@ -51,11 +48,10 @@ async function main() {
 }
 
 async function initialize(
-  deployer: web3.Keypair,
+  deployer: anchor.web3.Keypair,
   genomeConfig: any
 ) {
-  const program = anchor.workspace
-    .GenomeContract as anchor.Program<GenomeContract>;
+  const program = getProgram();
 
   const tx = await program.methods
     .initialize(genomeConfig)
