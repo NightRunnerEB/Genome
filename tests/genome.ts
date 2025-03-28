@@ -97,7 +97,6 @@ describe("Genome Solana Singlechain", () => {
       checkAnchorError(error, "Account does not exist");
     }
 
-    const configBefore = await txBuilder.getConfig();
     tx = await txBuilder.revokeRole(admin, verifier3.publicKey);
     console.log("Revoke verifier role tx: ", tx);
     try {
@@ -105,7 +104,7 @@ describe("Genome Solana Singlechain", () => {
     } catch (error) {
       checkAnchorError(error, "Account does not exist");
     }
-    const configAfter = await txBuilder.getConfig();
-    assert.equal(configBefore.verifierAddresses.length - 1, configAfter.verifierAddresses.length);
+    const config = await txBuilder.getConfig();
+    assert.ok(!config.verifierAddresses.map((pk) => pk.toString()).includes(verifier3.publicKey.toString()));
   });
 });
