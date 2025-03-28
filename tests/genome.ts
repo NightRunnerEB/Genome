@@ -63,14 +63,13 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Add new Vefifier", async () => {
-    const configBefore = await txBuilder.getConfig();
     let tx = await txBuilder.grantRole(admin, verifier3, { verifier: {} })
     console.log("Add new Vefifier tx: ", tx);
 
-    const configAfter = await txBuilder.getConfig();
+    const config = await txBuilder.getConfig();
     const userRole = await txBuilder.getUserRole(verifier3.publicKey);
     assert.ok(userRole.role.verifier);
-    assert.equal(configBefore.verifierAddresses.length + 1, configAfter.verifierAddresses.length);
+    assert.ok(config.verifierAddresses.map((pk) => pk.toString()).includes(verifier3.publicKey.toString()));
   });
 
   it("Grant Organizer Role", async () => {
@@ -85,7 +84,7 @@ describe("Genome Solana Singlechain", () => {
     try {
       await txBuilder.grantRole(operator, organizer, { organizer: {} })
     } catch (error) {
-        checkAnchorError(error, "Not Allowed");
+      checkAnchorError(error, "Not Allowed");
     }
   });
 
@@ -95,7 +94,7 @@ describe("Genome Solana Singlechain", () => {
     try {
       await txBuilder.getUserRole(operator.publicKey);
     } catch (error) {
-        checkAnchorError(error, "Account does not exist");
+      checkAnchorError(error, "Account does not exist");
     }
 
     const configBefore = await txBuilder.getConfig();
