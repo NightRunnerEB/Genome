@@ -23,16 +23,11 @@ pub struct RoleInfo {
     pub role: Role,
 }
 
-#[derive(PartialEq, Eq, AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+#[derive(PartialEq, Eq, AnchorSerialize, AnchorDeserialize, Clone, InitSpace, Default)]
 pub enum Role {
+    #[default]
     None,
     Operator,
     Verifier,
     Organizer,
-}
-
-impl Default for Role {
-    fn default() -> Self {
-        Role::None
-    }
 }
