@@ -5,7 +5,7 @@ mod error;
 
 use anchor_lang::{
     prelude::*,
-    solana_program::{program::invoke, system_instruction},
+    solana_program::{program::invoke, pubkey::PUBKEY_BYTES, system_instruction},
 };
 
 use data::{GenomeConfig, Role, RoleInfo};
@@ -95,13 +95,13 @@ fn system_transfer<'a>(from: AccountInfo<'a>, to: AccountInfo<'a>, amount: u64) 
 
 #[derive(Accounts)]
 #[instruction(config_params: GenomeConfig)]
-pub struct Initialize<'info> {
+struct Initialize<'info> {
     #[account(mut, address = DEPLOYER @ TournamentError::NotAllowed)]
     deployer: Signer<'info>,
     #[account(
         init,
         payer = deployer,
-        space = 8 + GenomeConfig::INIT_SPACE + config_params.verifier_addresses.len() * 32,
+        space = 8 + GenomeConfig::INIT_SPACE + config_params.verifier_addresses.len() * PUBKEY_BYTES,
         seeds = [GENOME_ROOT, CONFIG],
         bump
     )]
@@ -110,11 +110,11 @@ pub struct Initialize<'info> {
 }
 
 #[derive(Accounts)]
-pub struct GrantRole<'info> {
+struct GrantRole<'info> {
     #[account(signer, mut, address = config.admin @ TournamentError::NotAllowed)]
-    pub admin: Signer<'info>,
+    admin: Signer<'info>,
     /// CHECK:
-    pub user: AccountInfo<'info>,
+    user: AccountInfo<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     pub config: Box<Account<'info, GenomeConfig>>,
     #[account(
@@ -123,23 +123,23 @@ pub struct GrantRole<'info> {
         space = 8 + RoleInfo::INIT_SPACE,
         seeds = [GENOME_ROOT, ROLE, user.key().as_ref()], bump
     )]
-    pub role_info: Box<Account<'info, RoleInfo>>,
-    pub system_program: Program<'info, System>,
+    role_info: Box<Account<'info, RoleInfo>>,
+    system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
-pub struct RevokeRole<'info> {
+struct RevokeRole<'info> {
     #[account(mut, signer, address = config.admin @ TournamentError::NotAllowed)]
-    pub admin: Signer<'info>,
+    admin: Signer<'info>,
     /// CHECK:
-    pub user: AccountInfo<'info>,
+    user: AccountInfo<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
-    pub config: Account<'info, GenomeConfig>,
+    config: Account<'info, GenomeConfig>,
     #[account(
         mut,
         seeds = [GENOME_ROOT, ROLE, user.key().as_ref()],
         bump,
         close = admin
     )]
-    pub role_info: Account<'info, RoleInfo>,
+    role_info: Account<'info, RoleInfo>,
 }
