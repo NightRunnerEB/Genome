@@ -26,20 +26,6 @@ async function main() {
   const platformWallet = new anchor.web3.PublicKey(platformWalletStr);
   const verifiers = verifiersAddresses.map(v => new anchor.web3.PublicKey(v));
 
-  const genomeConfig: any = {
-    tournamentNonce: parseInt(tournamentNonceStr),
-    platformFee: new anchor.BN(platformFeeStr),
-    minEntryFee: new anchor.BN(minEntryFeeStr),
-    minSponsorPool: new anchor.BN(minSponsorPoolStr),
-    minTeams: parseInt(minTeamsStr),
-    maxTeams: parseInt(maxTeamsStr),
-    falsePrecision: parseFloat(falsePrecisionStr),
-    maxOrganizerFee: new anchor.BN(maxOrganizerFeeStr),
-    admin: admin,
-    platformWallet,
-    verifierAddresses: verifiers
-  };
-
   console.log(`Deployer: ${deployer.publicKey.toBase58()}`);
 
   await initialize(
