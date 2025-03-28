@@ -1,5 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
+
 import { getProgram } from "./utils";
 
 async function main() {

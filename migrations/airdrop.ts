@@ -1,4 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
+
 import { airdrop } from "../tests/utils";
 
 async function main(): Promise<void> {

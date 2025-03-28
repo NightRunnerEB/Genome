@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
-import { GenomeContract } from "../target/types/genome_contract";
+
 import { getProgram } from "./utils";
 
 async function main() {
