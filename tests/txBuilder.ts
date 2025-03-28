@@ -38,13 +38,13 @@ export class TxBuilder {
 
   async revokeRole(
     admin: Keypair,
-    user: Keypair,
+    user: PublicKey,
   ): Promise<string> {
     return this.program.methods
       .revokeRole()
       .accounts({
         admin: admin.publicKey,
-        user: user.publicKey
+        user: user
       })
       .signers([admin])
       .rpc();

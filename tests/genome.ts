@@ -89,7 +89,7 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Revoke Role", async () => {
-    let tx = await txBuilder.revokeRole(admin, operator);
+    let tx = await txBuilder.revokeRole(admin, operator.publicKey);
     console.log("Revoke operator role tx: ", tx);
     try {
       await txBuilder.getUserRole(operator.publicKey);
@@ -98,7 +98,7 @@ describe("Genome Solana Singlechain", () => {
     }
 
     const configBefore = await txBuilder.getConfig();
-    tx = await txBuilder.revokeRole(admin, verifier3);
+    tx = await txBuilder.revokeRole(admin, verifier3.publicKey);
     console.log("Revoke verifier role tx: ", tx);
     try {
       await txBuilder.getUserRole(verifier3.publicKey);
