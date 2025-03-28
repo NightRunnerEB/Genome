@@ -15,7 +15,7 @@ export class TxBuilder {
     return this.program.methods
       .initialize(configData)
       .accounts({
-        admin: deployer.publicKey,
+        deployer: deployer.publicKey,
       })
       .signers([deployer])
       .rpc();
