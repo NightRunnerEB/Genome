@@ -2,29 +2,29 @@ use anchor_lang::prelude::*;
 
 #[account]
 #[derive(InitSpace)]
-pub struct GenomeConfig {
-    pub admin: Pubkey,
-    pub tournament_nonce: u32,
+pub(crate) struct GenomeConfig {
+    pub(crate) admin: Pubkey,
     #[max_len(0)]
-    pub verifier_addresses: Vec<Pubkey>,
-    pub consensus_rate: f64,
-    pub platform_wallet: Pubkey,
-    pub nome_mint: Pubkey,
-    pub false_precision: f64,
-    pub platform_fee: u64,
-    pub max_organizer_fee: u64,
-    pub min_teams: u16,
-    pub max_teams: u16,
+    pub(crate) verifier_addresses: Vec<Pubkey>,
+    tournament_nonce: u32,
+    consensus_rate: f64,
+    platform_wallet: Pubkey,
+    nome_mint: Pubkey,
+    false_precision: f64,
+    platform_fee: u64,
+    max_organizer_fee: u64,
+    min_teams: u16,
+    max_teams: u16,
 }
 
 #[account]
 #[derive(InitSpace)]
-pub struct RoleInfo {
-    pub role: Role,
+pub(crate) struct RoleInfo {
+    pub(crate) role: Role,
 }
 
 #[derive(PartialEq, Eq, AnchorSerialize, AnchorDeserialize, Clone, InitSpace, Default)]
-pub enum Role {
+pub(crate) enum Role {
     #[default]
     None,
     Operator,

@@ -116,7 +116,7 @@ struct GrantRole<'info> {
     /// CHECK:
     user: AccountInfo<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
-    pub config: Box<Account<'info, GenomeConfig>>,
+    config: Box<Account<'info, GenomeConfig>>,
     #[account(
         init_if_needed,
         payer = admin,
