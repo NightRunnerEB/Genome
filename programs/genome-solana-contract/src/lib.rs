@@ -121,7 +121,8 @@ struct GrantRole<'info> {
         init_if_needed,
         payer = admin,
         space = 8 + RoleInfo::INIT_SPACE,
-        seeds = [GENOME_ROOT, ROLE, user.key().as_ref()], bump
+        seeds = [GENOME_ROOT, ROLE, user.key().as_ref()], 
+        bump
     )]
     role_info: Box<Account<'info, RoleInfo>>,
     system_program: Program<'info, System>,
