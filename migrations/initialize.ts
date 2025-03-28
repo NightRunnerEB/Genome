@@ -43,7 +43,19 @@ async function main() {
 
   await initialize(
     deployer,
-    genomeConfig
+    {
+      tournamentNonce: parseInt(tournamentNonceStr),
+      platformFee: new anchor.BN(platformFeeStr),
+      minEntryFee: new anchor.BN(minEntryFeeStr),
+      minSponsorPool: new anchor.BN(minSponsorPoolStr),
+      minTeams: parseInt(minTeamsStr),
+      maxTeams: parseInt(maxTeamsStr),
+      falsePrecision: parseFloat(falsePrecisionStr),
+      maxOrganizerFee: new anchor.BN(maxOrganizerFeeStr),
+      admin: admin,
+      platformWallet,
+      verifierAddresses: verifiers
+    }
   );
 }
 
