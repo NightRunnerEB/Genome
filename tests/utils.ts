@@ -54,7 +54,7 @@ export function getKeyPairs(): {
   };
 }
 
-export function getGenomePda(): PublicKey {
+export function getConfigPda(): PublicKey {
   const genomeProgram = anchor.workspace
     .GenomeContract as anchor.Program<GenomeContract>;
   const genomeRootArray = JSON.parse(genomeProgram.idl.constants[1].value);

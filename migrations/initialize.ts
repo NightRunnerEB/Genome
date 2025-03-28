@@ -3,7 +3,7 @@ import { getKeypairFromFile } from "@solana-developers/node-helpers";
 import * as anchor from "@coral-xyz/anchor";
 import { GenomeContract } from "../target/types/genome_contract";
 import { prettify } from "./utils";
-import { getGenomePda } from "../tests/utils";
+import { getConfigPda } from "../tests/utils";
 import { BN } from "@coral-xyz/anchor";
 
 async function main() {
@@ -67,7 +67,7 @@ async function initialize(
   const txSignature = await provider.sendAndConfirm(tx, [deployer]);
   console.log(`Initialize tx: ${txSignature}`);
 
-  const configPda = getGenomePda();
+  const configPda = getConfigPda();
   const configData = await program.account.genomeConfig.fetch(configPda);
   console.log(`GenomeConfig: ${prettify(configData)}`);
 }
