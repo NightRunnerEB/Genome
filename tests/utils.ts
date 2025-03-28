@@ -57,35 +57,42 @@ export function getKeyPairs(): {
 export function getConfigPda(): PublicKey {
   const genomeProgram = anchor.workspace
     .GenomeContract as anchor.Program<GenomeContract>;
-  const genomeRootArray = JSON.parse(genomeProgram.idl.constants[1].value);
-  const genomeRootBuffer = Buffer.from(genomeRootArray);
-  const configArray = JSON.parse(genomeProgram.idl.constants[0].value);
+  const configConstant = genomeProgram.idl.constants.find(
+    (c: any) => c.name === "config"
+  );
+  if (!configConstant) {
+    throw new Error("Missing config constant in IDL");
+  }
+  const configArray = JSON.parse(configConstant.value);
   const configBuffer = Buffer.from(configArray);
   return PublicKey.findProgramAddressSync(
-    [genomeRootBuffer, configBuffer],
+    [GenomeSeed(), configBuffer],
     genomeProgram.programId
   )[0];
 }
 
 export function getUserRolePda(
-  seed: any
+  user: any
 ): PublicKey {
   const genomeProgram = anchor.workspace
     .GenomeContract as anchor.Program<GenomeContract>;
-  const genomeRootArray = JSON.parse(genomeProgram.idl.constants[1].value);
-  const genomeRootBuffer = Buffer.from(genomeRootArray);
-  const roleArray = JSON.parse(genomeProgram.idl.constants[2].value);
+  const roleConstant = genomeProgram.idl.constants.find(
+    (c: any) => c.name === "role"
+  );
+  if (!roleConstant) {
+    throw new Error("Missing role constant in IDL");
+  }
+  const roleArray = JSON.parse(roleConstant.value);
   const roleBuffer = Buffer.from(roleArray);
-  const seedBuffer = Buffer.from(seed);
+  const userBuffer = Buffer.from(user);
   return PublicKey.findProgramAddressSync(
-    [genomeRootBuffer, roleBuffer, seedBuffer],
+    [GenomeSeed(), roleBuffer, userBuffer],
     genomeProgram.programId
   )[0];
 }
 
 export async function airdrop(address: PublicKey, amount: number) {
   const provider = getProvider();
-
   let txid = await provider.connection.requestAirdrop(
     address,
     amount * anchor.web3.LAMPORTS_PER_SOL
@@ -97,6 +104,19 @@ export async function airdrop(address: PublicKey, amount: number) {
     blockhash,
     lastValidBlockHeight,
   });
+}
+
+function GenomeSeed(): Buffer {
+  const genomeProgram = anchor.workspace
+    .GenomeContract as anchor.Program<GenomeContract>;
+  const genomeRootConstant = genomeProgram.idl.constants.find(
+    (c: any) => c.name === "genomeRoot"
+  );
+  if (!genomeRootConstant) {
+    throw new Error("Missing genomeRoot constant in IDL");
+  }
+  const genomeRootArray = JSON.parse(genomeRootConstant.value);
+  return Buffer.from(genomeRootArray);
 }
 
 export function checkAnchorError(error: any, errMsg: string) {
