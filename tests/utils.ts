@@ -13,8 +13,8 @@ export function getProvider() {
 export function getKeyPairs(): {
   admin: Keypair,
   organizer: Keypair,
+  platform: Keypair,
   deployer: Keypair,
-  token: Keypair,
   verifier1: Keypair,
   verifier2: Keypair,
   verifier3: Keypair,
@@ -23,8 +23,8 @@ export function getKeyPairs(): {
 } {
   const adminSecret = Uint8Array.from(require("../keys/admin.json"));
   const organizerSecret = Uint8Array.from(require("../keys/organizer.json"));
+  const platformSecret = Uint8Array.from(require("../keys/platform_wallet.json"));
   const deployerSecret = Uint8Array.from(require("../keys/deployer.json"));
-  const tokenSecret = Uint8Array.from(require("../keys/token.json"));
   const verifier1Secret = Uint8Array.from(require("../keys/verifier1.json"));
   const verifier2Secret = Uint8Array.from(require("../keys/verifier2.json"));
   const verifier3Secret = Uint8Array.from(require("../keys/verifier3.json"));
@@ -33,8 +33,8 @@ export function getKeyPairs(): {
 
   const admin = Keypair.fromSecretKey(adminSecret);
   const organizer = Keypair.fromSecretKey(organizerSecret);
+  const platform = Keypair.fromSecretKey(platformSecret);
   const deployer = Keypair.fromSecretKey(deployerSecret);
-  const token = Keypair.fromSecretKey(tokenSecret);
   const verifier1 = Keypair.fromSecretKey(verifier1Secret);
   const verifier2 = Keypair.fromSecretKey(verifier2Secret);
   const verifier3 = Keypair.fromSecretKey(verifier3Secret);
@@ -44,8 +44,8 @@ export function getKeyPairs(): {
   return {
     admin,
     organizer,
+    platform,
     deployer,
-    token,
     verifier1,
     verifier2,
     verifier3,

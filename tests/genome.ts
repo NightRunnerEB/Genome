@@ -10,14 +10,14 @@ import {
 describe("Genome Solana Singlechain", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const { admin, deployer, organizer, nome, verifier1, verifier2, verifier3, operator } = getKeyPairs();
+  const { admin, deployer, platform, organizer, nome, verifier1, verifier2, verifier3, operator } = getKeyPairs();
   const txBuilder = new TxBuilder();
 
   const configData = {
     admin: admin.publicKey,
     tournamentNonce: 0,
     platformFee: new anchor.BN(10),
-    platformWallet: admin.publicKey,
+    platformWallet: platform.publicKey,
     nomeMint: nome.publicKey,
     minTeams: 2,
     maxTeams: 20,
