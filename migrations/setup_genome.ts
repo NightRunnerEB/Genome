@@ -22,7 +22,7 @@ async function main(): Promise<void> {
 
   const recipients = [operator, admin, deployer, organizer, verifier1, verifier2, verifier3];
 
-  await Promise.all(
+  Promise.all(
     recipients.map(
       async (keypair) => await airdrop(keypair, 10)
     )
