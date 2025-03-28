@@ -23,14 +23,14 @@ export class TxBuilder {
 
   async grantRole(
     admin: Keypair,
-    user: Keypair,
+    user: PublicKey,
     params: any
   ): Promise<string> {
     return this.program.methods
       .grantRole(params)
       .accounts({
         admin: admin.publicKey,
-        user: user.publicKey
+        user
       })
       .signers([admin])
       .rpc();
@@ -44,7 +44,7 @@ export class TxBuilder {
       .revokeRole()
       .accounts({
         admin: admin.publicKey,
-        user: user
+        user
       })
       .signers([admin])
       .rpc();

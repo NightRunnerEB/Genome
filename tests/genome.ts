@@ -55,7 +55,7 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Grant Operator Role", async () => {
-    let tx = await txBuilder.grantRole(admin, operator, { operator: {} })
+    let tx = await txBuilder.grantRole(admin, operator.publicKey, { operator: {} })
     console.log("Grant operator role tx: ", tx);
 
     const userRole = await txBuilder.getUserRole(operator.publicKey);
@@ -63,7 +63,7 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Add new Vefifier", async () => {
-    let tx = await txBuilder.grantRole(admin, verifier2, { verifier: {} })
+    let tx = await txBuilder.grantRole(admin, verifier2.publicKey, { verifier: {} })
     console.log("Add new Vefifier tx: ", tx);
 
     const config = await txBuilder.getConfig();
@@ -73,7 +73,7 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Grant Organizer Role", async () => {
-    let tx = await txBuilder.grantRole(admin, organizer, { organizer: {} })
+    let tx = await txBuilder.grantRole(admin, organizer.publicKey, { organizer: {} })
     console.log("Grant operator role tx: ", tx);
 
     const userRole = await txBuilder.getUserRole(organizer.publicKey);
@@ -82,7 +82,7 @@ describe("Genome Solana Singlechain", () => {
 
   it("Grant Role by non-admin", async () => {
     try {
-      await txBuilder.grantRole(operator, organizer, { organizer: {} })
+      await txBuilder.grantRole(operator, organizer.publicKey, { organizer: {} })
     } catch (error) {
       checkAnchorError(error, "Not Allowed");
     }
