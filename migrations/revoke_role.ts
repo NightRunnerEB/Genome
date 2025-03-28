@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 
-import { getProgram } from "./utils";
+import { TxBuilder } from "../tests/txBuilder";
 
 async function main() {
     const adminKeypairPath = process.argv[2];
@@ -13,17 +13,9 @@ async function main() {
     console.log(`admin: ${admin.publicKey.toBase58()}`);
     console.log(`user: ${user.toBase58()}`);
 
-    const program = getProgram();
+    const txBuilder = new TxBuilder();
 
-    const tx = await program.methods
-        .revokeRole()
-        .accounts({
-            admin: admin.publicKey,
-            user: user,
-        })
-        .signers([admin])
-        .rpc();
-
+    const tx = await txBuilder.revokeRole(admin, user);
     console.log("Revoke role tx signature:", tx);
 }
 

@@ -23,7 +23,3 @@ export function prettify(obj: any): string {
 
   return JSON.stringify(prettyObj, null, 2);
 }
-
-export function getProgram() {
-  return anchor.workspace.GenomeContract as anchor.Program<GenomeContract>;
-}

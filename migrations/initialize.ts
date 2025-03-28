@@ -1,8 +1,8 @@
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 import * as anchor from "@coral-xyz/anchor";
 
-import { getProgram, prettify } from "./utils";
-import { getConfigPda } from "../tests/utils";
+import { prettify } from "./utils";
+import { TxBuilder } from "../tests/txBuilder";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -28,7 +28,8 @@ async function main() {
 
   console.log(`Deployer: ${deployer.publicKey.toBase58()}`);
 
-  await initialize(
+  const txBuilder = new TxBuilder();
+  const tx = txBuilder.initialize(
     deployer,
     {
       tournamentNonce: parseInt(tournamentNonceStr),
@@ -44,27 +45,10 @@ async function main() {
       verifierAddresses: verifiers
     }
   );
-}
+  console.log(`Initialize tx: ${tx}`);
 
-async function initialize(
-  deployer: anchor.web3.Keypair,
-  genomeConfig: any
-) {
-  const program = getProgram();
-
-  const tx = await program.methods
-    .initialize(genomeConfig)
-    .accounts({ admin: deployer.publicKey })
-    .signers([deployer])
-    .transaction();
-
-  const provider = anchor.AnchorProvider.env();
-  const txSignature = await provider.sendAndConfirm(tx, [deployer]);
-  console.log(`Initialize tx: ${txSignature}`);
-
-  const configPda = getConfigPda();
-  const configData = await program.account.genomeConfig.fetch(configPda);
-  console.log(`GenomeConfig: ${prettify(configData)}`);
+  const config = txBuilder.getConfig();
+  console.log(`GenomeConfig: ${prettify(config)}`);
 }
 
 main()

@@ -92,21 +92,19 @@ spl-token create-token -u <network> <path-to-nome-keypair>
 Setting up wallets:
 
 ```rs
-anchor run setup-genome -- \
+anchor run airdrop -- \
   <deployer-pubkey> \
   <verifier1-pubkey> \
   <verifier2-pubkey> \
-  <verifier3-pubkey> \
   <operator-pubkey> \
   <admin-pubkey> \
   <organizer-pubkey>
 
 /* Example: 
-  anchor run setup-genome -- \
+  anchor run airdrop -- \
   HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7 \
   FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
   9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL \
-  GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7 \
   6Agqn5YD4fAncrnB9VrvwTfaufw2Tx1pphGca79uWruT \
   4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB \
   ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz
