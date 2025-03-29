@@ -1,12 +1,15 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { GenomeContract } from "../target/types/genome_contract";
+import { getProgram } from "./utils";
+
+const PROGRAM = getProgram();
 
 export class IxBuilder {
     public program: anchor.Program<GenomeContract>;
 
     constructor() {
-        this.program = anchor.workspace.GenomeContract as anchor.Program<GenomeContract>;
+        this.program = PROGRAM;
     }
 
     async initializeIx(deployer: PublicKey, configData: any): Promise<TransactionInstruction> {
