@@ -27,11 +27,13 @@ const ROLE: &[u8] = b"role";
 mod genome_contract {
     use super::*;
 
+    #[instruction(discriminator = b"initsngl")]
     pub fn initialize(ctx: Context<Initialize>, config_params: GenomeConfig) -> Result<()> {
         ctx.accounts.config.set_inner(config_params);
         Ok(())
     }
 
+    #[instruction(discriminator = b"grntrole")]
     pub fn grant_role(ctx: Context<GrantRole>, role: Role) -> Result<()> {
         if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
@@ -51,6 +53,7 @@ mod genome_contract {
         Ok(())
     }
 
+    #[instruction(discriminator = b"revkrole")]
     pub fn revoke_role(ctx: Context<RevokeRole>) -> Result<()> {
         if ctx.accounts.role_info.role == Role::Verifier {
             let config = &mut ctx.accounts.config;
