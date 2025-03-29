@@ -1,18 +1,17 @@
 import * as anchor from "@coral-xyz/anchor";
+import { Transaction } from "@solana/web3.js";
 import * as assert from "assert";
 
-import { TxBuilder } from "./txBuilder";
-import {
-  airdrop,
-  getKeyPairs,
-  checkAnchorError,
-} from "./utils";
+import { getKeyPairs, checkAnchorError } from "./utils";
+import { IxBuilder } from "../common/ixBuilder";
+import { airdropAll, getConfig, getUserRole } from "../common/utils";
 
 describe("Genome Solana Singlechain", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
+  const provider = anchor.AnchorProvider.env();
 
   const { admin, deployer, platform, organizer, nome, verifier1, verifier2, operator } = getKeyPairs();
-  const txBuilder = new TxBuilder();
+  const ixBuilder = new IxBuilder();
 
   const configData = {
     admin: admin.publicKey,
@@ -29,18 +28,26 @@ describe("Genome Solana Singlechain", () => {
   };
 
   before(async () => {
-    await Promise.all(
-      [admin, deployer, organizer, operator, verifier1, verifier2].map(
-        async (keypair) => await airdrop(keypair.publicKey, 10)
-      )
+    await airdropAll(
+      [
+        admin.publicKey,
+        deployer.publicKey,
+        organizer.publicKey,
+        operator.publicKey,
+        verifier1.publicKey,
+        verifier2.publicKey
+      ],
+      10
     );
   });
 
   it("Initialize Genome Solana", async () => {
-    let tx = await txBuilder.initialize(deployer, configData);
-    console.log("Initialize Genome tx: ", tx);
+    const initIx = await ixBuilder.initializeIx(deployer.publicKey, configData);
+    const tx = new Transaction().add(initIx);
+    const initTxSig = await provider.sendAndConfirm(tx, [deployer]);
+    console.log("Initialize Genome tx:", initTxSig);
 
-    const config = await txBuilder.getConfig();
+    const config = await getConfig();
     assert.deepEqual(config.admin, configData.admin);
     assert.deepEqual(config.platformWallet, configData.platformWallet);
     assert.equal(config.falsePrecision, configData.falsePrecision);
@@ -49,64 +56,75 @@ describe("Genome Solana Singlechain", () => {
     assert.equal(config.tournamentNonce, configData.tournamentNonce);
     assert.equal(config.minTeams, configData.minTeams);
     assert.equal(config.maxTeams, configData.maxTeams);
-
     assert.deepEqual(config.nomeMint, configData.nomeMint);
     assert.equal(config.consensusRate, configData.consensusRate);
     assert.deepEqual(config.verifierAddresses, configData.verifierAddresses);
   });
 
   it("Grant Operator Role", async () => {
-    let tx = await txBuilder.grantRole(admin, operator.publicKey, { operator: {} })
-    console.log("Grant operator role tx: ", tx);
+    const grantOpIx = await ixBuilder.grantRoleIx(admin.publicKey, operator.publicKey, { operator: {} });
+    const tx = new Transaction().add(grantOpIx);
+    const txSig = await provider.sendAndConfirm(tx, [admin]);
+    console.log("Grant operator role tx:", txSig);
 
-    const userRole = await txBuilder.getUserRole(operator.publicKey);
+    const userRole = await getUserRole(operator.publicKey);
     assert.ok(userRole.role.operator);
   });
 
-  it("Add new Vefifier", async () => {
-    let tx = await txBuilder.grantRole(admin, verifier2.publicKey, { verifier: {} })
-    console.log("Add new Vefifier tx: ", tx);
+  it("Add new Verifier", async () => {
+    const grantVerIx = await ixBuilder.grantRoleIx(admin.publicKey, verifier2.publicKey, { verifier: {} });
+    const tx = new Transaction().add(grantVerIx);
+    const txSig = await provider.sendAndConfirm(tx, [admin]);
+    console.log("Add new Verifier tx:", txSig);
 
-    const config = await txBuilder.getConfig();
-    const userRole = await txBuilder.getUserRole(verifier2.publicKey);
+    const config = await getConfig();
+    const userRole = await getUserRole(verifier2.publicKey);
     assert.ok(userRole.role.verifier);
-    assert.ok(config.verifierAddresses.map((pk) => pk.toString()).includes(verifier2.publicKey.toString()));
+    assert.ok(config.verifierAddresses.map(pk => pk.toString()).includes(verifier2.publicKey.toString()));
   });
 
   it("Grant Organizer Role", async () => {
-    let tx = await txBuilder.grantRole(admin, organizer.publicKey, { organizer: {} })
-    console.log("Grant operator role tx: ", tx);
+    const grantOrgIx = await ixBuilder.grantRoleIx(admin.publicKey, organizer.publicKey, { organizer: {} });
+    const tx = new Transaction().add(grantOrgIx);
+    const txSig = await provider.sendAndConfirm(tx, [admin]);
+    console.log("Grant organizer role tx:", txSig);
 
-    const userRole = await txBuilder.getUserRole(organizer.publicKey);
+    const userRole = await getUserRole(organizer.publicKey);
     assert.ok(userRole.role.organizer);
   });
 
   it("Grant Role by non-admin", async () => {
     try {
-      await txBuilder.grantRole(operator, organizer.publicKey, { organizer: {} })
+      const grantRoleIx = await ixBuilder.grantRoleIx(operator.publicKey, organizer.publicKey, { organizer: {} });
+      const tx = new Transaction().add(grantRoleIx);
+      await provider.sendAndConfirm(tx, [operator]);
     } catch (error) {
       checkAnchorError(error, "Not Allowed");
     }
   });
 
   it("Revoke Role", async () => {
-    let tx = await txBuilder.revokeRole(admin, operator.publicKey);
-    console.log("Revoke operator role tx: ", tx);
+    let revokeOpIx = await ixBuilder.revokeRoleIx(admin.publicKey, operator.publicKey);
+    let tx = new Transaction().add(revokeOpIx);
+    let txSig = await provider.sendAndConfirm(tx, [admin]);
+    console.log("Revoke operator role tx:", txSig);
     try {
-      await txBuilder.getUserRole(operator.publicKey);
+      await getUserRole(operator.publicKey);
     } catch (error) {
       checkAnchorError(error, "Account does not exist");
     }
 
-    tx = await txBuilder.revokeRole(admin, verifier2.publicKey);
-    console.log("Revoke verifier role tx: ", tx);
+    let revokeVerIx = await ixBuilder.revokeRoleIx(admin.publicKey, verifier2.publicKey);
+    tx = new Transaction().add(revokeVerIx);
+    txSig = await provider.sendAndConfirm(tx, [admin]);
+    console.log("Revoke verifier role tx:", txSig);
     try {
-      await txBuilder.getUserRole(verifier2.publicKey);
+      await getUserRole(verifier2.publicKey);
     } catch (error) {
       checkAnchorError(error, "Account does not exist");
     }
-    const config = await txBuilder.getConfig();
-    assert.ok(config.verifierAddresses.map((pk) => pk.toString()).includes(verifier1.publicKey.toString()));
-    assert.ok(!config.verifierAddresses.map((pk) => pk.toString()).includes(verifier2.publicKey.toString()));
+    const config = await getConfig();
+    assert.ok(config.verifierAddresses.map(pk => pk.toString()).includes(verifier1.publicKey.toString()));
+    assert.ok(!config.verifierAddresses.map(pk => pk.toString()).includes(verifier2.publicKey.toString()));
   });
 });

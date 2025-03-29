@@ -1,8 +1,9 @@
-import { getKeypairFromFile } from "@solana-developers/node-helpers";
 import * as anchor from "@coral-xyz/anchor";
+import { Transaction } from "@solana/web3.js";
+import { getKeypairFromFile } from "@solana-developers/node-helpers";
 
-import { prettify } from "./utils";
-import { TxBuilder } from "../tests/txBuilder";
+import { getConfig, prettify } from "../common/utils";
+import { IxBuilder } from "../common/ixBuilder";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -28,9 +29,9 @@ async function main() {
 
   console.log(`Deployer: ${deployer.publicKey.toBase58()}`);
 
-  const txBuilder = new TxBuilder();
-  const tx = txBuilder.initialize(
-    deployer,
+  const ixBuilder = new IxBuilder();
+  const initializeIx = await ixBuilder.initializeIx(
+    deployer.publicKey,
     {
       tournamentNonce: parseInt(tournamentNonceStr),
       platformFee: new anchor.BN(platformFeeStr),
@@ -45,10 +46,15 @@ async function main() {
       verifierAddresses: verifiers
     }
   );
-  console.log(`Initialize tx: ${tx}`);
+  const tx = new Transaction().add(initializeIx);
 
-  const config = txBuilder.getConfig();
+  const provider = anchor.AnchorProvider.env();
+  const txSignature = await provider.sendAndConfirm(tx, [deployer]);
+  console.log("Initialize Genome tx:", txSignature);
+
+  const config = await getConfig();
   console.log(`GenomeConfig: ${prettify(config)}`);
+
 }
 
 main()

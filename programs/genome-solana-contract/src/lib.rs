@@ -42,11 +42,7 @@ mod genome_contract {
                 let new_capacity = current_capacity + 1;
 
                 let new_size = 8 + GenomeConfig::INIT_SPACE + (new_capacity * 32);
-                realloc(
-                    config.to_account_info(),
-                    ctx.accounts.admin.to_account_info(),
-                    new_size,
-                )?;
+                realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_size)?;
             }
             config.verifier_addresses.push(verifier_to_add);
         }
@@ -59,11 +55,7 @@ mod genome_contract {
         if ctx.accounts.role_info.role == Role::Verifier {
             let config = &mut ctx.accounts.config;
             let verifier = ctx.accounts.user.key();
-            if let Some(index) = config
-                .verifier_addresses
-                .iter()
-                .position(|&key| key == verifier)
-            {
+            if let Some(index) = config.verifier_addresses.iter().position(|&key| key == verifier) {
                 config.verifier_addresses.remove(index);
             }
         }
@@ -121,7 +113,7 @@ struct GrantRole<'info> {
         init_if_needed,
         payer = admin,
         space = 8 + RoleInfo::INIT_SPACE,
-        seeds = [GENOME_ROOT, ROLE, user.key().as_ref()], 
+        seeds = [GENOME_ROOT, ROLE, user.key().as_ref()],
         bump
     )]
     role_info: Box<Account<'info, RoleInfo>>,

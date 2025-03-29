@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 
-import { airdrop } from "../tests/utils";
+import { airdropAll } from "../common/utils";
 
 async function main(): Promise<void> {
   const [
@@ -21,11 +21,7 @@ async function main(): Promise<void> {
 
   const recipients = [operator, admin, deployer, organizer, verifier1, verifier2];
 
-  await Promise.all(
-    recipients.map(
-      async (keypair) => airdrop(keypair, 10)
-    )
-  );
+  await airdropAll(recipients, 10);
 }
 
 main().catch((err) => {

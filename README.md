@@ -115,8 +115,6 @@ Initialize Genome Program
 
 ```rs
 anchor run initialize -- \
-<path-to-deplyer-keypair> \
-<admin-pubkey> \
 <platformWallet> \
 <tournamentNonce> <platformFee> <minEntryFee> <minSponsorPool> <minTeams> <maxTeams> <falsePrecision> <maxOrganizerFee> \
 [
@@ -127,8 +125,6 @@ anchor run initialize -- \
 
 /* Example:
 anchor run initialize -- \
-keys/deployer.json \
-4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB \
 9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe \
 1 10 10 0 2 20 0.000065 5000 \
 FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
@@ -141,13 +137,13 @@ FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
 Grant:
 
 ```rs
-anchor run grant-role -- <path-to-admin-keypair> <user-pubkey> <role>
-// Example: anchor run grant-role -- keys/admin.json GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7 verifier
+anchor run grant-role -- <user-pubkey> <role>
+// Example: anchor run grant-role -- GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7 verifier
 ```
 
 Revoke:
 
 ```rs
-anchor run revoke-role -- <path-to-admin-keypair> <user-pubkey>
-// Example: anchor run revoke-role -- keys/admin.json GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7
+anchor run revoke-role -- <user-pubkey>
+// Example: anchor run revoke-role -- GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7
 ```

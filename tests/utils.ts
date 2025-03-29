@@ -1,15 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { assert } from "chai";
-
-import { GenomeContract } from "../target/types/genome_contract";
-
-export function getProvider() {
-  const provider = anchor.AnchorProvider.env();
-  anchor.setProvider(provider);
-
-  return provider;
-}
+import { getProvider } from "../common/utils";
 
 export function getKeyPairs(): {
   admin: Keypair,
@@ -49,71 +41,6 @@ export function getKeyPairs(): {
     operator,
     nome
   };
-}
-
-export function getConfigPda(): PublicKey {
-  const genomeProgram = anchor.workspace
-    .GenomeContract as anchor.Program<GenomeContract>;
-  const configConstant = genomeProgram.idl.constants.find(
-    (c: any) => c.name === "config"
-  );
-  if (!configConstant) {
-    throw new Error("Missing config constant in IDL");
-  }
-  const configArray = JSON.parse(configConstant.value);
-  const configBuffer = Buffer.from(configArray);
-  return PublicKey.findProgramAddressSync(
-    [GenomeSeed(), configBuffer],
-    genomeProgram.programId
-  )[0];
-}
-
-export function getUserRolePda(
-  user: any
-): PublicKey {
-  const genomeProgram = anchor.workspace
-    .GenomeContract as anchor.Program<GenomeContract>;
-  const roleConstant = genomeProgram.idl.constants.find(
-    (c: any) => c.name === "role"
-  );
-  if (!roleConstant) {
-    throw new Error("Missing role constant in IDL");
-  }
-  const roleArray = JSON.parse(roleConstant.value);
-  const roleBuffer = Buffer.from(roleArray);
-  const userBuffer = Buffer.from(user);
-  return PublicKey.findProgramAddressSync(
-    [GenomeSeed(), roleBuffer, userBuffer],
-    genomeProgram.programId
-  )[0];
-}
-
-export async function airdrop(address: PublicKey, amount: number) {
-  const provider = getProvider();
-  let txid = await provider.connection.requestAirdrop(
-    address,
-    amount * anchor.web3.LAMPORTS_PER_SOL
-  );
-  let { blockhash, lastValidBlockHeight } =
-    await provider.connection.getLatestBlockhash();
-  await provider.connection.confirmTransaction({
-    signature: txid,
-    blockhash,
-    lastValidBlockHeight,
-  });
-}
-
-function GenomeSeed(): Buffer {
-  const genomeProgram = anchor.workspace
-    .GenomeContract as anchor.Program<GenomeContract>;
-  const genomeRootConstant = genomeProgram.idl.constants.find(
-    (c: any) => c.name === "genomeRoot"
-  );
-  if (!genomeRootConstant) {
-    throw new Error("Missing genomeRoot constant in IDL");
-  }
-  const genomeRootArray = JSON.parse(genomeRootConstant.value);
-  return Buffer.from(genomeRootArray);
 }
 
 export function checkAnchorError(error: any, errMsg: string) {
