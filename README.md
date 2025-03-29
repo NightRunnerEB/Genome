@@ -177,3 +177,20 @@ anchor run grant-role -- <admin-keypair> <user-pubkey> <role>
 
 #Example: anchor run grant-role -- keys/admin.json GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7 verifier
 ```
+
+#### Create Tournament
+
+```sh
+anchor run create-tournament -- \
+<organizer-keypair> \
+<sponsor-publickey> \
+<token-publickey> \
+<organizerFee> <sponsorPool> <entryFee> <teamSize> <minTeams> <maxTeams>
+
+# Example:
+anchor run create-tournament -- \
+keys/organizer.json \
+7NukBTvEvJytba1bjBfTUqeijevxQMkRsmbse894WZMS \
+6F7Tn3YPcArLG6G2FoKGtkPYrwrQqdJeA7SQ3i5Uy1py \
+100 1000 20 10 4 10
+```

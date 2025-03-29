@@ -132,6 +132,117 @@ describe("Genome Solana Singlechain", () => {
     }
   });
 
+  it("Create a Tournament with banned token", async () => {
+    try {
+      await txBuilder.createTournament(organizer, sponsor, assetMint, tournamentDataMock);
+    } catch (error) {
+      checkAnchorError(error, "expected this account to be already initialized");
+    }
+  });
+
+  it("Create a Tournament with approved token", async () => {
+    const minSponsorPool = new anchor.BN(1000);
+    const minEntryPool = new anchor.BN(100);
+    let tx = await txBuilder.approveToken(operator, token, minSponsorPool, minEntryPool);
+
+    const sponsorAtaBefore = await getSponsorAta(sponsorAta);
+    tx = await txBuilder.createTournament(organizer, sponsor, assetMint, tournamentDataMock);
+    console.log("Initialize createTournament tx: ", tx);
+
+    const sponsorAtaAfter = await getSponsorAta(sponsorAta);
+    const configData = await txBuilder.getConfig();
+    const tournamentAccount = await txBuilder.getTournament(
+      configData.tournamentNonce - 1
+    );
+
+    assert.equal(tournamentAccount.id, configData.tournamentNonce - 1);
+    assert.equal(tournamentAccount.sponsorPool.toNumber(), tournamentDataMock.sponsorPool.toNumber());
+    assert.equal(tournamentAccount.organizerFee.toNumber(), tournamentDataMock.organizerFee.toNumber());
+    assert.equal(tournamentAccount.entryFee.toNumber(), tournamentDataMock.entryFee.toNumber());
+    assert.equal(tournamentAccount.organizer.toBase58(), tournamentDataMock.organizer.toBase58());
+    assert.equal(tournamentAccount.assetMint.toBase58(), tournamentDataMock.assetMint.toBase58());
+    assert.equal(tournamentAccount.teamSize, tournamentDataMock.teamSize);
+    assert.equal(tournamentAccount.minTeams, tournamentDataMock.minTeams);
+    assert.equal(tournamentAccount.maxTeams, tournamentDataMock.maxTeams);
+    assert.ok(tournamentAccount.status.new);
+
+    const prizePoolAta = await getPrizePoolAta(assetMint, tournamentAccount.tournamentPda);
+    assert.equal(sponsorAtaBefore.amount - sponsorAtaAfter.amount, prizePoolAta.amount);
+  });
+
+  it("Create a Tournament by a non-organizer", async () => {
+    try {
+      await txBuilder.createTournament(operator, sponsor, assetMint, tournamentDataMock);
+    } catch (error) {
+      checkAnchorError(error, "Invalid role is provided");
+    }
+  });
+
+  it("Invalid organizer fee", async () => {
+    try {
+      await txBuilder.createTournament(organizer, sponsor, assetMint, {
+        ...tournamentDataMock,
+        organizerFee: new anchor.BN(9999999),
+      });
+    } catch (error) {
+      checkAnchorError(error, "Invalid organizer fee");
+    }
+  });
+
+  it("Invalid entry fee", async () => {
+    try {
+      await txBuilder.createTournament(organizer, sponsor, assetMint, {
+        ...tournamentDataMock,
+        entryFee: new anchor.BN(1),
+      });
+    } catch (error) {
+      checkAnchorError(error, "Invalid entry fee");
+    }
+  });
+
+  it("Invalid team limit (minTeams, maxTeams)", async () => {
+    try {
+      await txBuilder.createTournament(organizer, sponsor, assetMint, {
+        ...tournamentDataMock,
+        maxTeams: 100,
+      });
+    } catch (error) {
+      checkAnchorError(error, "Invalid teams count");
+    }
+
+    try {
+      await txBuilder.createTournament(organizer, sponsor, assetMint, {
+        ...tournamentDataMock,
+        minTeams: 0,
+      });
+    } catch (error) {
+      checkAnchorError(error, "Invalid teams count");
+    }
+  });
+
+  it("Invalid prize_pool", async () => {
+    try {
+      await txBuilder.createTournament(organizer, sponsor, assetMint, {
+        ...tournamentDataMock,
+        sponsorPool: new anchor.BN(10),
+      });
+    } catch (error) {
+      checkAnchorError(error, "Invalid sponsor pool");
+    }
+  });
+
+  it("Invalid tournament capacity", async () => {
+    try {
+      await txBuilder.createTournament(organizer, sponsor, assetMint, {
+        ...tournamentDataMock,
+        maxTeams: 100,
+        teamSize: 40,
+      });
+    } catch (error) {
+      checkAnchorError(error, "Max players exceeded(3200)");
+    }
+  });
+
   it("Revoke Role", async () => {
     let tx = await txBuilder.revokeRole(admin, operator);
     console.log("Revoke operator role tx: ", tx);

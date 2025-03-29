@@ -2,16 +2,23 @@
 
 mod data;
 mod error;
-
-use std::mem;
+mod utils;
 
 use anchor_lang::{
     prelude::*,
     solana_program::{program::invoke, system_instruction},
 };
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
+};
 
-use data::{GenomeConfig, Role, RoleInfo, TokenInfo};
+use data::{
+    BloomFilter, GenomeConfig, Role, RoleInfo, TokenInfo, Tournament, TournamentCreated,
+    TournamentData,
+};
 use error::TournamentError;
+use utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params};
 
 declare_id!("G4nqiWUsV9ho8CTBT1SQE5CHQTcAhpy4viPip95MziLk");
 
@@ -20,6 +27,8 @@ const DEPLOYER: Pubkey = pubkey!("HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7")
 
 const GENOME_ROOT: &[u8] = b"genome";
 const CONFIG: &[u8] = b"config";
+const BLOOM: &[u8] = b"bloom";
+const TOURNAMENT: &[u8] = b"tournament";
 const ROLE: &[u8] = b"role";
 const TOKEN: &[u8] = b"token";
 
@@ -87,6 +96,52 @@ mod genome_contract {
     pub fn ban_token(_ctx: Context<BanToken>) -> Result<()> {
         Ok(())
     }
+
+    pub fn create_tournament(
+        ctx: Context<CreateTournament>,
+        tournament_data: TournamentData,
+    ) -> Result<()> {
+        let tournament = &mut ctx.accounts.tournament;
+        validate_params(
+            &tournament_data,
+            &ctx.accounts.config,
+            &ctx.accounts.token_info,
+        )?;
+        initialize_bloom_filter(
+            tournament,
+            &ctx.accounts.config.false_precision,
+            &mut ctx.accounts.bloom_filter,
+        )?;
+        let id = &mut ctx.accounts.config.tournament_nonce;
+        tournament.initialize(*id, tournament_data);
+        *id += 1;
+
+        if tournament.sponsor_pool > 0 {
+            let accounts = TransferChecked {
+                from: ctx.accounts.sponsor_ata.to_account_info(),
+                to: ctx.accounts.prize_pool_ata.to_account_info(),
+                mint: ctx.accounts.mint.to_account_info(),
+                authority: ctx.accounts.organizer.to_account_info(),
+            };
+
+            let cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), accounts);
+            transfer_checked(cpi, tournament.sponsor_pool, ctx.accounts.mint.decimals)?;
+        }
+
+        emit!(TournamentCreated {
+            id: tournament.id,
+            organizer: tournament.organizer,
+            organizer_fee: tournament.organizer_fee,
+            sponsor_pool: tournament.sponsor_pool,
+            entry_fee: tournament.entry_fee,
+            team_size: tournament.team_size,
+            min_teams: tournament.min_teams,
+            max_teams: tournament.max_teams,
+            asset_mint: tournament.asset_mint
+        });
+
+        Ok(())
+    }
 }
 
 fn realloc<'info>(
@@ -123,12 +178,70 @@ pub struct Initialize<'info> {
     #[account(
         init,
         payer = deployer,
-        space = 8 + GenomeConfig::INIT_SPACE + config_params.verifier_addresses.len() * mem ::size_of::<Pubkey>(),
+        space = 8 + GenomeConfig::INIT_SPACE + config_params.verifier_addresses.len() * 32,
         seeds = [GENOME_ROOT, CONFIG],
         bump
     )]
     config: Account<'info, GenomeConfig>,
     system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(tournament_data: TournamentData)]
+pub struct CreateTournament<'info> {
+    #[account(mut)]
+    organizer: Signer<'info>,
+    /// CHECKED
+    sponsor: UncheckedAccount<'info>,
+    #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
+    config: Account<'info, GenomeConfig>,
+    #[account(
+        seeds = [GENOME_ROOT, ROLE, organizer.key().as_ref()],
+        bump,
+        constraint = role_info.role == Role::Organizer @ TournamentError::InvalidRole
+    )]
+    pub role_info: Account<'info, RoleInfo>,
+    #[account(
+        init,
+        payer = organizer,
+        space = 8 + Tournament::INIT_SPACE,
+        seeds = [GENOME_ROOT, TOURNAMENT, config.tournament_nonce.to_le_bytes().as_ref()],
+        bump
+    )]
+    tournament: Account<'info, Tournament>,
+    mint: InterfaceAccount<'info, Mint>,
+    #[account(
+        seeds = [GENOME_ROOT, TOKEN, mint.key().as_ref()],
+        bump,
+    )]
+    pub token_info: Account<'info, TokenInfo>,
+    #[account(
+        init,
+        payer = organizer,
+        associated_token::mint = mint,
+        associated_token::authority = tournament,
+        associated_token::token_program = token_program,
+    )]
+    prize_pool_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    #[account(
+        init_if_needed,
+        payer = organizer,
+        associated_token::mint = mint,
+        associated_token::authority = sponsor,
+        associated_token::token_program = token_program,
+    )]
+    sponsor_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    #[account(
+        init,
+        payer = organizer,
+        space = 8 + calculate_bloom_memory(tournament_data.max_teams * tournament_data.team_size, config.false_precision)?,
+        seeds = [GENOME_ROOT, BLOOM, config.tournament_nonce.to_le_bytes().as_ref()],
+        bump
+    )]
+    bloom_filter: Box<Account<'info, BloomFilter>>,
+    associated_token_program: Program<'info, AssociatedToken>,
+    system_program: Program<'info, System>,
+    token_program: Interface<'info, TokenInterface>,
 }
 
 #[derive(Accounts)]
