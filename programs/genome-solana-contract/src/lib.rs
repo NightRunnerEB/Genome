@@ -96,7 +96,7 @@ struct Initialize<'info> {
     #[account(
         init,
         payer = deployer,
-        space = 8 + GenomeConfig::INIT_SPACE + config_params.verifier_addresses.len() * PUBKEY_BYTES,
+        space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + config_params.verifier_addresses.len() * PUBKEY_BYTES,
         seeds = [GENOME_ROOT, CONFIG],
         bump
     )]
@@ -115,7 +115,7 @@ struct GrantRole<'info> {
     #[account(
         init_if_needed,
         payer = admin,
-        space = 8 + RoleInfo::INIT_SPACE,
+        space = RoleInfo::DISCRIMINATOR.len() + RoleInfo::INIT_SPACE,
         seeds = [GENOME_ROOT, ROLE, user.key().as_ref()],
         bump
     )]
