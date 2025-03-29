@@ -51,6 +51,17 @@ export async function getUserRole(user: PublicKey) {
     return { role: userRole.role };
 }
 
+export async function getTokenInfo(token: PublicKey) {
+    const tokenPda = getTokenPda(token.toBuffer());
+    const tokenInfo = await PROGRAM.account.tokenInfo.fetch(tokenPda);
+    return {
+        assetMint: tokenInfo.assetMint,
+        minSponsorPool: tokenInfo.minSponsorPool,
+        minEntryPool: tokenInfo.minEntryFee,
+    }
+
+}
+
 export async function airdropAll(pubkeys: Array<anchor.web3.PublicKey>, lamports: number): Promise<void> {
     await Promise.all(pubkeys.map((pubkey) => airdrop(pubkey, lamports)));
 }
@@ -103,6 +114,18 @@ function getUserRolePda(
     const userBuffer = Buffer.from(user);
     return PublicKey.findProgramAddressSync(
         [genomeSeed, roleArray, userBuffer],
+        PROGRAM.programId
+    )[0];
+}
+
+function getTokenPda(
+    token: any
+): PublicKey {
+    const genomeSeed = getConstant("genomeRoot");
+    const tokenArray = getConstant("token");
+    const userBuffer = Buffer.from(token);
+    return PublicKey.findProgramAddressSync(
+        [genomeSeed, tokenArray, userBuffer],
         PROGRAM.programId
     )[0];
 }

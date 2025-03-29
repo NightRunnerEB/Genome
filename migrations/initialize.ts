@@ -49,6 +49,8 @@ async function main() {
   const tx = new Transaction().add(initializeIx);
 
   const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
+
   const txSignature = await provider.sendAndConfirm(tx, [deployer]);
   console.log("Initialize Genome tx:", txSignature);
 

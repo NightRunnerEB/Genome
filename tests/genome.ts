@@ -4,13 +4,13 @@ import * as assert from "assert";
 
 import { getKeyPairs, checkAnchorError } from "./utils";
 import { IxBuilder } from "../common/ixBuilder";
-import { airdropAll, getConfig, getUserRole } from "../common/utils";
+import { airdropAll, getConfig, getTokenInfo, getUserRole } from "../common/utils";
 
 describe("Genome Solana Singlechain", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
   const provider = anchor.AnchorProvider.env();
 
-  const { admin, deployer, platform, organizer, nome, verifier1, verifier2, operator } = getKeyPairs();
+  const { admin, deployer, platform, token, organizer, nome, verifier1, verifier2, operator } = getKeyPairs();
   const ixBuilder = new IxBuilder();
 
   const configData = {
@@ -100,6 +100,32 @@ describe("Genome Solana Singlechain", () => {
       await provider.sendAndConfirm(tx, [operator]);
     } catch (error) {
       checkAnchorError(error, "Not Allowed");
+    }
+  });
+
+  it("Approve Token", async () => {
+    const minSponsorPool = new anchor.BN(1000);
+    const minEntryPool = new anchor.BN(100);
+    let approveTokenIx = await ixBuilder.approveTokenIx(operator.publicKey, token.publicKey, minSponsorPool, minEntryPool);
+    const tx = new Transaction().add(approveTokenIx);
+    const txSig = await provider.sendAndConfirm(tx, [operator]);
+    console.log("Approve Token tx: ", txSig);
+
+    const tokenInfo = await getTokenInfo(token.publicKey);
+    assert.deepEqual(tokenInfo.assetMint, token.publicKey);
+    assert.equal(tokenInfo.minEntryPool.toNumber(), minEntryPool.toNumber());
+    assert.equal(tokenInfo.minSponsorPool.toNumber(), minSponsorPool.toNumber());
+  });
+
+  it("Ban Token", async () => {
+    const banTokenIx = await ixBuilder.banTokenIx(operator.publicKey, token.publicKey);
+    const tx = new Transaction().add(banTokenIx);
+    const txSig = await provider.sendAndConfirm(tx, [operator]);
+    console.log("Ban Token tx: ", txSig);
+    try {
+      await getTokenInfo(token.publicKey);
+    } catch (error) {
+      checkAnchorError(error, "Account does not exist");
     }
   });
 

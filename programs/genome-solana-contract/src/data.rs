@@ -19,6 +19,14 @@ pub(crate) struct GenomeConfig {
 
 #[account]
 #[derive(InitSpace)]
+pub(crate) struct TokenInfo {
+    pub(crate) asset_mint: Pubkey,
+    pub(crate) min_sponsor_pool: u64,
+    pub(crate) min_entry_fee: u64,
+}
+
+#[account]
+#[derive(InitSpace)]
 pub(crate) struct RoleInfo {
     pub(crate) role: Role,
 }

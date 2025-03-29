@@ -32,4 +32,27 @@ export class IxBuilder {
             .accounts({ admin, user })
             .instruction();
     }
+
+    async approveTokenIx(
+        operator: PublicKey,
+        assetMint: PublicKey,
+        minSponsorPool: any,
+        minEntryFee: any
+    ): Promise<TransactionInstruction> {
+        return this.program.methods
+            .approveToken(minSponsorPool, minEntryFee)
+            .accounts({ operator, assetMint })
+            .instruction();
+    }
+
+    async banTokenIx(
+        operator: PublicKey,
+        assetMint: PublicKey,
+    ): Promise<TransactionInstruction> {
+        return this.program.methods
+            .banToken()
+            .accounts({ operator, assetMint })
+            .instruction();
+    }
+
 }

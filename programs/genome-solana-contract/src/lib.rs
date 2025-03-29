@@ -8,7 +8,7 @@ use anchor_lang::{
     solana_program::{program::invoke, pubkey::PUBKEY_BYTES, system_instruction},
 };
 
-use data::{GenomeConfig, Role, RoleInfo};
+use data::{GenomeConfig, Role, RoleInfo, TokenInfo};
 use error::TournamentError;
 
 declare_id!("E8Pa2NFPqUCqZ9PUweRxyMzHcHphyGWwzx7VhDc5dPyv");
@@ -22,6 +22,8 @@ const GENOME_ROOT: &[u8] = b"genome";
 const CONFIG: &[u8] = b"config";
 #[constant]
 const ROLE: &[u8] = b"role";
+#[constant]
+const TOKEN: &[u8] = b"token";
 
 #[program]
 mod genome_contract {
@@ -62,6 +64,25 @@ mod genome_contract {
                 config.verifier_addresses.remove(index);
             }
         }
+        Ok(())
+    }
+
+    #[instruction(discriminator = b"aprvtokn")]
+    pub fn approve_token(
+        ctx: Context<ApproveToken>,
+        min_sponsor_pool: u64,
+        min_entry_fee: u64,
+    ) -> Result<()> {
+        let info = &mut ctx.accounts.token_info;
+        info.asset_mint = ctx.accounts.asset_mint.key();
+        info.min_sponsor_pool = min_sponsor_pool;
+        info.min_entry_fee = min_entry_fee;
+
+        Ok(())
+    }
+
+    #[instruction(discriminator = b"bantokn")]
+    pub fn ban_token(_ctx: Context<BanToken>) -> Result<()> {
         Ok(())
     }
 }
@@ -138,4 +159,48 @@ struct RevokeRole<'info> {
         close = admin
     )]
     role_info: Account<'info, RoleInfo>,
+}
+
+#[derive(Accounts)]
+pub struct ApproveToken<'info> {
+    #[account(mut)]
+    operator: Signer<'info>,
+    /// CHECKED
+    pub asset_mint: AccountInfo<'info>,
+    #[account(
+        seeds = [GENOME_ROOT, ROLE, operator.key().as_ref()],
+        bump,
+        constraint = role_info.role == Role::Operator @ TournamentError::NotAllowed
+    )]
+    role_info: Account<'info, RoleInfo>,
+    #[account(
+        init_if_needed,
+        payer = operator,
+        space = TokenInfo::DISCRIMINATOR.len() + TokenInfo::INIT_SPACE,
+        seeds = [GENOME_ROOT, TOKEN, asset_mint.key().as_ref()],
+        bump
+    )]
+    token_info: Account<'info, TokenInfo>,
+    system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct BanToken<'info> {
+    #[account(mut)]
+    operator: Signer<'info>,
+    /// CHECKED
+    asset_mint: AccountInfo<'info>,
+    #[account(
+        seeds = [GENOME_ROOT, ROLE, operator.key().as_ref()],
+        bump,
+        constraint = role_info.role == Role::Operator @ TournamentError::NotAllowed
+    )]
+    role_info: Account<'info, RoleInfo>,
+    #[account(
+        mut,
+        seeds = [GENOME_ROOT, TOKEN, asset_mint.key().as_ref()],
+        bump,
+        close = operator
+    )]
+    token_info: Account<'info, TokenInfo>,
 }

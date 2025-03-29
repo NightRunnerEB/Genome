@@ -82,6 +82,13 @@ NOTE: Do NOT use any keypairs which were published in gitlab for production
 
 Before testing the program, you need to create tokens and set up all accounts. This can be done in the following way:
 
+Creating a Tournament token:
+
+```rs
+spl-token create-token -u <network> <path-to-token-keypair>
+// Example: spl-token create-token -u localhost keys/token.json
+```
+
 Creating a Genome token:
 
 ```rs
@@ -146,4 +153,20 @@ Revoke:
 ```rs
 anchor run revoke-role -- <user-pubkey>
 // Example: anchor run revoke-role -- GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7
+```
+
+#### Approve/Ban Token
+
+Approve:
+
+```rs
+anchor run approve-token -- <path-to-operator-keypair> <asset-mint> <minSponsorPool> <minEntryFee>
+// Example: anchor run approve-token -- keys/operator.json 6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne 1000 100
+```
+
+Ban:
+
+```rs
+anchor run ban-token -- <path-to-operator-keypair> <asset-mint>
+// Example: anchor run ban-token -- keys/operator.json 6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne
 ```
