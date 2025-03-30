@@ -3,6 +3,7 @@ import { getKeypairFromFile } from "@solana-developers/node-helpers";
 import { Transaction } from "@solana/web3.js";
 
 import { IxBuilder } from "../common/ixBuilder";
+import { getProvider } from "../common/utils";
 
 async function main() {
   const adminKeypairPath = process.argv[2];
@@ -30,10 +31,10 @@ async function main() {
   console.log(`user: ${user.toBase58()}`);
   console.log(`role: ${JSON.stringify(role)}`);
 
+  const provider = getProvider();
   const ixBuilder = new IxBuilder();
   const grantRoleIx = await ixBuilder.grantRoleIx(admin.publicKey, user, role);
   const tx = new Transaction().add(grantRoleIx);
-  const provider = anchor.AnchorProvider.env();
   const txSignature = await provider.sendAndConfirm(tx, [admin]);
   console.log("Grant role tx signature:", txSignature);
 }
