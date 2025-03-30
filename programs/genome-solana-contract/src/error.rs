@@ -4,4 +4,14 @@ use anchor_lang::prelude::*;
 pub(crate) enum TournamentError {
     #[msg("Not Allowed")]
     NotAllowed,
+    #[msg("Max players exceeded")]
+    MaxPlayersExceeded,
+    #[msg("Invalid entry fee")]
+    InvalidEntryFee,
+    #[msg("Invalid sponsor pool")]
+    InvalidSponsorPool,
+    #[msg("Invalid teams count")]
+    InvalidTeamsCount,
+    #[msg("Invalid organizer fee")]
+    InvalidOrginizerFee,
 }

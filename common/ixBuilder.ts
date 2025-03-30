@@ -1,6 +1,8 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { GenomeContract } from "../target/types/genome_contract";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+
 import { getProgram } from "./utils";
 
 const PROGRAM = getProgram();
@@ -16,6 +18,23 @@ export class IxBuilder {
         return this.program.methods
             .initialize(configData)
             .accounts({ deployer })
+            .instruction();
+    }
+
+    async createTournamentIx(
+        organizer: PublicKey,
+        sponsor: PublicKey,
+        mint: PublicKey,
+        params: any
+    ): Promise<TransactionInstruction> {
+        return this.program.methods
+            .createTournament(params)
+            .accounts({
+                organizer: organizer,
+                sponsor: sponsor,
+                mint: mint,
+                tokenProgram: TOKEN_PROGRAM_ID,
+            })
             .instruction();
     }
 
@@ -54,5 +73,4 @@ export class IxBuilder {
             .accounts({ operator, assetMint })
             .instruction();
     }
-
 }

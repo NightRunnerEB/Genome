@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 import { Transaction } from "@solana/web3.js";
 import { IxBuilder } from "../common/ixBuilder";
+import { getProvider } from "../common/utils";
 
 async function main() {
     const operatorKeypairPath = process.argv[2];
@@ -13,9 +14,7 @@ async function main() {
     console.log(`operator: ${operator.publicKey.toBase58()}`);
     console.log(`assetMint: ${assetMint.toBase58()}`);
 
-    anchor.setProvider(anchor.AnchorProvider.env());
-    const provider = anchor.AnchorProvider.env();
-
+    const provider = getProvider();
     const ixBuilder = new IxBuilder();
     const banTokenIx = await ixBuilder.banTokenIx(operator.publicKey, assetMint);
     const tx = new Transaction().add(banTokenIx);

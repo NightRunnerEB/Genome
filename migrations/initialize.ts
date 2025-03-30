@@ -2,7 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Transaction } from "@solana/web3.js";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 
-import { getConfig, prettify } from "../common/utils";
+import { getConfig, getProvider, prettify } from "../common/utils";
 import { IxBuilder } from "../common/ixBuilder";
 
 async function main() {
@@ -19,6 +19,7 @@ async function main() {
     maxTeamsStr,
     falsePrecisionStr,
     maxOrganizerFeeStr,
+    consensusRateStr,
     ...verifiersAddresses
   ] = args;
 
@@ -29,6 +30,7 @@ async function main() {
 
   console.log(`Deployer: ${deployer.publicKey.toBase58()}`);
 
+  const provider = getProvider();
   const ixBuilder = new IxBuilder();
   const initializeIx = await ixBuilder.initializeIx(
     deployer.publicKey,
@@ -43,14 +45,11 @@ async function main() {
       maxOrganizerFee: new anchor.BN(maxOrganizerFeeStr),
       admin: admin,
       platformWallet,
+      consensusRate: parseFloat(consensusRateStr),
       verifierAddresses: verifiers
     }
   );
   const tx = new Transaction().add(initializeIx);
-
-  const provider = anchor.AnchorProvider.env();
-  anchor.setProvider(provider);
-
   const txSignature = await provider.sendAndConfirm(tx, [deployer]);
   console.log("Initialize Genome tx:", txSignature);
 

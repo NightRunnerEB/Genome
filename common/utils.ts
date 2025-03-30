@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 
 import { GenomeContract } from "../target/types/genome_contract";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, getAccount, getAssociatedTokenAddress, Account as SplTokenAccount, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 const PROGRAM = getProgram();
 
@@ -45,21 +46,37 @@ export async function getConfig() {
     };
 }
 
-export async function getUserRole(user: PublicKey) {
-    const userRolePda = getUserRolePda(user.toBuffer());
-    const userRole = await PROGRAM.account.roleInfo.fetch(userRolePda);
-    return { role: userRole.role };
+export async function getSponsorAta(
+    sponsorPoolAta: PublicKey
+): Promise<SplTokenAccount> {
+    const provider = getProvider();
+    return getAccount(
+        provider.connection,
+        sponsorPoolAta,
+        undefined,
+        TOKEN_PROGRAM_ID
+    );
 }
 
-export async function getTokenInfo(token: PublicKey) {
-    const tokenPda = getTokenPda(token.toBuffer());
-    const tokenInfo = await PROGRAM.account.tokenInfo.fetch(tokenPda);
-    return {
-        assetMint: tokenInfo.assetMint,
-        minSponsorPool: tokenInfo.minSponsorPool,
-        minEntryPool: tokenInfo.minEntryFee,
-    }
+export async function getPrizePoolAta(
+    mint: PublicKey,
+    authority: PublicKey
+): Promise<SplTokenAccount> {
+    const prizePoolAta = await getAssociatedTokenAddress(
+        mint,
+        authority,
+        true,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+    );
 
+    const provider = getProvider();
+    return getAccount(
+        provider.connection,
+        prizePoolAta,
+        undefined,
+        TOKEN_PROGRAM_ID
+    );
 }
 
 export async function airdropAll(pubkeys: Array<anchor.web3.PublicKey>, lamports: number): Promise<void> {
@@ -74,12 +91,6 @@ export function getProvider() {
     const provider = anchor.AnchorProvider.env();
     anchor.setProvider(provider);
     return provider;
-}
-
-function getConstant(name: string): Uint8Array {
-    return JSON.parse(
-        PROGRAM.idl.constants.find((obj) => obj.name == name)!.value
-    );
 }
 
 async function airdrop(address: PublicKey, amount: number) {
@@ -97,6 +108,35 @@ async function airdrop(address: PublicKey, amount: number) {
     });
 }
 
+export async function getUserRole(user: any) {
+    const userRolePda = getUserRolePda(user);
+    const userRole = await PROGRAM.account.roleInfo.fetch(userRolePda);
+    return { role: userRole.role };
+}
+
+export async function getTokenInfo(token: any) {
+    const tokenPda = getTokenPda(token);
+    const tokenInfo = await PROGRAM.account.tokenInfo.fetch(tokenPda);
+    return {
+        assetMint: tokenInfo.assetMint,
+        minSponsorPool: tokenInfo.minSponsorPool,
+        minEntryPool: tokenInfo.minEntryFee,
+    }
+
+}
+
+export async function getTournament(id: any) {
+    const tournamentPda = getTournamentPda(id);
+    const tournament = await PROGRAM.account.tournament.fetch(tournamentPda);
+    return {
+        id: tournament.id,
+        teamCount: tournament.teamCount,
+        tournamentData: tournament.tournamentData,
+        status: tournament.status,
+        tournamentPda: tournamentPda,
+    };
+}
+
 function getConfigPda(): PublicKey {
     const genomeSeed = getConstant("genomeRoot");
     const configArray = getConstant("config");
@@ -106,14 +146,24 @@ function getConfigPda(): PublicKey {
     )[0];
 }
 
+function getTournamentPda(id: any): PublicKey {
+    const genomeSeed = getConstant("genomeRoot");
+    const tournamentArray = getConstant("tournament");
+    const idBuffer = Buffer.alloc(4);
+    idBuffer.writeUInt32LE(id, 0);
+    return PublicKey.findProgramAddressSync(
+        [genomeSeed, tournamentArray, idBuffer],
+        PROGRAM.programId
+    )[0];
+}
+
 function getUserRolePda(
     user: any
 ): PublicKey {
     const genomeSeed = getConstant("genomeRoot");
     const roleArray = getConstant("role");
-    const userBuffer = Buffer.from(user);
     return PublicKey.findProgramAddressSync(
-        [genomeSeed, roleArray, userBuffer],
+        [genomeSeed, roleArray, user.toBuffer()],
         PROGRAM.programId
     )[0];
 }
@@ -123,9 +173,14 @@ function getTokenPda(
 ): PublicKey {
     const genomeSeed = getConstant("genomeRoot");
     const tokenArray = getConstant("token");
-    const userBuffer = Buffer.from(token);
     return PublicKey.findProgramAddressSync(
-        [genomeSeed, tokenArray, userBuffer],
+        [genomeSeed, tokenArray, token.toBuffer()],
         PROGRAM.programId
     )[0];
+}
+
+function getConstant(name: string): Uint8Array {
+    return JSON.parse(
+        PROGRAM.idl.constants.find((obj) => obj.name == name)!.value
+    );
 }

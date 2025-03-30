@@ -1,49 +1,139 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Keypair } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
+import {
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  createAssociatedTokenAccount,
+  approveChecked,
+  mintTo,
+  createMint,
+} from "@solana/spl-token";
 import { assert } from "chai";
+import { getProvider } from "../common/utils";
+
 
 export function getKeyPairs(): {
   admin: Keypair,
   organizer: Keypair,
-  platform: Keypair,
+  sponsor: Keypair,
   deployer: Keypair,
+  token: Keypair,
+  platform: Keypair,
   verifier1: Keypair,
   verifier2: Keypair,
   operator: Keypair,
-  nome: Keypair,
-  token: Keypair
+  nome: Keypair
 } {
   const adminSecret = Uint8Array.from(require("../keys/admin.json"));
   const organizerSecret = Uint8Array.from(require("../keys/organizer.json"));
-  const platformSecret = Uint8Array.from(require("../keys/platform_wallet.json"));
+  const sponsorSecret = Uint8Array.from(require("../keys/sponsor.json"));
   const deployerSecret = Uint8Array.from(require("../keys/deployer.json"));
+  const tokenSecret = Uint8Array.from(require("../keys/token.json"));
+  const platformSecret = Uint8Array.from(require("../keys/platform_wallet.json"));
   const verifier1Secret = Uint8Array.from(require("../keys/verifier1.json"));
   const verifier2Secret = Uint8Array.from(require("../keys/verifier2.json"));
   const operatorSecret = Uint8Array.from(require("../keys/operator.json"));
   const nomeSecret = Uint8Array.from(require("../keys/nome.json"));
-  const tokenSecret = Uint8Array.from(require("../keys/token.json"));
 
   const admin = Keypair.fromSecretKey(adminSecret);
   const organizer = Keypair.fromSecretKey(organizerSecret);
-  const platform = Keypair.fromSecretKey(platformSecret);
+  const sponsor = Keypair.fromSecretKey(sponsorSecret);
   const deployer = Keypair.fromSecretKey(deployerSecret);
+  const token = Keypair.fromSecretKey(tokenSecret);
+  const platform = Keypair.fromSecretKey(platformSecret);
   const verifier1 = Keypair.fromSecretKey(verifier1Secret);
   const verifier2 = Keypair.fromSecretKey(verifier2Secret);
   const operator = Keypair.fromSecretKey(operatorSecret);
   const nome = Keypair.fromSecretKey(nomeSecret);
-  const token = Keypair.fromSecretKey(tokenSecret);
 
   return {
     admin,
     organizer,
-    platform,
+    sponsor,
     deployer,
+    token,
+    platform,
     verifier1,
     verifier2,
     operator,
-    nome,
-    token
+    nome
   };
+}
+
+export async function createGenomeMint(): Promise<{
+  assetMint: PublicKey;
+  sponsorAta: PublicKey;
+}> {
+  let { admin, sponsor, organizer, token } = getKeyPairs();
+
+  const connection = getProvider().connection;
+
+  const assetMint = await createMint(
+    connection,
+    admin,
+    admin.publicKey,
+    null,
+    9,
+    token,
+    undefined,
+    TOKEN_PROGRAM_ID
+  );
+  console.log("Genome mint:", assetMint.toBase58());
+
+  const sponsorAta = await createAssociatedTokenAccount(
+    connection,
+    admin,
+    token.publicKey,
+    sponsor.publicKey,
+    undefined,
+    TOKEN_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  console.log("Sponsor genome ata:", sponsorAta.toBase58());
+
+  const reward_pool_ata = await createAssociatedTokenAccount(
+    connection,
+    admin,
+    token.publicKey,
+    organizer.publicKey,
+    undefined,
+    TOKEN_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  console.log("Tournament pool ata:", reward_pool_ata.toBase58());
+
+  let tx = await mintTo(
+    connection,
+    admin,
+    token.publicKey,
+    sponsorAta,
+    admin,
+    1000000000000000,
+    [],
+    {},
+    TOKEN_PROGRAM_ID
+  );
+  console.log("Mint to sponsor tx:", tx);
+
+  return { assetMint, sponsorAta };
+}
+
+export async function delegateAccount(sponsorAta: PublicKey): Promise<String> {
+  let provider = getProvider();
+  let { admin, sponsor, organizer, token } = getKeyPairs();
+  return approveChecked(
+    provider.connection,
+    admin,
+    token.publicKey,
+    sponsorAta,
+    organizer.publicKey,
+    sponsor,
+    1e8,
+    9,
+    [],
+    {},
+    TOKEN_PROGRAM_ID
+  );
 }
 
 export function checkAnchorError(error: any, errMsg: string) {

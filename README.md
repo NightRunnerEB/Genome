@@ -99,7 +99,12 @@ spl-token create-token -u <network> <path-to-nome-keypair>
 Setting up wallets:
 
 ```rs
-anchor run airdrop -- \
+anchor run setup-wallets -- \
+  <path-to-authority-keypair> \
+  <path-to-payer-keypair> \
+  <path-to-sponsor-keypair> \
+  <assetMint> \
+  <nomeMint> \
   <deployer-pubkey> \
   <verifier1-pubkey> \
   <verifier2-pubkey> \
@@ -108,14 +113,19 @@ anchor run airdrop -- \
   <organizer-pubkey>
 
 /* Example: 
-  anchor run airdrop -- \
+  anchor run setup-wallets -- \
+  /Users/evgeniybukharev/.config/solana/id.json \
+  /Users/evgeniybukharev/.config/solana/id.json \
+  keys/sponsor.json \
+  6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne \
+  Btzv5f2fxbF5FKSjbEhCxkusvdxridtRGwKWkp1C77dJ \
   HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7 \
   FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
   9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL \
   6Agqn5YD4fAncrnB9VrvwTfaufw2Tx1pphGca79uWruT \
   4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB \
   ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz
-*/
+  */
 ```
 
 Initialize Genome Program
@@ -133,7 +143,7 @@ anchor run initialize -- \
 /* Example:
 anchor run initialize -- \
 9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe \
-1 10 10 0 2 20 0.000065 5000 \
+1 10 10 0 2 20 0.000065 5000 66 \
 FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
 9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL
 */
@@ -169,4 +179,22 @@ Ban:
 ```rs
 anchor run ban-token -- <path-to-operator-keypair> <asset-mint>
 // Example: anchor run ban-token -- keys/operator.json 6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne
+```
+
+#### Create Tournament
+
+```rs
+anchor run create-tournament -- \
+<organizer-keypair> \
+<sponsor-publickey> \
+<token-publickey> \
+<organizerFee> <sponsorPool> <entryFee> <teamSize> <minTeams> <maxTeams>
+
+/* Example:
+anchor run create-tournament -- \
+keys/organizer.json \
+5RuyKrrBCD6URTNQEujCJn9WEB6ssypaAfGWzbU5tGtX \
+6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne \
+100 1000 20 10 4 10
+*/
 ```
