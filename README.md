@@ -138,7 +138,11 @@ Grant:
 
 ```rs
 anchor run grant-role -- <user-pubkey> <role>
-// Example: anchor run grant-role -- GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7 verifier
+/* Example: 
+    anchor run grant-role -- GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7 verifier
+    anchor run grant-role -- 6Agqn5YD4fAncrnB9VrvwTfaufw2Tx1pphGca79uWruT operator
+    anchor run grant-role -- ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz organizer
+*/
 ```
 
 Revoke:
