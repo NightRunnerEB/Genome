@@ -143,7 +143,7 @@ anchor run initialize -- \
 /* Example:
 anchor run initialize -- \
 9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe \
-1 10 10 0 2 20 0.000065 5000 66 \
+1 10 10 0 2 20 0.000065 5000 66.0 \
 FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
 9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL
 */
@@ -155,7 +155,11 @@ Grant:
 
 ```rs
 anchor run grant-role -- <user-pubkey> <role>
-// Example: anchor run grant-role -- GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7 verifier
+/* Example: 
+  anchor run grant-role -- GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7 verifier
+  anchor run grant-role -- 6Agqn5YD4fAncrnB9VrvwTfaufw2Tx1pphGca79uWruT operator
+  anchor run grant-role -- ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz organizer
+*/
 ```
 
 Revoke:
@@ -171,7 +175,7 @@ Approve:
 
 ```rs
 anchor run approve-token -- <path-to-operator-keypair> <asset-mint> <minSponsorPool> <minEntryFee>
-// Example: anchor run approve-token -- keys/operator.json 6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne 1000 100
+// Example: anchor run approve-token -- keys/operator.json 6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne 1000 10
 ```
 
 Ban:
@@ -195,6 +199,6 @@ anchor run create-tournament -- \
 keys/organizer.json \
 5RuyKrrBCD6URTNQEujCJn9WEB6ssypaAfGWzbU5tGtX \
 6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne \
-100 1000 20 10 4 10
+100 1000 200 10 4 10
 */
 ```

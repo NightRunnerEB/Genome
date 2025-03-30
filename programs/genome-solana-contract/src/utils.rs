@@ -31,18 +31,12 @@ pub fn validate_params(
     config: &GenomeConfig,
     token_info: &TokenInfo,
 ) -> Result<()> {
-    require!(
-        params.organizer_fee <= config.max_organizer_fee,
-        TournamentError::InvalidOrginizerFee
-    );
+    require!(params.organizer_fee <= config.max_organizer_fee, TournamentError::InvalidOrginizerFee);
     require!(params.entry_fee >= token_info.min_entry_fee, TournamentError::InvalidEntryFee);
+    require!(params.sponsor_pool >= token_info.min_sponsor_pool, TournamentError::InvalidSponsorPool);
     require!(
         params.min_teams >= config.min_teams && params.max_teams <= config.max_teams,
         TournamentError::InvalidTeamsCount
-    );
-    require!(
-        params.sponsor_pool >= token_info.min_sponsor_pool,
-        TournamentError::InvalidSponsorPool
     );
     Ok(())
 }

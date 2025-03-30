@@ -20,4 +20,6 @@ initialize = "yarn run ts-node migrations/initialize.ts keys/deployer.json 4LZ7r
 setup-wallets = "yarn run ts-node migrations/setup-wallets.ts"
 grant-role = "yarn run ts-node migrations/grant_role.ts keys/admin.json"
 revoke-role = "yarn run ts-node migrations/revoke_role.ts keys/admin.json"
-create-tournament = "yarn run ts-node migrations/create-tournament.ts"
+approve-token = "yarn run ts-node migrations/approve_token.ts"
+ban-token = "yarn run ts-node migrations/ban_token.ts"
+create-tournament = "yarn run ts-node migrations/create_tournament.ts"
