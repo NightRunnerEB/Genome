@@ -4,14 +4,13 @@ import * as assert from "assert";
 
 import { getKeyPairs, checkAnchorError } from "./utils";
 import { IxBuilder } from "../common/ixBuilder";
-import { airdropAll, getConfig, getTokenInfo, getUserRole } from "../common/utils";
+import { airdropAll, getConfig, getProvider, getTokenInfo, getUserRole } from "../common/utils";
 
 describe("Genome Solana Singlechain", () => {
-  anchor.setProvider(anchor.AnchorProvider.env());
-  const provider = anchor.AnchorProvider.env();
+  const provider = getProvider();
+  const ixBuilder = new IxBuilder();
 
   const { admin, deployer, platform, token, organizer, nome, verifier1, verifier2, operator } = getKeyPairs();
-  const ixBuilder = new IxBuilder();
 
   const configData = {
     admin: admin.publicKey,

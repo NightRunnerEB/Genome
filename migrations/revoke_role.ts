@@ -3,6 +3,7 @@ import { Transaction } from "@solana/web3.js";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 
 import { IxBuilder } from "../common/ixBuilder";
+import { getProvider } from "../common/utils";
 
 async function main() {
     const adminKeypairPath = process.argv[2];
@@ -17,9 +18,7 @@ async function main() {
     const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, user);
     const tx = new Transaction().add(revokeIx);
 
-    const provider = anchor.AnchorProvider.env();
-    anchor.setProvider(provider);
-
+    const provider = getProvider();
     const txSignature = await provider.sendAndConfirm(tx, [admin]);
     console.log("Revoke role tx:", txSignature);
 }
