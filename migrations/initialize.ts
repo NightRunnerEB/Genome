@@ -13,12 +13,11 @@ async function main() {
     platformWalletStr,
     tournamentNonceStr,
     platformFeeStr,
-    minEntryFeeStr,
-    minSponsorPoolStr,
     minTeamsStr,
     maxTeamsStr,
     falsePrecisionStr,
     maxOrganizerFeeStr,
+    consensusRateStr,
     ...verifiersAddresses
   ] = args;
 
@@ -35,11 +34,10 @@ async function main() {
     {
       tournamentNonce: parseInt(tournamentNonceStr),
       platformFee: new anchor.BN(platformFeeStr),
-      minEntryFee: new anchor.BN(minEntryFeeStr),
-      minSponsorPool: new anchor.BN(minSponsorPoolStr),
       minTeams: parseInt(minTeamsStr),
       maxTeams: parseInt(maxTeamsStr),
       falsePrecision: parseFloat(falsePrecisionStr),
+      consensusRate: parseFloat(consensusRateStr),
       maxOrganizerFee: new anchor.BN(maxOrganizerFeeStr),
       admin: admin,
       platformWallet,
