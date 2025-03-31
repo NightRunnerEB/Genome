@@ -106,8 +106,7 @@ struct Initialize<'info> {
 struct GrantRole<'info> {
     #[account(signer, mut, address = config.admin @ TournamentError::NotAllowed)]
     admin: Signer<'info>,
-    /// CHECK:
-    user: AccountInfo<'info>,
+    user: SystemAccount<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     config: Box<Account<'info, GenomeConfig>>,
     #[account(
@@ -125,8 +124,7 @@ struct GrantRole<'info> {
 struct RevokeRole<'info> {
     #[account(mut, signer, address = config.admin @ TournamentError::NotAllowed)]
     admin: Signer<'info>,
-    /// CHECK:
-    user: AccountInfo<'info>,
+    user: SystemAccount<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     config: Account<'info, GenomeConfig>,
     #[account(
