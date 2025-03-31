@@ -4,7 +4,7 @@ import * as assert from "assert";
 
 import { getKeyPairs, checkAnchorError } from "./utils";
 import { IxBuilder } from "../common/ixBuilder";
-import { airdropAll, getConfig, getProgram, getProvider, getUserRole } from "../common/utils";
+import { airdropAll, getConfig, getProvider, getUserRole } from "../common/utils";
 import { GenomeContract } from "../target/types/genome_contract";
 
 describe("Genome Solana Singlechain", () => {
