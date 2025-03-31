@@ -10,7 +10,6 @@ async function main() {
   const [
     deployerPath,
     adminAddress,
-    platformWalletStr,
     tournamentNonceStr,
     platformFeeStr,
     minTeamsStr,
@@ -18,12 +17,15 @@ async function main() {
     falsePrecisionStr,
     maxOrganizerFeeStr,
     consensusRateStr,
+    platformWalletAddress,
+    nomeMintAddress,
     ...verifiersAddresses
   ] = args;
 
   const deployer = await getKeypairFromFile(deployerPath);
   const admin = new PublicKey(adminAddress);
-  const platformWallet = new PublicKey(platformWalletStr);
+  const nomeMint = new PublicKey(nomeMintAddress);
+  const platformWallet = new PublicKey(platformWalletAddress);
   const verifiers = verifiersAddresses.map((v) => new PublicKey(v));
 
   console.log(`Deployer: ${deployer.publicKey.toBase58()}`);
@@ -37,8 +39,9 @@ async function main() {
     falsePrecision: parseFloat(falsePrecisionStr),
     consensusRate: parseFloat(consensusRateStr),
     maxOrganizerFee: new BN(maxOrganizerFeeStr),
-    admin: admin,
+    admin,
     platformWallet,
+    nomeMint,
     verifierAddresses: verifiers,
   });
 

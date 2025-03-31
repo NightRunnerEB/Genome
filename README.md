@@ -101,8 +101,9 @@ Initialize Genome Program
 
 ```rs
 anchor run initialize -- \
-<platformWallet> \
 <tournamentNonce> <platformFee> <minTeams> <maxTeams> <falsePrecision> <maxOrganizerFee> \
+<platformWallet-pubkey> \
+<nome-pubkey> \
 [
  <verifier1>, 
  <verifier2>, 
@@ -111,8 +112,9 @@ anchor run initialize -- \
 
 /* Example:
     anchor run initialize -- \
-    9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe \
     1 10 2 20 0.000065 5000 66.0 \
+    9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe \
+    Btzv5f2fxbF5FKSjbEhCxkusvdxridtRGwKWkp1C77dJ \
     FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
     9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL
 */
