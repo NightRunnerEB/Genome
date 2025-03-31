@@ -2,9 +2,9 @@ import { BN, IdlTypes } from "@coral-xyz/anchor";
 import { Transaction, PublicKey } from "@solana/web3.js";
 import * as assert from "assert";
 
-import { getKeyPairs, checkAnchorError } from "./utils";
+import { getKeyPairs, getUserRole, checkAnchorError} from "./utils";
 import { IxBuilder } from "../common/ixBuilder";
-import { airdropAll, getConfig, getProvider, getUserRole } from "../common/utils";
+import { airdropAll, getConfig, getProvider } from "../common/utils";
 import { GenomeContract } from "../target/types/genome_contract";
 
 describe("Genome Solana Singlechain", () => {

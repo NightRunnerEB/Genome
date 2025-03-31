@@ -45,12 +45,6 @@ export async function getConfig() {
     };
 }
 
-export async function getUserRole(user: PublicKey) {
-    const rolePda = getGenomePda([getConstant("role"), user.toBuffer()]);
-    const userRole = await PROGRAM.account.roleInfo.fetch(rolePda);
-    return { role: userRole.role };
-}
-
 export function getGenomePda(seeds: Array<Buffer | Uint8Array>): PublicKey {
     return PublicKey.findProgramAddressSync([getConstant("genomeRoot"), ...seeds], PROGRAM.programId)[0];
 }
@@ -78,15 +72,15 @@ export function getConstant(name: string): Uint8Array {
 export async function buildAndSendTx(
     ixs: TransactionInstruction[],
     signers: Keypair[]
-  ): Promise<string> {
+): Promise<string> {
     const program = getProgram();
     const tx = new Transaction().add(...ixs);
     return await sendAndConfirmTransaction(
-      program.provider.connection,
-      tx,
-      signers
+        program.provider.connection,
+        tx,
+        signers
     );
-  }  
+}
 
 async function airdrop(address: PublicKey, amount: number) {
     const provider = getProvider();
