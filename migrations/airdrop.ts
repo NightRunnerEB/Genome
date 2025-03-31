@@ -5,9 +5,6 @@ import { airdropAll } from "../common/utils";
 
 async function main(): Promise<void> {
   const keysFolder = process.argv[2];
-  if (!keysFolder) {
-    throw new Error("Please provide the path to the keys folder as the first argument.");
-  }
 
   const files = fs.readdirSync(keysFolder);
   const keyFiles = files.filter((f) => f.endsWith(".json"));
