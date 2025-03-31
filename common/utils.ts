@@ -52,6 +52,10 @@ export async function getUserRole(user: PublicKey) {
     return { role: userRole.role };
 }
 
+export function getPda(seeds: Array<Buffer | Uint8Array>): PublicKey {
+    return PublicKey.findProgramAddressSync([getConstant("genomeRoot"), ...seeds], PROGRAM.programId)[0];
+}
+
 export async function airdropAll(pubkeys: Array<anchor.web3.PublicKey>, lamports: number): Promise<void> {
     await Promise.all(pubkeys.map((pubkey) => airdrop(pubkey, lamports)));
 }
@@ -66,7 +70,7 @@ export function getProvider() {
     return provider;
 }
 
-function getConstant(name: string): Uint8Array {
+export function getConstant(name: string): Uint8Array {
     return JSON.parse(
         PROGRAM.idl.constants.find((obj) => obj.name == name)!.value
     );
@@ -85,8 +89,4 @@ async function airdrop(address: PublicKey, amount: number) {
         blockhash,
         lastValidBlockHeight,
     });
-}
-
-function getPda(seeds: Array<Buffer | Uint8Array>): PublicKey {
-    return PublicKey.findProgramAddressSync([getConstant("genomeRoot"), ...seeds], PROGRAM.programId)[0];
 }
