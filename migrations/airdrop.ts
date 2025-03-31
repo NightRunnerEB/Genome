@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as anchor from "@coral-xyz/anchor";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 import { airdropAll } from "../common/utils";
 
