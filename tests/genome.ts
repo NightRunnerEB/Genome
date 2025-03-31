@@ -1,10 +1,11 @@
-import { BN } from "@coral-xyz/anchor";
+import { BN, IdlTypes } from "@coral-xyz/anchor";
 import { Transaction, PublicKey } from "@solana/web3.js";
 import * as assert from "assert";
 
 import { getKeyPairs, checkAnchorError } from "./utils";
 import { IxBuilder } from "../common/ixBuilder";
-import { airdropAll, getConfig, getProvider, getUserRole } from "../common/utils";
+import { airdropAll, getConfig, getProgram, getProvider, getUserRole } from "../common/utils";
+import { GenomeContract } from "../target/types/genome_contract";
 
 describe("Genome Solana Singlechain", () => {
   const provider = getProvider();
@@ -61,7 +62,8 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Grant role", async () => {
-    const roles: [PublicKey, { operator?: {}; verifier?: {} }][] = [
+    type Role = IdlTypes<GenomeContract>['role'];
+    const roles: [PublicKey, Role][] = [
       [operator.publicKey, { operator: {} }],
       [organizer.publicKey, { verifier: {} }],
       [verifier2.publicKey, { verifier: {} }],
