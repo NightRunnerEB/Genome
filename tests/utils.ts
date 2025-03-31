@@ -4,18 +4,20 @@ import { assert } from "chai";
 import { getConstant, getGenomePda, getProgram } from "../common/utils";
 
 export function getKeyPairs(): {
-  admin: Keypair,
-  organizer: Keypair,
-  platform: Keypair,
-  deployer: Keypair,
-  verifier1: Keypair,
-  verifier2: Keypair,
-  operator: Keypair,
-  nome: Keypair
+  admin: Keypair;
+  organizer: Keypair;
+  platform: Keypair;
+  deployer: Keypair;
+  verifier1: Keypair;
+  verifier2: Keypair;
+  operator: Keypair;
+  nome: Keypair;
 } {
   const adminSecret = Uint8Array.from(require("../keys/admin.json"));
   const organizerSecret = Uint8Array.from(require("../keys/organizer.json"));
-  const platformSecret = Uint8Array.from(require("../keys/platform_wallet.json"));
+  const platformSecret = Uint8Array.from(
+    require("../keys/platform_wallet.json")
+  );
   const deployerSecret = Uint8Array.from(require("../keys/deployer.json"));
   const verifier1Secret = Uint8Array.from(require("../keys/verifier1.json"));
   const verifier2Secret = Uint8Array.from(require("../keys/verifier2.json"));
@@ -39,7 +41,7 @@ export function getKeyPairs(): {
     verifier1,
     verifier2,
     operator,
-    nome
+    nome,
   };
 }
 

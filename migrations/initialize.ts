@@ -24,33 +24,29 @@ async function main() {
   const deployer = await getKeypairFromFile(deployerPath);
   const admin = new PublicKey(adminAddress);
   const platformWallet = new PublicKey(platformWalletStr);
-  const verifiers = verifiersAddresses.map(v => new PublicKey(v));
+  const verifiers = verifiersAddresses.map((v) => new PublicKey(v));
 
   console.log(`Deployer: ${deployer.publicKey.toBase58()}`);
 
   const ixBuilder = new IxBuilder();
-  const initializeIx = await ixBuilder.initializeIx(
-    deployer.publicKey,
-    {
-      tournamentNonce: parseInt(tournamentNonceStr),
-      platformFee: new BN(platformFeeStr),
-      minTeams: parseInt(minTeamsStr),
-      maxTeams: parseInt(maxTeamsStr),
-      falsePrecision: parseFloat(falsePrecisionStr),
-      consensusRate: parseFloat(consensusRateStr),
-      maxOrganizerFee: new BN(maxOrganizerFeeStr),
-      admin: admin,
-      platformWallet,
-      verifierAddresses: verifiers
-    }
-  );
+  const initializeIx = await ixBuilder.initializeIx(deployer.publicKey, {
+    tournamentNonce: parseInt(tournamentNonceStr),
+    platformFee: new BN(platformFeeStr),
+    minTeams: parseInt(minTeamsStr),
+    maxTeams: parseInt(maxTeamsStr),
+    falsePrecision: parseFloat(falsePrecisionStr),
+    consensusRate: parseFloat(consensusRateStr),
+    maxOrganizerFee: new BN(maxOrganizerFeeStr),
+    admin: admin,
+    platformWallet,
+    verifierAddresses: verifiers,
+  });
 
   const txSignature = await buildAndSendTx([initializeIx], [deployer]);
   console.log("Initialize Genome tx:", txSignature);
 
   const config = await getConfig();
   console.log(`GenomeConfig: ${prettify(config)}`);
-
 }
 
 main()

@@ -9,7 +9,16 @@ import { GenomeContract } from "../target/types/genome_contract";
 
 describe("Genome Solana Singlechain", () => {
   const ixBuilder = new IxBuilder();
-  const { admin, deployer, platform, organizer, nome, verifier1, verifier2, operator } = getKeyPairs();
+  const {
+    admin,
+    deployer,
+    platform,
+    organizer,
+    nome,
+    verifier1,
+    verifier2,
+    operator,
+  } = getKeyPairs();
 
   const configData = {
     admin: admin.publicKey,
@@ -48,8 +57,14 @@ describe("Genome Solana Singlechain", () => {
     assert.deepEqual(config.admin, configData.admin);
     assert.deepEqual(config.platformWallet, configData.platformWallet);
     assert.equal(config.falsePrecision, configData.falsePrecision);
-    assert.equal(config.platformFee.toNumber(), configData.platformFee.toNumber());
-    assert.equal(config.maxOrganizerFee.toNumber(), configData.maxOrganizerFee.toNumber());
+    assert.equal(
+      config.platformFee.toNumber(),
+      configData.platformFee.toNumber()
+    );
+    assert.equal(
+      config.maxOrganizerFee.toNumber(),
+      configData.maxOrganizerFee.toNumber()
+    );
     assert.equal(config.tournamentNonce, configData.tournamentNonce);
     assert.equal(config.minTeams, configData.minTeams);
     assert.equal(config.maxTeams, configData.maxTeams);
@@ -67,7 +82,11 @@ describe("Genome Solana Singlechain", () => {
     ];
 
     for (const [userPubkey, roleParams] of roles) {
-      const grantIx = await ixBuilder.grantRoleIx(admin.publicKey, userPubkey, roleParams);
+      const grantIx = await ixBuilder.grantRoleIx(
+        admin.publicKey,
+        userPubkey,
+        roleParams
+      );
       const txSig = await buildAndSendTx([grantIx], [admin]);
       console.log("Grant role tx signature:", txSig);
 
@@ -75,12 +94,19 @@ describe("Genome Solana Singlechain", () => {
       assert.deepEqual(userRole, roleParams);
     }
     const config = await getConfig();
-    assert.deepEqual(config.verifierAddresses, [verifier1.publicKey, verifier2.publicKey]);
+    assert.deepEqual(config.verifierAddresses, [
+      verifier1.publicKey,
+      verifier2.publicKey,
+    ]);
   });
 
   it("Grant Role by non-admin", async () => {
     try {
-      const grantRoleIx = await ixBuilder.grantRoleIx(operator.publicKey, organizer.publicKey, { organizer: {} });
+      const grantRoleIx = await ixBuilder.grantRoleIx(
+        operator.publicKey,
+        organizer.publicKey,
+        { organizer: {} }
+      );
       await buildAndSendTx([grantRoleIx], [operator]);
       throw new Error("Expected error was not thrown");
     } catch (error) {
@@ -89,7 +115,11 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Revoke Role", async () => {
-    for (const role of [operator.publicKey, verifier2.publicKey, organizer.publicKey]) {
+    for (const role of [
+      operator.publicKey,
+      verifier2.publicKey,
+      organizer.publicKey,
+    ]) {
       const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, role);
       const txSig = await buildAndSendTx([revokeIx], [admin]);
       console.log("Revoke role tx:", txSig);

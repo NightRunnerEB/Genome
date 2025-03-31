@@ -1,5 +1,18 @@
-import { Program, BN, workspace, AnchorProvider, setProvider } from "@coral-xyz/anchor";
-import { Keypair, PublicKey, sendAndConfirmTransaction, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import {
+  Program,
+  BN,
+  workspace,
+  AnchorProvider,
+  setProvider,
+} from "@coral-xyz/anchor";
+import {
+  Keypair,
+  PublicKey,
+  sendAndConfirmTransaction,
+  Transaction,
+  TransactionInstruction,
+  LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
 
 import { GenomeContract } from "../target/types/genome_contract";
 
@@ -11,88 +24,94 @@ const PROGRAM = getProgram();
  * @returns Well formatted string
  */
 export function prettify(obj: any): string {
-    let prettyObj: any = {};
+  let prettyObj: any = {};
 
-    for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            const targetType = typeof obj[key];
-            if (obj[key] instanceof BN) {
-                prettyObj[key] = obj[key].toNumber();
-            } else {
-                prettyObj[key] = obj[key];
-            }
-        }
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const targetType = typeof obj[key];
+      if (obj[key] instanceof BN) {
+        prettyObj[key] = obj[key].toNumber();
+      } else {
+        prettyObj[key] = obj[key];
+      }
     }
+  }
 
-    return JSON.stringify(prettyObj, null, 2);
+  return JSON.stringify(prettyObj, null, 2);
 }
 
 export async function getConfig() {
-    const configPda = getGenomePda([getConstant("config")]);
-    const config = await PROGRAM.account.genomeConfig.fetch(configPda);
-    return {
-        admin: config.admin,
-        verifierAddresses: config.verifierAddresses,
-        consensusRate: config.consensusRate,
-        tournamentNonce: config.tournamentNonce,
-        platformFee: config.platformFee,
-        platformWallet: config.platformWallet,
-        falsePrecision: config.falsePrecision,
-        minTeams: config.minTeams,
-        maxTeams: config.maxTeams,
-        maxOrganizerFee: config.maxOrganizerFee,
-        nomeMint: config.nomeMint,
-    };
+  const configPda = getGenomePda([getConstant("config")]);
+  const config = await PROGRAM.account.genomeConfig.fetch(configPda);
+  return {
+    admin: config.admin,
+    verifierAddresses: config.verifierAddresses,
+    consensusRate: config.consensusRate,
+    tournamentNonce: config.tournamentNonce,
+    platformFee: config.platformFee,
+    platformWallet: config.platformWallet,
+    falsePrecision: config.falsePrecision,
+    minTeams: config.minTeams,
+    maxTeams: config.maxTeams,
+    maxOrganizerFee: config.maxOrganizerFee,
+    nomeMint: config.nomeMint,
+  };
 }
 
 export function getGenomePda(seeds: Array<Buffer | Uint8Array>): PublicKey {
-    return PublicKey.findProgramAddressSync([getConstant("genomeRoot"), ...seeds], PROGRAM.programId)[0];
+  return PublicKey.findProgramAddressSync(
+    [getConstant("genomeRoot"), ...seeds],
+    PROGRAM.programId
+  )[0];
 }
 
-export async function airdropAll(pubkeys: Array<PublicKey>, lamports: number): Promise<void> {
-    await Promise.all(pubkeys.map((pubkey) => airdrop(pubkey, lamports)));
+export async function airdropAll(
+  pubkeys: Array<PublicKey>,
+  lamports: number
+): Promise<void> {
+  await Promise.all(pubkeys.map((pubkey) => airdrop(pubkey, lamports)));
 }
 
 export function getProgram() {
-    return workspace.GenomeContract as Program<GenomeContract>;
+  return workspace.GenomeContract as Program<GenomeContract>;
 }
 
 export function getProvider() {
-    const provider = AnchorProvider.env();
-    setProvider(provider);
-    return provider;
+  const provider = AnchorProvider.env();
+  setProvider(provider);
+  return provider;
 }
 
 export function getConstant(name: string): Uint8Array {
-    return JSON.parse(
-        PROGRAM.idl.constants.find((obj) => obj.name == name)!.value
-    );
+  return JSON.parse(
+    PROGRAM.idl.constants.find((obj) => obj.name == name)!.value
+  );
 }
 
 export async function buildAndSendTx(
-    ixs: TransactionInstruction[],
-    signers: Keypair[]
+  ixs: TransactionInstruction[],
+  signers: Keypair[]
 ): Promise<string> {
-    const program = getProgram();
-    const tx = new Transaction().add(...ixs);
-    return await sendAndConfirmTransaction(
-        program.provider.connection,
-        tx,
-        signers
-    );
+  const program = getProgram();
+  const tx = new Transaction().add(...ixs);
+  return await sendAndConfirmTransaction(
+    program.provider.connection,
+    tx,
+    signers
+  );
 }
 
 async function airdrop(address: PublicKey, amount: number) {
-    const provider = getProvider();
-    let txid = await provider.connection.requestAirdrop(
-        address,
-        amount * LAMPORTS_PER_SOL
-    );
-    let { blockhash, lastValidBlockHeight } =
-        await provider.connection.getLatestBlockhash();
-    await provider.connection.confirmTransaction({
-        signature: txid,
-        blockhash,
-        lastValidBlockHeight,
-    });
+  const provider = getProvider();
+  let txid = await provider.connection.requestAirdrop(
+    address,
+    amount * LAMPORTS_PER_SOL
+  );
+  let { blockhash, lastValidBlockHeight } =
+    await provider.connection.getLatestBlockhash();
+  await provider.connection.confirmTransaction({
+    signature: txid,
+    blockhash,
+    lastValidBlockHeight,
+  });
 }
