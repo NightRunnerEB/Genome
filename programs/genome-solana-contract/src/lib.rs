@@ -103,10 +103,8 @@ fn realloc<'info>(
 
 fn system_transfer<'a>(from: AccountInfo<'a>, to: AccountInfo<'a>, amount: u64) -> Result<()> {
     let ix = system_instruction::transfer(from.key, to.key, amount);
-    invoke(&ix, &[from.clone(), to.clone()]).map_err(|err| {
-        msg!("Transfer failed: {:?}", err);
-        err.into()
-    })
+    invoke(&ix, &[from.clone(), to.clone()])?;
+    Ok(())
 }
 
 #[derive(Accounts)]
@@ -129,8 +127,7 @@ struct Initialize<'info> {
 struct GrantRole<'info> {
     #[account(signer, mut, address = config.admin @ TournamentError::NotAllowed)]
     admin: Signer<'info>,
-    /// CHECK:
-    user: AccountInfo<'info>,
+    user: SystemAccount<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     config: Box<Account<'info, GenomeConfig>>,
     #[account(
@@ -148,8 +145,7 @@ struct GrantRole<'info> {
 struct RevokeRole<'info> {
     #[account(mut, signer, address = config.admin @ TournamentError::NotAllowed)]
     admin: Signer<'info>,
-    /// CHECK:
-    user: AccountInfo<'info>,
+    user: SystemAccount<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     config: Account<'info, GenomeConfig>,
     #[account(
@@ -165,8 +161,7 @@ struct RevokeRole<'info> {
 pub struct ApproveToken<'info> {
     #[account(mut)]
     operator: Signer<'info>,
-    /// CHECKED
-    pub asset_mint: AccountInfo<'info>,
+    pub asset_mint: SystemAccount<'info>,
     #[account(
         seeds = [GENOME_ROOT, ROLE, operator.key().as_ref()],
         bump,
@@ -188,8 +183,7 @@ pub struct ApproveToken<'info> {
 pub struct BanToken<'info> {
     #[account(mut)]
     operator: Signer<'info>,
-    /// CHECKED
-    asset_mint: AccountInfo<'info>,
+    asset_mint: SystemAccount<'info>,
     #[account(
         seeds = [GENOME_ROOT, ROLE, operator.key().as_ref()],
         bump,

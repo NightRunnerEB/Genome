@@ -1,5 +1,5 @@
-import * as anchor from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { Program, BN, workspace, AnchorProvider, setProvider } from "@coral-xyz/anchor";
+import { Keypair, PublicKey, sendAndConfirmTransaction, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 import { GenomeContract } from "../target/types/genome_contract";
 
@@ -16,7 +16,7 @@ export function prettify(obj: any): string {
     for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
             const targetType = typeof obj[key];
-            if (obj[key] instanceof anchor.BN) {
+            if (obj[key] instanceof BN) {
                 prettyObj[key] = obj[key].toNumber();
             } else {
                 prettyObj[key] = obj[key];
@@ -28,7 +28,7 @@ export function prettify(obj: any): string {
 }
 
 export async function getConfig() {
-    const configPda = getConfigPda();
+    const configPda = getGenomePda([getConstant("config")]);
     const config = await PROGRAM.account.genomeConfig.fetch(configPda);
     return {
         admin: config.admin,
@@ -45,14 +45,8 @@ export async function getConfig() {
     };
 }
 
-export async function getUserRole(user: PublicKey) {
-    const userRolePda = getUserRolePda(user.toBuffer());
-    const userRole = await PROGRAM.account.roleInfo.fetch(userRolePda);
-    return { role: userRole.role };
-}
-
 export async function getTokenInfo(token: PublicKey) {
-    const tokenPda = getTokenPda(token.toBuffer());
+    const tokenPda = getGenomePda([getConstant("token"), token.toBuffer()]);
     const tokenInfo = await PROGRAM.account.tokenInfo.fetch(tokenPda);
     return {
         assetMint: tokenInfo.assetMint,
@@ -62,23 +56,40 @@ export async function getTokenInfo(token: PublicKey) {
 
 }
 
-export async function airdropAll(pubkeys: Array<anchor.web3.PublicKey>, lamports: number): Promise<void> {
+export function getGenomePda(seeds: Array<Buffer | Uint8Array>): PublicKey {
+    return PublicKey.findProgramAddressSync([getConstant("genomeRoot"), ...seeds], PROGRAM.programId)[0];
+}
+
+export async function airdropAll(pubkeys: Array<PublicKey>, lamports: number): Promise<void> {
     await Promise.all(pubkeys.map((pubkey) => airdrop(pubkey, lamports)));
 }
 
 export function getProgram() {
-    return anchor.workspace.GenomeContract as anchor.Program<GenomeContract>;
+    return workspace.GenomeContract as Program<GenomeContract>;
 }
 
 export function getProvider() {
-    const provider = anchor.AnchorProvider.env();
-    anchor.setProvider(provider);
+    const provider = AnchorProvider.env();
+    setProvider(provider);
     return provider;
 }
 
-function getConstant(name: string): Uint8Array {
+export function getConstant(name: string): Uint8Array {
     return JSON.parse(
         PROGRAM.idl.constants.find((obj) => obj.name == name)!.value
+    );
+}
+
+export async function buildAndSendTx(
+    ixs: TransactionInstruction[],
+    signers: Keypair[]
+): Promise<string> {
+    const program = getProgram();
+    const tx = new Transaction().add(...ixs);
+    return await sendAndConfirmTransaction(
+        program.provider.connection,
+        tx,
+        signers
     );
 }
 
@@ -86,7 +97,7 @@ async function airdrop(address: PublicKey, amount: number) {
     const provider = getProvider();
     let txid = await provider.connection.requestAirdrop(
         address,
-        amount * anchor.web3.LAMPORTS_PER_SOL
+        amount * LAMPORTS_PER_SOL
     );
     let { blockhash, lastValidBlockHeight } =
         await provider.connection.getLatestBlockhash();
@@ -95,37 +106,4 @@ async function airdrop(address: PublicKey, amount: number) {
         blockhash,
         lastValidBlockHeight,
     });
-}
-
-function getConfigPda(): PublicKey {
-    const genomeSeed = getConstant("genomeRoot");
-    const configArray = getConstant("config");
-    return PublicKey.findProgramAddressSync(
-        [genomeSeed, configArray],
-        PROGRAM.programId
-    )[0];
-}
-
-function getUserRolePda(
-    user: any
-): PublicKey {
-    const genomeSeed = getConstant("genomeRoot");
-    const roleArray = getConstant("role");
-    const userBuffer = Buffer.from(user);
-    return PublicKey.findProgramAddressSync(
-        [genomeSeed, roleArray, userBuffer],
-        PROGRAM.programId
-    )[0];
-}
-
-function getTokenPda(
-    token: any
-): PublicKey {
-    const genomeSeed = getConstant("genomeRoot");
-    const tokenArray = getConstant("token");
-    const userBuffer = Buffer.from(token);
-    return PublicKey.findProgramAddressSync(
-        [genomeSeed, tokenArray, userBuffer],
-        PROGRAM.programId
-    )[0];
 }

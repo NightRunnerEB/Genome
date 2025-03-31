@@ -1,6 +1,7 @@
-import * as anchor from "@coral-xyz/anchor";
-import { Keypair } from "@solana/web3.js";
+import { AnchorError } from "@coral-xyz/anchor";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import { assert } from "chai";
+import { getConstant, getGenomePda, getProgram } from "../common/utils";
 
 export function getKeyPairs(): {
   admin: Keypair,
@@ -46,9 +47,16 @@ export function getKeyPairs(): {
   };
 }
 
+export async function getUserRole(user: PublicKey) {
+  const program = getProgram();
+  const rolePda = getGenomePda([getConstant("role"), user.toBuffer()]);
+  const userRole = await program.account.roleInfo.fetch(rolePda);
+  return userRole.role;
+}
+
 export function checkAnchorError(error: any, errMsg: string) {
   let errorMessage: string;
-  if (error instanceof anchor.AnchorError) {
+  if (error instanceof AnchorError) {
     errorMessage = error.error.errorMessage;
   } else {
     errorMessage = error.message;
