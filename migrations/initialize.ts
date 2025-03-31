@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 
-import { buildAndSendTx, getConfig, getProvider, prettify } from "../common/utils";
+import { buildAndSendTx, getConfig, prettify } from "../common/utils";
 import { IxBuilder } from "../common/ixBuilder";
 
 async function main() {
