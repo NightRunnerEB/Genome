@@ -61,13 +61,24 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Grant Operator Role", async () => {
-    const grantOpIx = await ixBuilder.grantRoleIx(admin.publicKey, operator.publicKey, { operator: {} });
-    const tx = new Transaction().add(grantOpIx);
-    const txSig = await provider.sendAndConfirm(tx, [admin]);
-    console.log("Grant operator role tx:", txSig);
-
-    const userRole = await getUserRole(operator.publicKey);
-    assert.ok(userRole.role.operator);
+    const roles: [anchor.web3.PublicKey, { operator?: {}; verifier?: {} }][] = [
+      [operator.publicKey, { operator: {} }],
+      [organizer.publicKey, { verifier: {} }],
+    ];
+    
+    for (const [userPubkey, roleParams] of roles) {
+      const grantIx = await ixBuilder.grantRoleIx(admin.publicKey, userPubkey, roleParams);
+      const tx = new Transaction().add(grantIx);
+      const txSig = await provider.sendAndConfirm(tx, [admin]);
+      console.log("Grant role tx signature:", txSig);
+    
+      const userRole = await getUserRole(userPubkey);
+      if ("operator" in roleParams) {
+        assert.ok(userRole.role.operator);
+      } else if ("verifier" in roleParams) {
+        assert.ok(userRole.role.verifier);
+      }
+    }    
   });
 
   it("Add new Verifier", async () => {
@@ -103,24 +114,16 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Revoke Role", async () => {
-    let revokeOpIx = await ixBuilder.revokeRoleIx(admin.publicKey, operator.publicKey);
-    let tx = new Transaction().add(revokeOpIx);
-    let txSig = await provider.sendAndConfirm(tx, [admin]);
-    console.log("Revoke operator role tx:", txSig);
-    try {
-      await getUserRole(operator.publicKey);
-    } catch (error) {
-      checkAnchorError(error, "Account does not exist");
-    }
-
-    let revokeVerIx = await ixBuilder.revokeRoleIx(admin.publicKey, verifier2.publicKey);
-    tx = new Transaction().add(revokeVerIx);
-    txSig = await provider.sendAndConfirm(tx, [admin]);
-    console.log("Revoke verifier role tx:", txSig);
-    try {
-      await getUserRole(verifier2.publicKey);
-    } catch (error) {
-      checkAnchorError(error, "Account does not exist");
+    for (const role of [operator.publicKey, verifier2.publicKey, organizer.publicKey]) {
+      const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, role);
+      const tx = new Transaction().add(revokeIx);
+      const txSig = await provider.sendAndConfirm(tx, [admin]);
+      console.log("Revoke role tx:", txSig);
+      try {
+        await getUserRole(role);
+      } catch (error) {
+        checkAnchorError(error, "Account does not exist");
+      }
     }
     const config = await getConfig();
     assert.ok(config.verifierAddresses.map(pk => pk.toString()).includes(verifier1.publicKey.toString()));
