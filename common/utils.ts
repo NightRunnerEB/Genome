@@ -2,7 +2,6 @@ import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 
 import { GenomeContract } from "../target/types/genome_contract";
-import { get } from "http";
 
 const PROGRAM = getProgram();
 
@@ -29,7 +28,7 @@ export function prettify(obj: any): string {
 }
 
 export async function getConfig() {
-    const configPda = getPda([getConstant("config")]);
+    const configPda = getGenomePda([getConstant("config")]);
     const config = await PROGRAM.account.genomeConfig.fetch(configPda);
     return {
         admin: config.admin,
@@ -47,12 +46,12 @@ export async function getConfig() {
 }
 
 export async function getUserRole(user: PublicKey) {
-    const rolePda = getPda([getConstant("role"), user.toBuffer()]);
+    const rolePda = getGenomePda([getConstant("role"), user.toBuffer()]);
     const userRole = await PROGRAM.account.roleInfo.fetch(rolePda);
     return { role: userRole.role };
 }
 
-export function getPda(seeds: Array<Buffer | Uint8Array>): PublicKey {
+export function getGenomePda(seeds: Array<Buffer | Uint8Array>): PublicKey {
     return PublicKey.findProgramAddressSync([getConstant("genomeRoot"), ...seeds], PROGRAM.programId)[0];
 }
 
