@@ -60,10 +60,11 @@ describe("Genome Solana Singlechain", () => {
     assert.deepEqual(config.verifierAddresses, configData.verifierAddresses);
   });
 
-  it("Grant Operator Role", async () => {
+  it("Grant role", async () => {
     const roles: [anchor.web3.PublicKey, { operator?: {}; verifier?: {} }][] = [
       [operator.publicKey, { operator: {} }],
       [organizer.publicKey, { verifier: {} }],
+      [verifier2.publicKey, { verifier: {} }],
     ];
 
     for (const [userPubkey, roleParams] of roles) {
@@ -71,32 +72,12 @@ describe("Genome Solana Singlechain", () => {
       const tx = new Transaction().add(grantIx);
       const txSig = await provider.sendAndConfirm(tx, [admin]);
       console.log("Grant role tx signature:", txSig);
-    
+
       const userRole = await getUserRole(userPubkey);
       assert.deepEqual(userRole.role, roleParams);
-    }    
-  });
-
-  it("Add new Verifier", async () => {
-    const grantVerIx = await ixBuilder.grantRoleIx(admin.publicKey, verifier2.publicKey, { verifier: {} });
-    const tx = new Transaction().add(grantVerIx);
-    const txSig = await provider.sendAndConfirm(tx, [admin]);
-    console.log("Add new Verifier tx:", txSig);
-
+    }
     const config = await getConfig();
-    const userRole = await getUserRole(verifier2.publicKey);
-    assert.ok(userRole.role.verifier);
     assert.ok(config.verifierAddresses.map(pk => pk.toString()).includes(verifier2.publicKey.toString()));
-  });
-
-  it("Grant Organizer Role", async () => {
-    const grantOrgIx = await ixBuilder.grantRoleIx(admin.publicKey, organizer.publicKey, { organizer: {} });
-    const tx = new Transaction().add(grantOrgIx);
-    const txSig = await provider.sendAndConfirm(tx, [admin]);
-    console.log("Grant organizer role tx:", txSig);
-
-    const userRole = await getUserRole(organizer.publicKey);
-    assert.ok(userRole.role.organizer);
   });
 
   it("Grant Role by non-admin", async () => {
