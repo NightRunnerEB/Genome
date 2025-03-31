@@ -1,16 +1,14 @@
 import { BN, IdlTypes } from "@coral-xyz/anchor";
-import { Transaction, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import * as assert from "assert";
 
-import { getKeyPairs, getUserRole, checkAnchorError} from "./utils";
+import { getKeyPairs, getUserRole, checkAnchorError } from "./utils";
 import { IxBuilder } from "../common/ixBuilder";
-import { airdropAll, getConfig, getProvider } from "../common/utils";
+import { airdropAll, getConfig, buildAndSendTx } from "../common/utils";
 import { GenomeContract } from "../target/types/genome_contract";
 
 describe("Genome Solana Singlechain", () => {
-  const provider = getProvider();
   const ixBuilder = new IxBuilder();
-
   const { admin, deployer, platform, organizer, nome, verifier1, verifier2, operator } = getKeyPairs();
 
   const configData = {
@@ -24,7 +22,7 @@ describe("Genome Solana Singlechain", () => {
     falsePrecision: 0.000065,
     maxOrganizerFee: new BN(5000),
     consensusRate: 66.0,
-    verifierAddresses: [verifier1.publicKey]
+    verifierAddresses: [verifier1.publicKey],
   };
 
   before(async () => {
@@ -35,7 +33,7 @@ describe("Genome Solana Singlechain", () => {
         organizer.publicKey,
         operator.publicKey,
         verifier1.publicKey,
-        verifier2.publicKey
+        verifier2.publicKey,
       ],
       10
     );
@@ -43,8 +41,7 @@ describe("Genome Solana Singlechain", () => {
 
   it("Initialize Genome Solana", async () => {
     const initIx = await ixBuilder.initializeIx(deployer.publicKey, configData);
-    const tx = new Transaction().add(initIx);
-    const initTxSig = await provider.sendAndConfirm(tx, [deployer]);
+    const initTxSig = await buildAndSendTx([initIx], [deployer]);
     console.log("Initialize Genome tx:", initTxSig);
 
     const config = await getConfig();
@@ -62,7 +59,7 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Grant role", async () => {
-    type Role = IdlTypes<GenomeContract>['role'];
+    type Role = IdlTypes<GenomeContract>["role"];
     const roles: [PublicKey, Role][] = [
       [operator.publicKey, { operator: {} }],
       [organizer.publicKey, { organizer: {} }],
@@ -71,8 +68,7 @@ describe("Genome Solana Singlechain", () => {
 
     for (const [userPubkey, roleParams] of roles) {
       const grantIx = await ixBuilder.grantRoleIx(admin.publicKey, userPubkey, roleParams);
-      const tx = new Transaction().add(grantIx);
-      const txSig = await provider.sendAndConfirm(tx, [admin]);
+      const txSig = await buildAndSendTx([grantIx], [admin]);
       console.log("Grant role tx signature:", txSig);
 
       const userRole = await getUserRole(userPubkey);
@@ -85,8 +81,8 @@ describe("Genome Solana Singlechain", () => {
   it("Grant Role by non-admin", async () => {
     try {
       const grantRoleIx = await ixBuilder.grantRoleIx(operator.publicKey, organizer.publicKey, { organizer: {} });
-      const tx = new Transaction().add(grantRoleIx);
-      await provider.sendAndConfirm(tx, [operator]);
+      await buildAndSendTx([grantRoleIx], [operator]);
+      throw new Error("Expected error was not thrown");
     } catch (error) {
       checkAnchorError(error, "Not Allowed");
     }
@@ -95,11 +91,11 @@ describe("Genome Solana Singlechain", () => {
   it("Revoke Role", async () => {
     for (const role of [operator.publicKey, verifier2.publicKey, organizer.publicKey]) {
       const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, role);
-      const tx = new Transaction().add(revokeIx);
-      const txSig = await provider.sendAndConfirm(tx, [admin]);
+      const txSig = await buildAndSendTx([revokeIx], [admin]);
       console.log("Revoke role tx:", txSig);
       try {
         await getUserRole(role);
+        throw new Error("Expected error was not thrown");
       } catch (error) {
         checkAnchorError(error, "Account does not exist");
       }
