@@ -65,7 +65,7 @@ describe("Genome Solana Singlechain", () => {
     type Role = IdlTypes<GenomeContract>['role'];
     const roles: [PublicKey, Role][] = [
       [operator.publicKey, { operator: {} }],
-      [organizer.publicKey, { verifier: {} }],
+      [organizer.publicKey, { organizer: {} }],
       [verifier2.publicKey, { verifier: {} }],
     ];
 
@@ -79,7 +79,7 @@ describe("Genome Solana Singlechain", () => {
       assert.deepEqual(userRole.role, roleParams);
     }
     const config = await getConfig();
-    assert.ok(config.verifierAddresses.map(pk => pk.toString()).includes(verifier2.publicKey.toString()));
+    assert.deepEqual(config.verifierAddresses, [verifier1.publicKey, verifier2.publicKey]);
   });
 
   it("Grant Role by non-admin", async () => {
@@ -105,7 +105,6 @@ describe("Genome Solana Singlechain", () => {
       }
     }
     const config = await getConfig();
-    assert.ok(config.verifierAddresses.map(pk => pk.toString()).includes(verifier1.publicKey.toString()));
-    assert.ok(!config.verifierAddresses.map(pk => pk.toString()).includes(verifier2.publicKey.toString()));
+    assert.deepEqual(config.verifierAddresses, [verifier1.publicKey]);
   });
 });
