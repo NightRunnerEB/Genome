@@ -1,4 +1,4 @@
-import * as anchor from "@coral-xyz/anchor";
+import { AnchorError } from "@coral-xyz/anchor";
 import { Keypair } from "@solana/web3.js";
 import { assert } from "chai";
 
@@ -44,7 +44,7 @@ export function getKeyPairs(): {
 
 export function checkAnchorError(error: any, errMsg: string) {
   let errorMessage: string;
-  if (error instanceof anchor.AnchorError) {
+  if (error instanceof AnchorError) {
     errorMessage = error.error.errorMessage;
   } else {
     errorMessage = error.message;

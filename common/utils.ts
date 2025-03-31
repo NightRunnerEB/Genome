@@ -1,5 +1,5 @@
-import * as anchor from "@coral-xyz/anchor";
-import { Keypair, PublicKey, sendAndConfirmTransaction, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Program, BN, workspace, AnchorProvider, setProvider } from "@coral-xyz/anchor";
+import { Keypair, PublicKey, sendAndConfirmTransaction, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 import { GenomeContract } from "../target/types/genome_contract";
 
@@ -16,7 +16,7 @@ export function prettify(obj: any): string {
     for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
             const targetType = typeof obj[key];
-            if (obj[key] instanceof anchor.BN) {
+            if (obj[key] instanceof BN) {
                 prettyObj[key] = obj[key].toNumber();
             } else {
                 prettyObj[key] = obj[key];
@@ -55,17 +55,17 @@ export function getGenomePda(seeds: Array<Buffer | Uint8Array>): PublicKey {
     return PublicKey.findProgramAddressSync([getConstant("genomeRoot"), ...seeds], PROGRAM.programId)[0];
 }
 
-export async function airdropAll(pubkeys: Array<anchor.web3.PublicKey>, lamports: number): Promise<void> {
+export async function airdropAll(pubkeys: Array<PublicKey>, lamports: number): Promise<void> {
     await Promise.all(pubkeys.map((pubkey) => airdrop(pubkey, lamports)));
 }
 
 export function getProgram() {
-    return anchor.workspace.GenomeContract as anchor.Program<GenomeContract>;
+    return workspace.GenomeContract as Program<GenomeContract>;
 }
 
 export function getProvider() {
-    const provider = anchor.AnchorProvider.env();
-    anchor.setProvider(provider);
+    const provider = AnchorProvider.env();
+    setProvider(provider);
     return provider;
 }
 
@@ -92,7 +92,7 @@ async function airdrop(address: PublicKey, amount: number) {
     const provider = getProvider();
     let txid = await provider.connection.requestAirdrop(
         address,
-        amount * anchor.web3.LAMPORTS_PER_SOL
+        amount * LAMPORTS_PER_SOL
     );
     let { blockhash, lastValidBlockHeight } =
         await provider.connection.getLatestBlockhash();

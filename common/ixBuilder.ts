@@ -1,5 +1,5 @@
-import * as anchor from "@coral-xyz/anchor";
-import { PublicKey, TransactionInstruction } from "@solana/web3.js";
+import { Program } from "@coral-xyz/anchor";
+import { PublicKey, TransactionInstruction,SystemProgram } from "@solana/web3.js";
 
 import { GenomeContract } from "../target/types/genome_contract";
 import { getConstant, getGenomePda, getProgram } from "./utils";
@@ -7,7 +7,7 @@ import { getConstant, getGenomePda, getProgram } from "./utils";
 const PROGRAM = getProgram();
 
 export class IxBuilder {
-    public program: anchor.Program<GenomeContract>;
+    public program: Program<GenomeContract>;
     private configPda: PublicKey;
     private role: Uint8Array;
 
@@ -23,7 +23,7 @@ export class IxBuilder {
             .accountsStrict({
                 deployer,
                 config: this.configPda,
-                systemProgram: anchor.web3.SystemProgram.programId,
+                systemProgram: SystemProgram.programId,
             })
             .instruction();
     }
@@ -36,7 +36,7 @@ export class IxBuilder {
                 user,
                 roleInfo: getGenomePda([this.role, user.toBuffer()]),
                 config: this.configPda,
-                systemProgram: anchor.web3.SystemProgram.programId,
+                systemProgram: SystemProgram.programId,
             })
             .instruction();
     }

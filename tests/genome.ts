@@ -1,5 +1,5 @@
-import * as anchor from "@coral-xyz/anchor";
-import { Transaction } from "@solana/web3.js";
+import { BN } from "@coral-xyz/anchor";
+import { Transaction, PublicKey } from "@solana/web3.js";
 import * as assert from "assert";
 
 import { getKeyPairs, checkAnchorError } from "./utils";
@@ -15,13 +15,13 @@ describe("Genome Solana Singlechain", () => {
   const configData = {
     admin: admin.publicKey,
     tournamentNonce: 0,
-    platformFee: new anchor.BN(10),
+    platformFee: new BN(10),
     platformWallet: platform.publicKey,
     nomeMint: nome.publicKey,
     minTeams: 2,
     maxTeams: 20,
     falsePrecision: 0.000065,
-    maxOrganizerFee: new anchor.BN(5000),
+    maxOrganizerFee: new BN(5000),
     consensusRate: 66.0,
     verifierAddresses: [verifier1.publicKey]
   };
@@ -61,7 +61,7 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Grant role", async () => {
-    const roles: [anchor.web3.PublicKey, { operator?: {}; verifier?: {} }][] = [
+    const roles: [PublicKey, { operator?: {}; verifier?: {} }][] = [
       [operator.publicKey, { operator: {} }],
       [organizer.publicKey, { verifier: {} }],
       [verifier2.publicKey, { verifier: {} }],

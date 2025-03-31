@@ -1,4 +1,5 @@
-import * as anchor from "@coral-xyz/anchor";
+import { BN } from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 
 import { buildAndSendTx, getConfig, prettify } from "../common/utils";
@@ -21,9 +22,9 @@ async function main() {
   ] = args;
 
   const deployer = await getKeypairFromFile(deployerPath);
-  const admin = new anchor.web3.PublicKey(adminAddress);
-  const platformWallet = new anchor.web3.PublicKey(platformWalletStr);
-  const verifiers = verifiersAddresses.map(v => new anchor.web3.PublicKey(v));
+  const admin = new PublicKey(adminAddress);
+  const platformWallet = new PublicKey(platformWalletStr);
+  const verifiers = verifiersAddresses.map(v => new PublicKey(v));
 
   console.log(`Deployer: ${deployer.publicKey.toBase58()}`);
 
@@ -32,12 +33,12 @@ async function main() {
     deployer.publicKey,
     {
       tournamentNonce: parseInt(tournamentNonceStr),
-      platformFee: new anchor.BN(platformFeeStr),
+      platformFee: new BN(platformFeeStr),
       minTeams: parseInt(minTeamsStr),
       maxTeams: parseInt(maxTeamsStr),
       falsePrecision: parseFloat(falsePrecisionStr),
       consensusRate: parseFloat(consensusRateStr),
-      maxOrganizerFee: new anchor.BN(maxOrganizerFeeStr),
+      maxOrganizerFee: new BN(maxOrganizerFeeStr),
       admin: admin,
       platformWallet,
       verifierAddresses: verifiers

@@ -1,6 +1,5 @@
-import * as anchor from "@coral-xyz/anchor";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
-import { TransactionInstruction } from "@solana/web3.js";
+import { TransactionInstruction, PublicKey } from "@solana/web3.js";
 
 import { IxBuilder } from "../common/ixBuilder";
 import { buildAndSendTx } from "../common/utils";
@@ -11,7 +10,7 @@ async function main(): Promise<void> {
   const roleArg = process.argv[4];
 
   const admin = await getKeypairFromFile(adminKeypairPath);
-  const user = new anchor.web3.PublicKey(userAddress);
+  const user = new PublicKey(userAddress);
 
   let role;
   switch (roleArg.toLowerCase()) {
