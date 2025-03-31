@@ -65,7 +65,7 @@ describe("Genome Solana Singlechain", () => {
       [operator.publicKey, { operator: {} }],
       [organizer.publicKey, { verifier: {} }],
     ];
-    
+
     for (const [userPubkey, roleParams] of roles) {
       const grantIx = await ixBuilder.grantRoleIx(admin.publicKey, userPubkey, roleParams);
       const tx = new Transaction().add(grantIx);
@@ -73,11 +73,7 @@ describe("Genome Solana Singlechain", () => {
       console.log("Grant role tx signature:", txSig);
     
       const userRole = await getUserRole(userPubkey);
-      if ("operator" in roleParams) {
-        assert.ok(userRole.role.operator);
-      } else if ("verifier" in roleParams) {
-        assert.ok(userRole.role.verifier);
-      }
+      assert.deepEqual(userRole.role, roleParams);
     }    
   });
 
