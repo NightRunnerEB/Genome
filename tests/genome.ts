@@ -72,7 +72,7 @@ describe("Genome Solana Singlechain", () => {
       console.log("Grant role tx signature:", txSig);
 
       const userRole = await getUserRole(userPubkey);
-      assert.deepEqual(userRole.role, roleParams);
+      assert.deepEqual(userRole, roleParams);
     }
     const config = await getConfig();
     assert.deepEqual(config.verifierAddresses, [verifier1.publicKey, verifier2.publicKey]);

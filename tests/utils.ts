@@ -47,7 +47,7 @@ export async function getUserRole(user: PublicKey) {
   const program = getProgram();
   const rolePda = getGenomePda([getConstant("role"), user.toBuffer()]);
   const userRole = await program.account.roleInfo.fetch(rolePda);
-  return { role: userRole.role };
+  return userRole.role;
 }
 
 export function checkAnchorError(error: any, errMsg: string) {
