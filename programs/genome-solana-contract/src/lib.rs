@@ -82,10 +82,8 @@ fn realloc<'info>(
 
 fn system_transfer<'a>(from: AccountInfo<'a>, to: AccountInfo<'a>, amount: u64) -> Result<()> {
     let ix = system_instruction::transfer(from.key, to.key, amount);
-    invoke(&ix, &[from.clone(), to.clone()]).map_err(|err| {
-        msg!("Transfer failed: {:?}", err);
-        err.into()
-    })
+    invoke(&ix, &[from.clone(), to.clone()])?;
+    Ok(())
 }
 
 #[derive(Accounts)]
