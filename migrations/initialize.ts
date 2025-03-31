@@ -1,6 +1,6 @@
 import { BN } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
-import { getKeypairFromFile } from "@solana-developers/node-helpers";
+import { getKeypairFromFile } from "@solana-developers/helpers";
 
 import { buildAndSendTx, getConfig, prettify } from "../common/utils";
 import { IxBuilder } from "../common/ixBuilder";

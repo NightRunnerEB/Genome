@@ -1,4 +1,4 @@
-import { getKeypairFromFile } from "@solana-developers/node-helpers";
+import { getKeypairFromFile } from "@solana-developers/helpers";
 import { PublicKey } from "@solana/web3.js";
 
 import { IxBuilder } from "../common/ixBuilder";

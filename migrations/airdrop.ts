@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { getKeypairFromFile } from "@solana-developers/node-helpers";
+import { getKeypairFromFile } from "@solana-developers/helpers";
 
 import { airdropAll } from "../common/utils";
 
