@@ -47,9 +47,7 @@ export async function getConfig() {
 }
 
 export async function getUserRole(user: PublicKey) {
-    const roleSeed = getConstant("role");
-    const userPubkeyBuffer = user.toBuffer();
-    const rolePda = getPda([roleSeed, userPubkeyBuffer]);
+    const rolePda = getPda([getConstant("role"), user.toBuffer()]);
     const userRole = await PROGRAM.account.roleInfo.fetch(rolePda);
     return { role: userRole.role };
 }
