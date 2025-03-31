@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 
 import { GenomeContract } from "../target/types/genome_contract";
+import { get } from "http";
 
 const PROGRAM = getProgram();
 
@@ -28,7 +29,7 @@ export function prettify(obj: any): string {
 }
 
 export async function getConfig() {
-    const configPda = getConfigPda();
+    const configPda = getPda([getConstant("config")]);
     const config = await PROGRAM.account.genomeConfig.fetch(configPda);
     return {
         admin: config.admin,
@@ -46,8 +47,10 @@ export async function getConfig() {
 }
 
 export async function getUserRole(user: PublicKey) {
-    const userRolePda = getUserRolePda(user.toBuffer());
-    const userRole = await PROGRAM.account.roleInfo.fetch(userRolePda);
+    const roleSeed = getConstant("role");
+    const userPubkeyBuffer = user.toBuffer();
+    const rolePda = getPda([roleSeed, userPubkeyBuffer]);
+    const userRole = await PROGRAM.account.roleInfo.fetch(rolePda);
     return { role: userRole.role };
 }
 
@@ -86,23 +89,6 @@ async function airdrop(address: PublicKey, amount: number) {
     });
 }
 
-function getConfigPda(): PublicKey {
-    const genomeSeed = getConstant("genomeRoot");
-    const configArray = getConstant("config");
-    return PublicKey.findProgramAddressSync(
-        [genomeSeed, configArray],
-        PROGRAM.programId
-    )[0];
-}
-
-function getUserRolePda(
-    user: any
-): PublicKey {
-    const genomeSeed = getConstant("genomeRoot");
-    const roleArray = getConstant("role");
-    const userBuffer = Buffer.from(user);
-    return PublicKey.findProgramAddressSync(
-        [genomeSeed, roleArray, userBuffer],
-        PROGRAM.programId
-    )[0];
+function getPda(seeds: Array<Buffer | Uint8Array>): PublicKey {
+    return PublicKey.findProgramAddressSync([getConstant("genomeRoot"), ...seeds], PROGRAM.programId)[0];
 }
