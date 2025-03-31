@@ -37,7 +37,6 @@ mod genome_contract {
     pub fn grant_role(ctx: Context<GrantRole>, role: Role) -> Result<()> {
         if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
-            let verifier_to_add = ctx.accounts.user.key();
 
             if config.verifier_addresses.len() >= config.verifier_addresses.capacity() {
                 let current_capacity = config.verifier_addresses.capacity();
@@ -46,7 +45,7 @@ mod genome_contract {
                 let new_size = 8 + GenomeConfig::INIT_SPACE + (new_capacity * 32);
                 realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_size)?;
             }
-            config.verifier_addresses.push(verifier_to_add);
+            config.verifier_addresses.push(ctx.accounts.user.key());
         }
         ctx.accounts.role_info.role = role;
 
