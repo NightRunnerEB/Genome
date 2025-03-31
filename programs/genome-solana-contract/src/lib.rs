@@ -29,6 +29,9 @@ mod genome_contract {
 
     #[instruction(discriminator = b"initsngl")]
     pub fn initialize(ctx: Context<Initialize>, config_params: GenomeConfig) -> Result<()> {
+        if !config_params.verifier_addresses.is_empty() {
+            return Err(TournamentError::InvalidParams.into());
+        }
         ctx.accounts.config.set_inner(config_params);
         Ok(())
     }
@@ -38,7 +41,9 @@ mod genome_contract {
         if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
 
-            if config.verifier_addresses.len() >= config.verifier_addresses.capacity() {
+            if config.verifier_addresses.len() >= config.verifier_addresses.capacity()
+                && !config.verifier_addresses.contains(&ctx.accounts.user.key())
+            {
                 let current_capacity = config.verifier_addresses.capacity();
                 let new_capacity = current_capacity + 1;
 
@@ -93,7 +98,7 @@ struct Initialize<'info> {
     #[account(
         init,
         payer = deployer,
-        space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + config_params.verifier_addresses.len() * PUBKEY_BYTES,
+        space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE,
         seeds = [GENOME_ROOT, CONFIG],
         bump
     )]
