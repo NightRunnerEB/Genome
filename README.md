@@ -92,23 +92,9 @@ spl-token create-token -u <network> <path-to-nome-keypair>
 Setting up wallets:
 
 ```rs
-anchor run airdrop -- \
-  <deployer-pubkey> \
-  <verifier1-pubkey> \
-  <verifier2-pubkey> \
-  <operator-pubkey> \
-  <admin-pubkey> \
-  <organizer-pubkey>
+anchor run airdrop -- <path-to-keys-folder> 
 
-/* Example: 
-  anchor run airdrop -- \
-  HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7 \
-  FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
-  9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL \
-  6Agqn5YD4fAncrnB9VrvwTfaufw2Tx1pphGca79uWruT \
-  4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB \
-  ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz
-*/
+// Example: anchor run airdrop -- keys
 ```
 
 Initialize Genome Program
@@ -124,11 +110,11 @@ anchor run initialize -- \
 ]
 
 /* Example:
-anchor run initialize -- \
-9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe \
-1 10 2 20 0.000065 5000 66.0 \
-FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
-9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL
+    anchor run initialize -- \
+    9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe \
+    1 10 2 20 0.000065 5000 66.0 \
+    FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
+    9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL
 */
 ```
 

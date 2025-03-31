@@ -1,26 +1,24 @@
+import * as fs from "fs";
+import * as path from "path";
 import * as anchor from "@coral-xyz/anchor";
-
+import { getKeypairFromFile } from "@solana-developers/node-helpers";
 import { airdropAll } from "../common/utils";
 
 async function main(): Promise<void> {
-  const [
-    deployerAddress,
-    verifier1Address,
-    verifier2Address,
-    operatorAddress,
-    adminAddress,
-    organizerAddress
-  ] = process.argv.slice(2);
+  const keysFolder = process.argv[2];
+  if (!keysFolder) {
+    throw new Error("Please provide the path to the keys folder as the first argument.");
+  }
 
-  const operator = new anchor.web3.PublicKey(operatorAddress);
-  const admin = new anchor.web3.PublicKey(adminAddress);
-  const deployer = new anchor.web3.PublicKey(deployerAddress);
-  const organizer = new anchor.web3.PublicKey(organizerAddress);
-  const verifier1 = new anchor.web3.PublicKey(verifier1Address);
-  const verifier2 = new anchor.web3.PublicKey(verifier2Address);
+  const files = fs.readdirSync(keysFolder);
+  const keyFiles = files.filter((f) => f.endsWith(".json"));
 
-  const recipients = [operator, admin, deployer, organizer, verifier1, verifier2];
+  const keypairs = await Promise.all(
+    keyFiles.map((file) => getKeypairFromFile(path.join(keysFolder, file)))
+  );
+  const recipients = keypairs.map((kp) => kp.publicKey);
 
+  console.log("Recipients:", recipients.map((pk) => pk.toBase58()));
   await airdropAll(recipients, 10);
 }
 
