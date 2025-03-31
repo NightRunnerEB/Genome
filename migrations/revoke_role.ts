@@ -1,9 +1,8 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Transaction } from "@solana/web3.js";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 
 import { IxBuilder } from "../common/ixBuilder";
-import { getProvider } from "../common/utils";
+import { buildAndSendTx, getProvider } from "../common/utils";
 
 async function main() {
     const adminKeypairPath = process.argv[2];
@@ -16,11 +15,9 @@ async function main() {
     console.log(`user: ${user.toBase58()}`);
 
     const ixBuilder = new IxBuilder();
-    const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, user);
-    const tx = new Transaction().add(revokeIx);
+    const revokeRoleIx = await ixBuilder.revokeRoleIx(admin.publicKey, user);
 
-    const provider = getProvider();
-    const txSignature = await provider.sendAndConfirm(tx, [admin]);
+    const txSignature = await buildAndSendTx([revokeRoleIx], [admin]);
     console.log("Revoke role tx:", txSignature);
 }
 

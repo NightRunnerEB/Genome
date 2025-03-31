@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey, sendAndConfirmTransaction, Transaction, TransactionInstruction } from "@solana/web3.js";
 
 import { GenomeContract } from "../target/types/genome_contract";
 
@@ -74,6 +74,19 @@ export function getConstant(name: string): Uint8Array {
         PROGRAM.idl.constants.find((obj) => obj.name == name)!.value
     );
 }
+
+export async function buildAndSendTx(
+    ixs: TransactionInstruction[],
+    signers: Keypair[]
+  ): Promise<string> {
+    const program = getProgram();
+    const tx = new Transaction().add(...ixs);
+    return await sendAndConfirmTransaction(
+      program.provider.connection,
+      tx,
+      signers
+    );
+  }  
 
 async function airdrop(address: PublicKey, amount: number) {
     const provider = getProvider();

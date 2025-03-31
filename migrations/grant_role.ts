@@ -1,17 +1,18 @@
 import * as anchor from "@coral-xyz/anchor";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
-import { Transaction } from "@solana/web3.js";
+import { TransactionInstruction } from "@solana/web3.js";
 
 import { IxBuilder } from "../common/ixBuilder";
-import { getProvider } from "../common/utils";
+import { buildAndSendTx } from "../common/utils";
 
-async function main() {
+async function main(): Promise<void> {
   const adminKeypairPath = process.argv[2];
   const userAddress = process.argv[3];
   const roleArg = process.argv[4];
 
   const admin = await getKeypairFromFile(adminKeypairPath);
   const user = new anchor.web3.PublicKey(userAddress);
+
   let role;
   switch (roleArg.toLowerCase()) {
     case "verifier":
@@ -31,11 +32,10 @@ async function main() {
   console.log(`user: ${user.toBase58()}`);
   console.log(`role: ${JSON.stringify(role)}`);
 
-  const provider = getProvider();
   const ixBuilder = new IxBuilder();
-  const grantRoleIx = await ixBuilder.grantRoleIx(admin.publicKey, user, role);
-  const tx = new Transaction().add(grantRoleIx);
-  const txSignature = await provider.sendAndConfirm(tx, [admin]);
+  const grantRoleIx: TransactionInstruction = await ixBuilder.grantRoleIx(admin.publicKey, user, role);
+
+  const txSignature = await buildAndSendTx([grantRoleIx], [admin]);
   console.log("Grant role tx signature:", txSignature);
 }
 
