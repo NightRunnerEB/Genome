@@ -1,19 +1,19 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import { GenomeContract } from "../target/types/genome_contract";
 
-import { getConstant, getPda, getProgram } from "./utils";
+import { GenomeContract } from "../target/types/genome_contract";
+import { getConstant, getGenomePda, getProgram } from "./utils";
 
 const PROGRAM = getProgram();
 
 export class IxBuilder {
     public program: anchor.Program<GenomeContract>;
-    private config: Uint8Array;
+    private configPda: PublicKey;
     private role: Uint8Array;
 
     constructor() {
         this.program = PROGRAM;
-        this.config = getConstant("config");
+        this.configPda = getGenomePda([getConstant("config")]);
         this.role = getConstant("role");
     }
 
@@ -22,7 +22,7 @@ export class IxBuilder {
             .initialize(configData)
             .accountsStrict({
                 deployer,
-                config: getPda([this.config]),
+                config: this.configPda,
                 systemProgram: anchor.web3.SystemProgram.programId,
             })
             .instruction();
@@ -34,8 +34,8 @@ export class IxBuilder {
             .accountsStrict({
                 admin,
                 user,
-                roleInfo: getPda([this.role, user.toBuffer()]),
-                config: getPda([this.config]),
+                roleInfo: getGenomePda([this.role, user.toBuffer()]),
+                config: this.configPda,
                 systemProgram: anchor.web3.SystemProgram.programId,
             })
             .instruction();
@@ -47,8 +47,8 @@ export class IxBuilder {
             .accountsStrict({
                 admin,
                 user,
-                roleInfo: getPda([this.role, user.toBuffer()]),
-                config: getPda([this.config]),
+                roleInfo: getGenomePda([this.role, user.toBuffer()]),
+                config: this.configPda,
             })
             .instruction();
     }
