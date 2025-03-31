@@ -2,7 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 
 import { IxBuilder } from "../common/ixBuilder";
-import { buildAndSendTx, getProvider } from "../common/utils";
+import { buildAndSendTx } from "../common/utils";
 
 async function main() {
     const adminKeypairPath = process.argv[2];
