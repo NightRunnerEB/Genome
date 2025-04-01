@@ -1,0 +1,33 @@
+variables:
+  IMAGE_NAME: gcr.io/poetic-nova-407814/genome-solana-contracts
+  IMAGE_TAG: $IMAGE_NAME:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
+
+stages:
+  - build
+  - test
+
+dev_build:
+    stage: build
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:latest
+    script:
+        - echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+        - gcloud auth configure-docker
+        - docker build -t $IMAGE_TAG.dev .
+        - docker push $IMAGE_TAG.dev
+        - docker rmi $IMAGE_TAG.dev
+    tags:
+        - docker
+    when: manual    
+
+unit-test-job:
+  stage: test
+  image: $IMAGE_TAG.dev
+  script:
+    - cd /app
+    - export PATH="/root/.local/share/solana/install/active_release/bin:/root/.cargo/bin:/root/.nvm/versions/node/v23.10.0/lib/node_modules/ts-mocha:/root/.nvm/versions/node/v23.10.0/bin:$PATH"
+    - anchor run test-ci
+  when: manual
+  tags:
+    - docker  
+  needs:
+    - dev_build

@@ -5,14 +5,18 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-genome_solana_contracts = "FyHw7Y9XgfGMo8CbzHPoica4PoApxBQfrDZzs8kmwW6K"
+genome_solana = "9SK6NkuZHbPHYqL2qpcN5gwpfnjtPLj36mLn6PGfe3R8"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
 cluster = "Localnet"
-wallet = "~/.config/solana/id.json"
+wallet = "keys/admin.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*test.ts --grep 'required'"
+test-all = "anchor run test-ci && pkill -9 solana-test-validator"
+test-ci = "sh run_tests.sh"
+initialize-omni = "yarn run ts-node migrations/initializeOmnichain.ts keys/deployer.json"
+set-bridge-fee = "yarn run ts-node migrations/setBridgeFee.ts keys/admin.json"
