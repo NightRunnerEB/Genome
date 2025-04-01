@@ -32,10 +32,7 @@ impl Team {
 
     pub fn add_participant_by_captain(&mut self, participant: Pubkey) -> Result<()> {
         let participants = &mut self.participants;
-        require!(
-            participants.len().lt(&self.team_size),
-            TournamentError::TeamSize
-        );
+        require!(participants.len().lt(&self.team_size), TournamentError::TeamSize);
 
         let info = ParticipantInfo {
             paid_by_captain: true,
@@ -49,10 +46,7 @@ impl Team {
 
     pub fn add_participant(&mut self, participant: Pubkey) -> Result<()> {
         let participants = &mut self.participants;
-        require!(
-            participants.len().lt(&self.team_size),
-            TournamentError::TeamSize
-        );
+        require!(participants.len().lt(&self.team_size), TournamentError::TeamSize);
 
         let info = ParticipantInfo::default();
         if self.participants.insert(participant, info).is_some() {
@@ -62,10 +56,8 @@ impl Team {
     }
 
     pub fn refund_participant(&mut self, participant: &Pubkey) -> Result<usize> {
-        let info = self
-            .participants
-            .get_mut(participant)
-            .ok_or(TournamentError::ParticipantNotFound)?;
+        let info =
+            self.participants.get_mut(participant).ok_or(TournamentError::ParticipantNotFound)?;
 
         if info.refunded {
             return Ok(0);
@@ -78,11 +70,7 @@ impl Team {
         }
 
         if *participant == self.captain {
-            let count = self
-                .participants
-                .values()
-                .filter(|p| p.paid_by_captain)
-                .count();
+            let count = self.participants.values().filter(|p| p.paid_by_captain).count();
             return Ok(count);
         }
 
@@ -124,9 +112,7 @@ mod tests {
             assert!(team.add_participant_by_captain(new_pubkey()).is_ok());
         }
 
-        let result = team
-            .add_participant_by_captain(participant)
-            .expect_err("Expected an error");
+        let result = team.add_participant_by_captain(participant).expect_err("Expected an error");
         assert_eq!(result, TournamentError::TeamSize.into());
     }
 
@@ -138,9 +124,7 @@ mod tests {
 
         assert!(team.add_participant_by_captain(participant).is_ok());
 
-        let result = team
-            .add_participant_by_captain(participant)
-            .expect_err("Expected an error");
+        let result = team.add_participant_by_captain(participant).expect_err("Expected an error");
         assert_eq!(result, TournamentError::AlreadyRegistered.into());
     }
 
@@ -168,9 +152,7 @@ mod tests {
             assert!(team.add_participant(new_pubkey()).is_ok());
         }
 
-        let result = team
-            .add_participant(participant)
-            .expect_err("Expected an error");
+        let result = team.add_participant(participant).expect_err("Expected an error");
         assert_eq!(result, TournamentError::TeamSize.into());
     }
 
@@ -182,9 +164,7 @@ mod tests {
 
         assert!(team.add_participant(participant).is_ok());
 
-        let result = team
-            .add_participant(participant)
-            .expect_err("Expected an error");
+        let result = team.add_participant(participant).expect_err("Expected an error");
         assert_eq!(result, TournamentError::AlreadyRegistered.into());
     }
 
@@ -196,9 +176,7 @@ mod tests {
 
         assert!(team.add_participant(participant).is_ok());
 
-        let result = team
-            .refund_participant(&participant)
-            .expect("Expected participant refunded");
+        let result = team.refund_participant(&participant).expect("Expected participant refunded");
 
         assert_eq!(result, 1);
 
@@ -214,9 +192,7 @@ mod tests {
 
         assert!(team.add_participant_by_captain(participant).is_ok());
 
-        let result = team
-            .refund_participant(&participant)
-            .expect("Expected participant refunded");
+        let result = team.refund_participant(&participant).expect("Expected participant refunded");
 
         assert_eq!(result, 0);
 
@@ -238,9 +214,7 @@ mod tests {
         assert!(team.add_participant_by_captain(participant_3).is_ok());
         assert!(team.add_participant(participant_4).is_ok());
 
-        let result = team
-            .refund_participant(&captain)
-            .expect("Expected participant refunded");
+        let result = team.refund_participant(&captain).expect("Expected participant refunded");
 
         assert_eq!(result, 4);
     }
@@ -251,9 +225,7 @@ mod tests {
         let participant = new_pubkey();
         let mut team = Team::new(captain, TEAM_SIZE);
 
-        let result = team
-            .refund_participant(&participant)
-            .expect_err("Expected an error");
+        let result = team.refund_participant(&participant).expect_err("Expected an error");
         assert_eq!(result, TournamentError::ParticipantNotFound.into());
     }
 }
