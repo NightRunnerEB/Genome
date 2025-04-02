@@ -4,7 +4,7 @@ import * as assert from "assert";
 
 import { getKeyPairs, getUserRole, checkAnchorError } from "./utils";
 import { IxBuilder } from "../common/ixBuilder";
-import { airdropAll, getConfig, buildAndSendTx } from "../common/utils";
+import { airdropAll, getConfig, buildAndSendTx, prettify } from "../common/utils";
 import { GenomeContract } from "../target/types/genome_contract";
 
 describe("Genome Solana Singlechain", () => {
@@ -31,7 +31,7 @@ describe("Genome Solana Singlechain", () => {
     falsePrecision: 0.000065,
     maxOrganizerFee: new BN(5000),
     consensusRate: 66.0,
-    verifierAddresses: [verifier1.publicKey],
+    verifierAddresses: [],
   };
 
   before(async () => {
@@ -46,6 +46,20 @@ describe("Genome Solana Singlechain", () => {
       ],
       10
     );
+  });
+
+  it("Initialize Genome Solana with Invalid Params", async () => {
+    try {
+      const configDataInvalid = {
+        ...configData,
+        verifierAddresses: [...configData.verifierAddresses, verifier1.publicKey, verifier2.publicKey]
+      };
+      const initIx = await ixBuilder.initializeIx(deployer.publicKey, configDataInvalid);
+      await buildAndSendTx([initIx], [deployer]);
+      throw new Error("Expected error was not thrown");
+    } catch (error) {
+      checkAnchorError(error, "Invalid Params");
+    }
   });
 
   it("Initialize Genome Solana", async () => {
@@ -73,6 +87,20 @@ describe("Genome Solana Singlechain", () => {
     assert.deepEqual(config.verifierAddresses, configData.verifierAddresses);
   });
 
+  it("Grant Role by non-admin", async () => {
+    try {
+      const grantRoleIx = await ixBuilder.grantRoleIx(
+        operator.publicKey,
+        organizer.publicKey,
+        { organizer: {} }
+      );
+      await buildAndSendTx([grantRoleIx], [operator]);
+      throw new Error("Expected error was not thrown");
+    } catch (error) {
+      checkAnchorError(error, "Not Allowed");
+    }
+  });
+
   it("Grant role", async () => {
     type Role = IdlTypes<GenomeContract>["role"];
     const roles: [PublicKey, Role][] = [
@@ -95,22 +123,21 @@ describe("Genome Solana Singlechain", () => {
     }
     const config = await getConfig();
     assert.deepEqual(config.verifierAddresses, [
-      verifier1.publicKey,
       verifier2.publicKey,
     ]);
   });
 
-  it("Grant Role by non-admin", async () => {
+  it("Give the role to the same person again", async () => {
     try {
-      const grantRoleIx = await ixBuilder.grantRoleIx(
-        operator.publicKey,
-        organizer.publicKey,
-        { organizer: {} }
+      const grantIx = await ixBuilder.grantRoleIx(
+        admin.publicKey,
+        verifier2.publicKey,
+        { verifier: {} }
       );
-      await buildAndSendTx([grantRoleIx], [operator]);
+      await buildAndSendTx([grantIx], [admin]);
       throw new Error("Expected error was not thrown");
     } catch (error) {
-      checkAnchorError(error, "Not Allowed");
+      checkAnchorError(error, "Unable to obtain a new blockhash");
     }
   });
 
@@ -131,6 +158,6 @@ describe("Genome Solana Singlechain", () => {
       }
     }
     const config = await getConfig();
-    assert.deepEqual(config.verifierAddresses, [verifier1.publicKey]);
+    assert.deepEqual(config.verifierAddresses, []);
   });
 });

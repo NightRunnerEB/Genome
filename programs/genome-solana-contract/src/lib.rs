@@ -114,7 +114,7 @@ struct GrantRole<'info> {
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     config: Box<Account<'info, GenomeConfig>>,
     #[account(
-        init_if_needed,
+        init,
         payer = admin,
         space = RoleInfo::DISCRIMINATOR.len() + RoleInfo::INIT_SPACE,
         seeds = [GENOME_ROOT, ROLE, user.key().as_ref()],
