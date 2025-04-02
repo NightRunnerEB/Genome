@@ -4,4 +4,6 @@ use anchor_lang::prelude::*;
 pub(crate) enum TournamentError {
     #[msg("Not Allowed")]
     NotAllowed,
+    #[msg("Invalid Params")]
+    InvalidParams,
 }

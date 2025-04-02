@@ -24,7 +24,9 @@ async function main(): Promise<void> {
       role = { organizer: {} };
       break;
     default:
-      throw new Error("Invalid role. Use one of these: 'verifier', 'operator', 'organizer'.");
+      throw new Error(
+        "Invalid role. Use one of these: 'verifier', 'operator', 'organizer'."
+      );
   }
 
     console.log(`admin: ${admin.publicKey.toBase58()}`);
@@ -32,7 +34,11 @@ async function main(): Promise<void> {
     console.log(`role: ${JSON.stringify(role)}`);
 
   const ixBuilder = new IxBuilder();
-  const grantRoleIx: TransactionInstruction = await ixBuilder.grantRoleIx(admin.publicKey, user, role);
+  const grantRoleIx: TransactionInstruction = await ixBuilder.grantRoleIx(
+    admin.publicKey,
+    user,
+    role
+  );
 
   const txSignature = await buildAndSendTx([grantRoleIx], [admin]);
   console.log("Grant role tx signature:", txSignature);

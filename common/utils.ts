@@ -1,5 +1,18 @@
-import { Program, BN, workspace, AnchorProvider, setProvider } from "@coral-xyz/anchor";
-import { Keypair, PublicKey, sendAndConfirmTransaction, Transaction, TransactionInstruction, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import {
+    Program,
+    BN,
+    workspace,
+    AnchorProvider,
+    setProvider,
+} from "@coral-xyz/anchor";
+import {
+    Keypair,
+    PublicKey,
+    sendAndConfirmTransaction,
+    Transaction,
+    TransactionInstruction,
+    LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
 
 import { GenomeContract } from "../target/types/genome_contract";
 
@@ -57,11 +70,17 @@ export async function getTokenInfo(token: PublicKey) {
 }
 
 export function getGenomePda(seeds: Array<Buffer | Uint8Array>): PublicKey {
-    return PublicKey.findProgramAddressSync([getConstant("genomeRoot"), ...seeds], PROGRAM.programId)[0];
+    return PublicKey.findProgramAddressSync(
+        [getConstant("genomeRoot"), ...seeds],
+        PROGRAM.programId
+    )[0];
 }
 
-export async function airdropAll(pubkeys: Array<PublicKey>, lamports: number): Promise<void> {
-    await Promise.all(pubkeys.map((pubkey) => airdrop(pubkey, lamports)));
+export async function airdropAll(
+    pubkeys: Array<PublicKey>,
+    sols: number
+): Promise<void> {
+    await Promise.all(pubkeys.map((pk) => airdrop(pk, sols)));
 }
 
 export function getProgram() {
@@ -84,20 +103,16 @@ export async function buildAndSendTx(
     ixs: TransactionInstruction[],
     signers: Keypair[]
 ): Promise<string> {
-    const program = getProgram();
+    const connection = getProgram().provider.connection;
     const tx = new Transaction().add(...ixs);
-    return await sendAndConfirmTransaction(
-        program.provider.connection,
-        tx,
-        signers
-    );
+    return await sendAndConfirmTransaction(connection, tx, signers);
 }
 
-async function airdrop(address: PublicKey, amount: number) {
+async function airdrop(address: PublicKey, sols: number) {
     const provider = getProvider();
     let txid = await provider.connection.requestAirdrop(
         address,
-        amount * LAMPORTS_PER_SOL
+        sols * LAMPORTS_PER_SOL
     );
     let { blockhash, lastValidBlockHeight } =
         await provider.connection.getLatestBlockhash();

@@ -15,7 +15,10 @@ async function main(): Promise<void> {
   );
   const recipients = keypairs.map((kp) => kp.publicKey);
 
-  console.log("Recipients:", recipients.map((pk) => pk.toBase58()));
+  console.log(
+    "Recipients:",
+    recipients.map((pk) => pk.toBase58())
+  );
   await airdropAll(recipients, 10);
 }
 

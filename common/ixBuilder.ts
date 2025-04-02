@@ -1,5 +1,9 @@
 import { Program } from "@coral-xyz/anchor";
-import { PublicKey, TransactionInstruction,SystemProgram } from "@solana/web3.js";
+import {
+    PublicKey,
+    TransactionInstruction,
+    SystemProgram,
+} from "@solana/web3.js";
 
 import { GenomeContract } from "../target/types/genome_contract";
 import { getConstant, getGenomePda, getProgram } from "./utils";
@@ -9,15 +13,18 @@ const PROGRAM = getProgram();
 export class IxBuilder {
     public program: Program<GenomeContract>;
     private configPda: PublicKey;
-    private role: Uint8Array;
+    private roleSeed: Uint8Array;
 
     constructor() {
         this.program = PROGRAM;
         this.configPda = getGenomePda([getConstant("config")]);
-        this.role = getConstant("role");
+        this.roleSeed = getConstant("role");
     }
 
-    async initializeIx(deployer: PublicKey, configData: any): Promise<TransactionInstruction> {
+    async initializeIx(
+        deployer: PublicKey,
+        configData: any
+    ): Promise<TransactionInstruction> {
         return this.program.methods
             .initialize(configData)
             .accountsStrict({
@@ -28,27 +35,19 @@ export class IxBuilder {
             .instruction();
     }
 
-    async grantRoleIx(admin: PublicKey, user: PublicKey, params: any): Promise<TransactionInstruction> {
+    async grantRoleIx(
+        admin: PublicKey,
+        user: PublicKey,
+        params: any
+    ): Promise<TransactionInstruction> {
         return this.program.methods
             .grantRole(params)
             .accountsStrict({
                 admin,
                 user,
-                roleInfo: getGenomePda([this.role, user.toBuffer()]),
+                roleInfo: getGenomePda([this.roleSeed, user.toBuffer()]),
                 config: this.configPda,
                 systemProgram: SystemProgram.programId,
-            })
-            .instruction();
-    }
-
-    async revokeRoleIx(admin: PublicKey, user: PublicKey): Promise<TransactionInstruction> {
-        return this.program.methods
-            .revokeRole()
-            .accountsStrict({
-                admin,
-                user,
-                roleInfo: getGenomePda([this.role, user.toBuffer()]),
-                config: this.configPda,
             })
             .instruction();
     }
@@ -64,7 +63,7 @@ export class IxBuilder {
             .accountsStrict({
                 operator,
                 assetMint,
-                roleInfo: getGenomePda([this.role, operator.toBuffer()]),
+                roleInfo: getGenomePda([this.roleSeed, operator.toBuffer()]),
                 tokenInfo: getGenomePda([getConstant("token"), assetMint.toBuffer()]),
                 systemProgram: SystemProgram.programId
             })
@@ -80,10 +79,24 @@ export class IxBuilder {
             .accountsStrict({
                 operator,
                 assetMint,
-                roleInfo: getGenomePda([this.role, operator.toBuffer()]),
+                roleInfo: getGenomePda([this.roleSeed, operator.toBuffer()]),
                 tokenInfo: getGenomePda([getConstant("token"), assetMint.toBuffer()]),
             })
             .instruction();
     }
 
+    async revokeRoleIx(
+        admin: PublicKey,
+        user: PublicKey
+    ): Promise<TransactionInstruction> {
+        return this.program.methods
+            .revokeRole()
+            .accountsStrict({
+                admin,
+                user,
+                roleInfo: getGenomePda([this.roleSeed, user.toBuffer()]),
+                config: this.configPda,
+            })
+            .instruction();
+    }
 }

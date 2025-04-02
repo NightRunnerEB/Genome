@@ -16,7 +16,9 @@ export function getKeyPairs(): {
 } {
   const adminSecret = Uint8Array.from(require("../keys/admin.json"));
   const organizerSecret = Uint8Array.from(require("../keys/organizer.json"));
-  const platformSecret = Uint8Array.from(require("../keys/platform_wallet.json"));
+  const platformSecret = Uint8Array.from(
+    require("../keys/platform_wallet.json")
+  );
   const deployerSecret = Uint8Array.from(require("../keys/deployer.json"));
   const verifier1Secret = Uint8Array.from(require("../keys/verifier1.json"));
   const verifier2Secret = Uint8Array.from(require("../keys/verifier2.json"));

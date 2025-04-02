@@ -11,7 +11,7 @@ use anchor_lang::{
 use data::{GenomeConfig, Role, RoleInfo, TokenInfo};
 use error::TournamentError;
 
-declare_id!("5HoKH9fr5wrQU3MyKBJuhpFx18QT3fXWYruSyDYD2UJR");
+declare_id!("61k9jndWDe36Wb7X1vteVLiWjmwFGwDmFLzzvLKtUPZo");
 
 #[cfg(feature = "localnet")]
 const DEPLOYER: Pubkey = pubkey!("HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7");
@@ -31,6 +31,9 @@ mod genome_contract {
 
     #[instruction(discriminator = b"initsngl")]
     pub fn initialize(ctx: Context<Initialize>, config_params: GenomeConfig) -> Result<()> {
+        if !config_params.verifier_addresses.is_empty() {
+            return Err(TournamentError::InvalidParams.into());
+        }
         ctx.accounts.config.set_inner(config_params);
         Ok(())
     }
@@ -39,16 +42,17 @@ mod genome_contract {
     pub fn grant_role(ctx: Context<GrantRole>, role: Role) -> Result<()> {
         if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
-            let verifier_to_add = ctx.accounts.user.key();
 
             if config.verifier_addresses.len() >= config.verifier_addresses.capacity() {
                 let current_capacity = config.verifier_addresses.capacity();
                 let new_capacity = current_capacity + 1;
 
-                let new_size = 8 + GenomeConfig::INIT_SPACE + (new_capacity * 32);
+                let new_size = GenomeConfig::DISCRIMINATOR.len()
+                    + GenomeConfig::INIT_SPACE
+                    + (new_capacity * PUBKEY_BYTES);
                 realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_size)?;
             }
-            config.verifier_addresses.push(verifier_to_add);
+            config.verifier_addresses.push(ctx.accounts.user.key());
         }
         ctx.accounts.role_info.role = role;
 
@@ -115,7 +119,7 @@ struct Initialize<'info> {
     #[account(
         init,
         payer = deployer,
-        space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + config_params.verifier_addresses.len() * PUBKEY_BYTES,
+        space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE,
         seeds = [GENOME_ROOT, CONFIG],
         bump
     )]
@@ -131,7 +135,7 @@ struct GrantRole<'info> {
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     config: Box<Account<'info, GenomeConfig>>,
     #[account(
-        init_if_needed,
+        init,
         payer = admin,
         space = RoleInfo::DISCRIMINATOR.len() + RoleInfo::INIT_SPACE,
         seeds = [GENOME_ROOT, ROLE, user.key().as_ref()],
