@@ -45,7 +45,9 @@ mod genome_contract {
                 let current_capacity = config.verifier_addresses.capacity();
                 let new_capacity = current_capacity + 1;
 
-                let new_size = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + (new_capacity * PUBKEY_BYTES);
+                let new_size = GenomeConfig::DISCRIMINATOR.len()
+                    + GenomeConfig::INIT_SPACE
+                    + (new_capacity * PUBKEY_BYTES);
                 realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_size)?;
             }
             config.verifier_addresses.push(ctx.accounts.user.key());
