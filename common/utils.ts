@@ -69,7 +69,7 @@ export async function airdropAll(
   pubkeys: Array<PublicKey>,
   sols: number
 ): Promise<void> {
-  await Promise.all(pubkeys.map((pubkey) => airdrop(pubkey, sols)));
+  await Promise.all(pubkeys.map((pk) => airdrop(pk, sols)));
 }
 
 export function getProgram() {
