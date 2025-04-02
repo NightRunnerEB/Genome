@@ -160,4 +160,14 @@ describe("Genome Solana Singlechain", () => {
     const config = await getConfig();
     assert.deepEqual(config.verifierAddresses, []);
   });
+
+  it("Revoke Role of a non-existent person", async () => {
+    try {
+      const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, operator.publicKey);
+      await buildAndSendTx([revokeIx], [admin]);
+      throw new Error("Expected error was not thrown");
+    } catch (error) {
+      checkAnchorError(error, "The program expected this account to be already initialized");
+    }
+  });
 });
