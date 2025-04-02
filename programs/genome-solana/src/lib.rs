@@ -1,5 +1,13 @@
 #![allow(unexpected_cfgs)]
+
+mod data;
+mod error;
+mod instructions;
+mod team;
+mod utils;
+
 use anchor_lang::prelude::*;
+use instructions::*;
 
 declare_id!("9SK6NkuZHbPHYqL2qpcN5gwpfnjtPLj36mLn6PGfe3R8");
 
@@ -20,6 +28,15 @@ enum CustomError {
 #[program]
 mod genome_solana {
     use super::*;
+
+    
+
+    //
+    //
+    //  OMNICHAIN INSTRUCTIONS
+    //
+    //
+    //
 
     #[instruction(discriminator = b"initomni")]
     pub fn initialize_omni(
