@@ -67,9 +67,9 @@ export function getGenomePda(seeds: Array<Buffer | Uint8Array>): PublicKey {
 
 export async function airdropAll(
   pubkeys: Array<PublicKey>,
-  lamports: number
+  sols: number
 ): Promise<void> {
-  await Promise.all(pubkeys.map((pubkey) => airdrop(pubkey, lamports)));
+  await Promise.all(pubkeys.map((pubkey) => airdrop(pubkey, sols)));
 }
 
 export function getProgram() {
