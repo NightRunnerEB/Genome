@@ -97,11 +97,11 @@ export async function buildAndSendTx(
     return await sendAndConfirmTransaction(connection, tx, signers);
 }
 
-async function airdrop(address: PublicKey, amount: number) {
+async function airdrop(address: PublicKey, sols: number) {
     const provider = getProvider();
     let txid = await provider.connection.requestAirdrop(
         address,
-        amount * LAMPORTS_PER_SOL
+        sols * LAMPORTS_PER_SOL
     );
     let { blockhash, lastValidBlockHeight } =
         await provider.connection.getLatestBlockhash();
