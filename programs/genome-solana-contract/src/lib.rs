@@ -11,7 +11,7 @@ use anchor_lang::{
 use data::{GenomeConfig, Role, RoleInfo};
 use error::TournamentError;
 
-declare_id!("5HoKH9fr5wrQU3MyKBJuhpFx18QT3fXWYruSyDYD2UJR");
+declare_id!("61k9jndWDe36Wb7X1vteVLiWjmwFGwDmFLzzvLKtUPZo");
 
 #[cfg(feature = "localnet")]
 const DEPLOYER: Pubkey = pubkey!("HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7");

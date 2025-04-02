@@ -18,15 +18,13 @@ async function main() {
     maxOrganizerFeeStr,
     consensusRateStr,
     platformWalletAddress,
-    nomeMintAddress,
-    ...verifiersAddresses
+    nomeMintAddress
   ] = args;
 
   const deployer = await getKeypairFromFile(deployerPath);
   const admin = new PublicKey(adminAddress);
   const nomeMint = new PublicKey(nomeMintAddress);
   const platformWallet = new PublicKey(platformWalletAddress);
-  const verifiers = verifiersAddresses.map((v) => new PublicKey(v));
 
   console.log(`Deployer: ${deployer.publicKey.toBase58()}`);
 
@@ -42,7 +40,7 @@ async function main() {
     admin,
     platformWallet,
     nomeMint,
-    verifierAddresses: verifiers,
+    verifierAddresses: []
   });
 
   const txSignature = await buildAndSendTx([initializeIx], [deployer]);
