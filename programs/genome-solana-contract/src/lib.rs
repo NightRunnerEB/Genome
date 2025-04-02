@@ -41,9 +41,7 @@ mod genome_contract {
         if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
 
-            if config.verifier_addresses.len() >= config.verifier_addresses.capacity()
-                && !config.verifier_addresses.contains(&ctx.accounts.user.key())
-            {
+            if config.verifier_addresses.len() >= config.verifier_addresses.capacity() {
                 let current_capacity = config.verifier_addresses.capacity();
                 let new_capacity = current_capacity + 1;
 
