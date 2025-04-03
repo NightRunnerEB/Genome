@@ -1,29 +1,32 @@
-import * as anchor from "@coral-xyz/anchor";
-import { Transaction } from "@solana/web3.js";
-import { getKeypairFromFile } from "@solana-developers/node-helpers";
+import { getKeypairFromFile } from "@solana-developers/helpers";
+import { PublicKey } from "@solana/web3.js";
+
 import { IxBuilder } from "../common/ixBuilder";
-import { getProvider } from "../common/utils";
+import { buildAndSendTx, parseRole } from "../common/utils";
 
 async function main() {
-    const adminKeypairPath = process.argv[2];
-    const userAddress = process.argv[3];
-    const admin = await getKeypairFromFile(adminKeypairPath);
-    const user = new anchor.web3.PublicKey(userAddress);
+  const adminKeypairPath = process.argv[2];
+  const userAddress = process.argv[3];
+  const roleArg = process.argv[4];
 
-    console.log(`admin: ${admin.publicKey.toBase58()}`);
-    console.log(`user: ${user.toBase58()}`);
+  const admin = await getKeypairFromFile(adminKeypairPath);
+  const user = new PublicKey(userAddress);
+  const role = parseRole(roleArg);
 
-    const provider = getProvider();
-    const ixBuilder = new IxBuilder();
-    const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, user);
-    const tx = new Transaction().add(revokeIx);
-    const txSignature = await provider.sendAndConfirm(tx, [admin]);
-    console.log("Revoke role tx:", txSignature);
+  console.log(`admin: ${admin.publicKey.toBase58()}`);
+  console.log(`user: ${user.toBase58()}`);
+  console.log(`role: ${JSON.stringify(role)}`);
+
+  const ixBuilder = new IxBuilder();
+  const revokeRoleIx = await ixBuilder.revokeRoleIx(admin.publicKey, user, role);
+
+  const txSignature = await buildAndSendTx([revokeRoleIx], [admin]);
+  console.log("Revoke role tx:", txSignature);
 }
 
 main()
-    .then(() => process.exit(0))
-    .catch((err) => {
-        console.error(err);
-        process.exit(1);
-    });
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });

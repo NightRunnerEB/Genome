@@ -14,4 +14,10 @@ pub(crate) enum TournamentError {
     InvalidTeamsCount,
     #[msg("Invalid organizer fee")]
     InvalidOrginizerFee,
+    #[msg("Role already granted")]
+    RoleAlreadyGranted,
+    #[msg("Role not found")]
+    RoleNotFound,
+    #[msg("Invalid Params")]
+    InvalidParams,
 }

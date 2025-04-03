@@ -1,16 +1,8 @@
-import * as anchor from "@coral-xyz/anchor";
+import { AnchorError } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  createAssociatedTokenAccount,
-  approveChecked,
-  mintTo,
-  createMint,
-} from "@solana/spl-token";
 import { assert } from "chai";
-import { getProvider } from "../common/utils";
-
+import { getConstant, getGenomePda, getProgram, getProvider } from "../common/utils";
+import { approveChecked, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccount, createMint, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export function getKeyPairs(): {
   admin: Keypair,
@@ -58,6 +50,13 @@ export function getKeyPairs(): {
     operator,
     nome
   };
+}
+
+export async function getUserRole(user: PublicKey) {
+  const program = getProgram();
+  const rolePda = getGenomePda([getConstant("role"), user.toBuffer()]);
+  const userRole = await program.account.roleInfo.fetch(rolePda);
+  return userRole.roles;
 }
 
 export async function createGenomeMint(): Promise<{
@@ -138,10 +137,14 @@ export async function delegateAccount(sponsorAta: PublicKey): Promise<String> {
 
 export function checkAnchorError(error: any, errMsg: string) {
   let errorMessage: string;
-  if (error instanceof anchor.AnchorError) {
+  if (error instanceof AnchorError) {
     errorMessage = error.error.errorMessage;
   } else {
     errorMessage = error.message;
   }
   assert.ok(errorMessage.includes(errMsg));
+}
+
+export function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

@@ -1,10 +1,26 @@
-import * as anchor from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import {
+    Program,
+    BN,
+    workspace,
+    AnchorProvider,
+    setProvider,
+    IdlTypes,
+} from "@coral-xyz/anchor";
+import {
+    Keypair,
+    PublicKey,
+    sendAndConfirmTransaction,
+    Transaction,
+    TransactionInstruction,
+    LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
 
 import { GenomeContract } from "../target/types/genome_contract";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, getAccount, getAssociatedTokenAddress, Account as SplTokenAccount, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 const PROGRAM = getProgram();
+
+export type Role = IdlTypes<GenomeContract>["role"];
 
 /**
  * Make object pretty for logging
@@ -17,7 +33,7 @@ export function prettify(obj: any): string {
     for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
             const targetType = typeof obj[key];
-            if (obj[key] instanceof anchor.BN) {
+            if (obj[key] instanceof BN) {
                 prettyObj[key] = obj[key].toNumber();
             } else {
                 prettyObj[key] = obj[key];
@@ -29,7 +45,7 @@ export function prettify(obj: any): string {
 }
 
 export async function getConfig() {
-    const configPda = getConfigPda();
+    const configPda = getGenomePda([getConstant("config")]);
     const config = await PROGRAM.account.genomeConfig.fetch(configPda);
     return {
         admin: config.admin,
@@ -44,6 +60,31 @@ export async function getConfig() {
         maxOrganizerFee: config.maxOrganizerFee,
         nomeMint: config.nomeMint,
     };
+}
+
+export async function getTokenInfo(assetMint: PublicKey) {
+    const tokenPda = getGenomePda([getConstant("token"), assetMint.toBuffer()]);
+    const tokenInfo = await PROGRAM.account.tokenInfo.fetch(tokenPda);
+    return {
+        assetMint: tokenInfo.assetMint,
+        minSponsorPool: tokenInfo.minSponsorPool,
+        minEntryFee: tokenInfo.minEntryFee,
+    };
+}
+
+export async function getTournament(id: any) {
+    const idBuffer = Buffer.alloc(4);
+    idBuffer.writeUInt32LE(id, 0);
+    const tournamentPda = getGenomePda([getConstant("tournament"), idBuffer]);
+    const tournament = await PROGRAM.account.tournament.fetch(tournamentPda);
+    return {
+        id: tournament.id,
+        tournamentData: tournament.tournamentData,
+        status: tournament.status,
+        teamCount: tournament.teamCount,
+        tournamentPda: tournamentPda
+    };
+
 }
 
 export async function getSponsorAta(
@@ -79,25 +120,63 @@ export async function getPrizePoolAta(
     );
 }
 
-export async function airdropAll(pubkeys: Array<anchor.web3.PublicKey>, lamports: number): Promise<void> {
-    await Promise.all(pubkeys.map((pubkey) => airdrop(pubkey, lamports)));
+export function getGenomePda(seeds: Array<Buffer | Uint8Array>): PublicKey {
+    return PublicKey.findProgramAddressSync(
+        [getConstant("genomeRoot"), ...seeds],
+        PROGRAM.programId
+    )[0];
+}
+
+export async function airdropAll(
+    pubkeys: Array<PublicKey>,
+    sols: number
+): Promise<void> {
+    await Promise.all(pubkeys.map((pk) => airdrop(pk, sols)));
 }
 
 export function getProgram() {
-    return anchor.workspace.GenomeContract as anchor.Program<GenomeContract>;
+    return workspace.GenomeContract as Program<GenomeContract>;
 }
 
 export function getProvider() {
-    const provider = anchor.AnchorProvider.env();
-    anchor.setProvider(provider);
+    const provider = AnchorProvider.env();
+    setProvider(provider);
     return provider;
 }
 
-async function airdrop(address: PublicKey, amount: number) {
+export function getConstant(name: string): Uint8Array {
+    return JSON.parse(
+        PROGRAM.idl.constants.find((obj) => obj.name == name)!.value
+    );
+}
+
+export function parseRole(roleArg: string): Role {
+    switch (roleArg.toLowerCase()) {
+        case "verifier":
+            return { verifier: {} };
+        case "operator":
+            return { operator: {} };
+        case "organizer":
+            return { organizer: {} };
+        default:
+            throw new Error("Invalid role. Use one of these: 'verifier', 'operator', 'organizer'.");
+    }
+}
+
+export async function buildAndSendTx(
+    ixs: TransactionInstruction[],
+    signers: Keypair[]
+): Promise<string> {
+    const connection = getProgram().provider.connection;
+    const tx = new Transaction().add(...ixs);
+    return await sendAndConfirmTransaction(connection, tx, signers);
+}
+
+async function airdrop(address: PublicKey, sols: number) {
     const provider = getProvider();
     let txid = await provider.connection.requestAirdrop(
         address,
-        amount * anchor.web3.LAMPORTS_PER_SOL
+        sols * LAMPORTS_PER_SOL
     );
     let { blockhash, lastValidBlockHeight } =
         await provider.connection.getLatestBlockhash();
@@ -106,81 +185,4 @@ async function airdrop(address: PublicKey, amount: number) {
         blockhash,
         lastValidBlockHeight,
     });
-}
-
-export async function getUserRole(user: any) {
-    const userRolePda = getUserRolePda(user);
-    const userRole = await PROGRAM.account.roleInfo.fetch(userRolePda);
-    return { role: userRole.role };
-}
-
-export async function getTokenInfo(token: any) {
-    const tokenPda = getTokenPda(token);
-    const tokenInfo = await PROGRAM.account.tokenInfo.fetch(tokenPda);
-    return {
-        assetMint: tokenInfo.assetMint,
-        minSponsorPool: tokenInfo.minSponsorPool,
-        minEntryPool: tokenInfo.minEntryFee,
-    }
-
-}
-
-export async function getTournament(id: any) {
-    const tournamentPda = getTournamentPda(id);
-    const tournament = await PROGRAM.account.tournament.fetch(tournamentPda);
-    return {
-        id: tournament.id,
-        teamCount: tournament.teamCount,
-        tournamentData: tournament.tournamentData,
-        status: tournament.status,
-        tournamentPda: tournamentPda,
-    };
-}
-
-function getConfigPda(): PublicKey {
-    const genomeSeed = getConstant("genomeRoot");
-    const configArray = getConstant("config");
-    return PublicKey.findProgramAddressSync(
-        [genomeSeed, configArray],
-        PROGRAM.programId
-    )[0];
-}
-
-function getTournamentPda(id: any): PublicKey {
-    const genomeSeed = getConstant("genomeRoot");
-    const tournamentArray = getConstant("tournament");
-    const idBuffer = Buffer.alloc(4);
-    idBuffer.writeUInt32LE(id, 0);
-    return PublicKey.findProgramAddressSync(
-        [genomeSeed, tournamentArray, idBuffer],
-        PROGRAM.programId
-    )[0];
-}
-
-function getUserRolePda(
-    user: any
-): PublicKey {
-    const genomeSeed = getConstant("genomeRoot");
-    const roleArray = getConstant("role");
-    return PublicKey.findProgramAddressSync(
-        [genomeSeed, roleArray, user.toBuffer()],
-        PROGRAM.programId
-    )[0];
-}
-
-function getTokenPda(
-    token: any
-): PublicKey {
-    const genomeSeed = getConstant("genomeRoot");
-    const tokenArray = getConstant("token");
-    return PublicKey.findProgramAddressSync(
-        [genomeSeed, tokenArray, token.toBuffer()],
-        PROGRAM.programId
-    )[0];
-}
-
-function getConstant(name: string): Uint8Array {
-    return JSON.parse(
-        PROGRAM.idl.constants.find((obj) => obj.name == name)!.value
-    );
 }

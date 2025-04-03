@@ -9,18 +9,12 @@ use anchor_lang::{
     solana_program::{program::invoke, pubkey::PUBKEY_BYTES, system_instruction},
 };
 
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token_interface::{Mint, TokenAccount, TokenInterface},
-};
-use data::{
-    BloomFilter, GenomeConfig, Role, RoleInfo, TokenInfo, Tournament, TournamentCreated,
-    TournamentData,
-};
+use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, TokenAccount, TokenInterface}};
+use data::{BloomFilter, GenomeConfig, Role, RoleInfo, TokenInfo, Tournament, TournamentData};
 use error::TournamentError;
 use utils::calculate_bloom_memory;
 
-declare_id!("5HoKH9fr5wrQU3MyKBJuhpFx18QT3fXWYruSyDYD2UJR");
+declare_id!("61k9jndWDe36Wb7X1vteVLiWjmwFGwDmFLzzvLKtUPZo");
 
 #[cfg(feature = "localnet")]
 const DEPLOYER: Pubkey = pubkey!("HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7");
@@ -42,54 +36,61 @@ const TOKEN: &[u8] = b"token";
 mod genome_contract {
     use anchor_spl::token::{transfer_checked, TransferChecked};
 
-    use crate::utils::{initialize_bloom_filter, validate_params};
+    use crate::{data::TournamentCreated, utils::{initialize_bloom_filter, validate_params}};
 
     use super::*;
 
     #[instruction(discriminator = b"initsngl")]
     pub fn initialize(ctx: Context<Initialize>, config_params: GenomeConfig) -> Result<()> {
+        if !config_params.verifier_addresses.is_empty() {
+            return Err(TournamentError::InvalidParams.into());
+        }
         ctx.accounts.config.set_inner(config_params);
         Ok(())
     }
 
     #[instruction(discriminator = b"grntrole")]
     pub fn grant_role(ctx: Context<GrantRole>, role: Role) -> Result<()> {
+        require!(!ctx.accounts.role_info.roles.contains(&role), TournamentError::RoleAlreadyGranted,);
+
         if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
-            let verifier_to_add = ctx.accounts.user.key();
+            let current_len = config.verifier_addresses.len();
+            let new_len = current_len + 1;
+            let new_space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + (new_len * PUBKEY_BYTES);
 
-            if config.verifier_addresses.len() >= config.verifier_addresses.capacity() {
-                let current_capacity = config.verifier_addresses.capacity();
-                let new_capacity = current_capacity + 1;
-
-                let new_size = 8 + GenomeConfig::INIT_SPACE + (new_capacity * 32);
-                realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_size)?;
-            }
-            config.verifier_addresses.push(verifier_to_add);
+            realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_space)?;
+            config.verifier_addresses.push(ctx.accounts.user.key());
         }
-        ctx.accounts.role_info.role = role;
+
+        ctx.accounts.role_info.roles.push(role);
 
         Ok(())
     }
 
     #[instruction(discriminator = b"revkrole")]
-    pub fn revoke_role(ctx: Context<RevokeRole>) -> Result<()> {
-        if ctx.accounts.role_info.role == Role::Verifier {
+    pub fn revoke_role(ctx: Context<RevokeRole>, role: Role) -> Result<()> {
+        let index = ctx.accounts.role_info.roles.iter().position(|r| *r == role).ok_or(TournamentError::RoleNotFound)?;
+
+        if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
-            let verifier = ctx.accounts.user.key();
-            if let Some(index) = config.verifier_addresses.iter().position(|&key| key == verifier) {
-                config.verifier_addresses.remove(index);
+            let user_key = ctx.accounts.user.key();
+            let current_len = config.verifier_addresses.len();
+            let new_len = current_len - 1;
+            let new_space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + (new_len * PUBKEY_BYTES);
+
+            realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_space)?;
+            if let Some(indx) = config.verifier_addresses.iter().position(|&k| k == user_key) {
+                config.verifier_addresses.remove(indx);
             }
         }
+        ctx.accounts.role_info.roles.remove(index);
+
         Ok(())
     }
 
     #[instruction(discriminator = b"aprvtokn")]
-    pub fn approve_token(
-        ctx: Context<ApproveToken>,
-        min_sponsor_pool: u64,
-        min_entry_fee: u64,
-    ) -> Result<()> {
+    pub fn approve_token(ctx: Context<ApproveToken>, min_sponsor_pool: u64, min_entry_fee: u64) -> Result<()> {
         let info = &mut ctx.accounts.token_info;
         info.asset_mint = ctx.accounts.asset_mint.key();
         info.min_sponsor_pool = min_sponsor_pool;
@@ -104,17 +105,10 @@ mod genome_contract {
     }
 
     #[instruction(discriminator = b"crtntmnt")]
-    pub fn create_tournament(
-        ctx: Context<CreateTournament>,
-        tournament_data: TournamentData,
-    ) -> Result<()> {
+    pub fn create_tournament(ctx: Context<CreateTournament>, tournament_data: TournamentData) -> Result<()> {
         let tournament = &mut ctx.accounts.tournament;
         validate_params(&tournament_data, &ctx.accounts.config, &ctx.accounts.token_info)?;
-        initialize_bloom_filter(
-            tournament,
-            &ctx.accounts.config.false_precision,
-            &mut ctx.accounts.bloom_filter,
-        )?;
+        initialize_bloom_filter(tournament, &ctx.accounts.config.false_precision, &mut ctx.accounts.bloom_filter)?;
         let id = &mut ctx.accounts.config.tournament_nonce;
         tournament.initialize(*id, tournament_data.clone());
         *id += 1;
@@ -128,11 +122,7 @@ mod genome_contract {
             };
 
             let cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), accounts);
-            transfer_checked(
-                cpi,
-                tournament.tournament_data.sponsor_pool,
-                ctx.accounts.mint.decimals,
-            )?;
+            transfer_checked(cpi, tournament.tournament_data.sponsor_pool, ctx.accounts.mint.decimals)?;
         }
 
         emit!(TournamentCreated {
@@ -144,26 +134,25 @@ mod genome_contract {
     }
 }
 
-fn realloc<'info>(
-    account: AccountInfo<'info>,
-    payer: AccountInfo<'info>,
-    space: usize,
-) -> Result<()> {
+fn realloc<'info>(account: AccountInfo<'info>, payer: AccountInfo<'info>, space: usize) -> Result<()> {
     let rent_lamports = Rent::get()?.minimum_balance(space);
     let current_lamports = account.lamports();
     account.realloc(space, false)?;
+
     if rent_lamports > current_lamports {
         system_transfer(payer, account, rent_lamports - current_lamports)?;
+    } else {
+        account.sub_lamports(current_lamports - rent_lamports)?;
+        payer.add_lamports(current_lamports - rent_lamports)?;
     }
+
     Ok(())
 }
 
 fn system_transfer<'a>(from: AccountInfo<'a>, to: AccountInfo<'a>, amount: u64) -> Result<()> {
     let ix = system_instruction::transfer(from.key, to.key, amount);
-    invoke(&ix, &[from.clone(), to.clone()]).map_err(|err| {
-        msg!("Transfer failed: {:?}", err);
-        err.into()
-    })
+    invoke(&ix, &[from.clone(), to.clone()])?;
+    Ok(())
 }
 
 #[derive(Accounts)]
@@ -174,7 +163,7 @@ struct Initialize<'info> {
     #[account(
         init,
         payer = deployer,
-        space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + config_params.verifier_addresses.len() * PUBKEY_BYTES,
+        space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE,
         seeds = [GENOME_ROOT, CONFIG],
         bump
     )]
@@ -186,8 +175,7 @@ struct Initialize<'info> {
 struct GrantRole<'info> {
     #[account(signer, mut, address = config.admin @ TournamentError::NotAllowed)]
     admin: Signer<'info>,
-    /// CHECK:
-    user: AccountInfo<'info>,
+    user: SystemAccount<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     config: Box<Account<'info, GenomeConfig>>,
     #[account(
@@ -205,16 +193,10 @@ struct GrantRole<'info> {
 struct RevokeRole<'info> {
     #[account(mut, signer, address = config.admin @ TournamentError::NotAllowed)]
     admin: Signer<'info>,
-    /// CHECK:
-    user: AccountInfo<'info>,
+    user: SystemAccount<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     config: Account<'info, GenomeConfig>,
-    #[account(
-        mut,
-        seeds = [GENOME_ROOT, ROLE, user.key().as_ref()],
-        bump,
-        close = admin
-    )]
+    #[account(mut, seeds = [GENOME_ROOT, ROLE, user.key().as_ref()], bump)]
     role_info: Account<'info, RoleInfo>,
 }
 
@@ -222,12 +204,11 @@ struct RevokeRole<'info> {
 struct ApproveToken<'info> {
     #[account(mut)]
     operator: Signer<'info>,
-    /// CHECKED
-    pub asset_mint: AccountInfo<'info>,
+    asset_mint: InterfaceAccount<'info, Mint>,
     #[account(
         seeds = [GENOME_ROOT, ROLE, operator.key().as_ref()],
         bump,
-        constraint = role_info.role == Role::Operator @ TournamentError::NotAllowed
+        constraint = role_info.roles.contains(&Role::Operator) @ TournamentError::NotAllowed
     )]
     role_info: Account<'info, RoleInfo>,
     #[account(
@@ -245,12 +226,11 @@ struct ApproveToken<'info> {
 struct BanToken<'info> {
     #[account(mut)]
     operator: Signer<'info>,
-    /// CHECKED
-    asset_mint: AccountInfo<'info>,
+    asset_mint: InterfaceAccount<'info, Mint>,
     #[account(
         seeds = [GENOME_ROOT, ROLE, operator.key().as_ref()],
         bump,
-        constraint = role_info.role == Role::Operator @ TournamentError::NotAllowed
+        constraint = role_info.roles.contains(&Role::Operator) @ TournamentError::NotAllowed
     )]
     role_info: Account<'info, RoleInfo>,
     #[account(
@@ -267,20 +247,19 @@ struct BanToken<'info> {
 struct CreateTournament<'info> {
     #[account(mut)]
     organizer: Signer<'info>,
-    /// CHECKED
-    sponsor: UncheckedAccount<'info>,
+    sponsor: SystemAccount<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
-    config: Account<'info, GenomeConfig>,
+    pub config: Account<'info, GenomeConfig>,
     #[account(
         seeds = [GENOME_ROOT, ROLE, organizer.key().as_ref()],
         bump,
-        constraint = role_info.role == Role::Organizer @ TournamentError::NotAllowed
+        constraint = role_info.roles.contains(&Role::Organizer) @ TournamentError::NotAllowed
     )]
     role_info: Account<'info, RoleInfo>,
     #[account(
         init,
         payer = organizer,
-        space = 8 + Tournament::INIT_SPACE,
+        space = Tournament::DISCRIMINATOR.len() + Tournament::INIT_SPACE,
         seeds = [GENOME_ROOT, TOURNAMENT, config.tournament_nonce.to_le_bytes().as_ref()],
         bump
     )]

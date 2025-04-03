@@ -1,4 +1,4 @@
-import * as anchor from "@coral-xyz/anchor";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { getKeypairFromFile } from "@solana-developers/helpers";
 import { approveChecked, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
@@ -23,14 +23,14 @@ async function main(): Promise<void> {
   const payer = await getKeypairFromFile(payerPath);
   const mintAuthority = await getKeypairFromFile(authorityPath);
   const sponsor = await getKeypairFromFile(sponsorPath);
-  const assetMint = new anchor.web3.PublicKey(assentMintAddress);
-  const nomeMint = new anchor.web3.PublicKey(nomeMintAddress);
-  const operator = new anchor.web3.PublicKey(operatorAddress);
-  const admin = new anchor.web3.PublicKey(adminAddress);
-  const deployer = new anchor.web3.PublicKey(deployerAddress);
-  const organizer = new anchor.web3.PublicKey(organizerAddress);
-  const verifier1 = new anchor.web3.PublicKey(verifier1Address);
-  const verifier2 = new anchor.web3.PublicKey(verifier2Address);
+  const assetMint = new PublicKey(assentMintAddress);
+  const nomeMint = new PublicKey(nomeMintAddress);
+  const operator = new PublicKey(operatorAddress);
+  const admin = new PublicKey(adminAddress);
+  const deployer = new PublicKey(deployerAddress);
+  const organizer = new PublicKey(organizerAddress);
+  const verifier1 = new PublicKey(verifier1Address);
+  const verifier2 = new PublicKey(verifier2Address);
 
   const recipients = [operator, admin, deployer, organizer, verifier1, verifier2];
   const connection = getProvider().connection;
@@ -78,11 +78,11 @@ async function main(): Promise<void> {
 }
 
 async function createAtaAndMint(
-  connection: anchor.web3.Connection,
-  payer: anchor.web3.Keypair,
-  assetMint: anchor.web3.PublicKey,
-  mintAuthority: anchor.web3.Keypair,
-  recipients: anchor.web3.PublicKey[],
+  connection: Connection,
+  payer: Keypair,
+  assetMint: PublicKey,
+  mintAuthority: Keypair,
+  recipients: PublicKey[],
   amount: number
 ) {
   for (const recipient of recipients) {

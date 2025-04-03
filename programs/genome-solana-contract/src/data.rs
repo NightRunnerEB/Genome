@@ -18,7 +18,7 @@ pub(crate) struct GenomeConfig {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
-pub struct TournamentData {
+pub(crate) struct TournamentData {
     pub(crate) organizer: Pubkey,
     pub(crate) organizer_fee: u64,
     pub(crate) sponsor_pool: u64,
@@ -70,7 +70,8 @@ pub(crate) struct TokenInfo {
 #[account]
 #[derive(InitSpace)]
 pub(crate) struct RoleInfo {
-    pub(crate) role: Role,
+    #[max_len(3)]
+    pub(crate) roles: Vec<Role>,
 }
 
 #[derive(PartialEq, AnchorSerialize, AnchorDeserialize, Clone, InitSpace, Default)]

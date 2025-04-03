@@ -1,24 +1,22 @@
-import * as anchor from "@coral-xyz/anchor";
-import { getKeypairFromFile } from "@solana-developers/node-helpers";
-import { Transaction } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
+import { getKeypairFromFile } from "@solana-developers/helpers";
+
 import { IxBuilder } from "../common/ixBuilder";
-import { getProvider } from "../common/utils";
+import { buildAndSendTx } from "../common/utils";
 
 async function main() {
     const operatorKeypairPath = process.argv[2];
     const assetMintAddress = process.argv[3];
 
     const operator = await getKeypairFromFile(operatorKeypairPath);
-    const assetMint = new anchor.web3.PublicKey(assetMintAddress);
+    const assetMint = new PublicKey(assetMintAddress);
 
     console.log(`operator: ${operator.publicKey.toBase58()}`);
     console.log(`assetMint: ${assetMint.toBase58()}`);
 
-    const provider = getProvider();
     const ixBuilder = new IxBuilder();
     const banTokenIx = await ixBuilder.banTokenIx(operator.publicKey, assetMint);
-    const tx = new Transaction().add(banTokenIx);
-    const txSignature = await provider.sendAndConfirm(tx, [operator]);
+    const txSignature = await buildAndSendTx([banTokenIx], [operator]);
     console.log("Ban token tx signature:", txSignature);
 }
 
