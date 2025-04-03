@@ -3,6 +3,7 @@ import { getKeypairFromFile } from "@solana-developers/helpers";
 import { Transaction } from "@solana/web3.js";
 
 import { IxBuilder } from "../common/ixBuilder";
+import { buildAndSendTx } from "../common/utils";
 
 async function main() {
     const operatorKeypairPath = process.argv[2];
@@ -14,13 +15,9 @@ async function main() {
     console.log(`operator: ${operator.publicKey.toBase58()}`);
     console.log(`assetMint: ${assetMint.toBase58()}`);
 
-    anchor.setProvider(anchor.AnchorProvider.env());
-    const provider = anchor.AnchorProvider.env();
-
     const ixBuilder = new IxBuilder();
     const banTokenIx = await ixBuilder.banTokenIx(operator.publicKey, assetMint);
-    const tx = new Transaction().add(banTokenIx);
-    const txSignature = await provider.sendAndConfirm(tx, [operator]);
+    const txSignature = await buildAndSendTx([banTokenIx], [operator]);
     console.log("Ban token tx signature:", txSignature);
 }
 
