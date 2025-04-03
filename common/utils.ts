@@ -4,6 +4,7 @@ import {
     workspace,
     AnchorProvider,
     setProvider,
+    IdlTypes,
 } from "@coral-xyz/anchor";
 import {
     Keypair,
@@ -17,6 +18,8 @@ import {
 import { GenomeContract } from "../target/types/genome_contract";
 
 const PROGRAM = getProgram();
+
+export type Role = IdlTypes<GenomeContract>["role"];
 
 /**
  * Make object pretty for logging
@@ -86,6 +89,19 @@ export function getConstant(name: string): Uint8Array {
     return JSON.parse(
         PROGRAM.idl.constants.find((obj) => obj.name == name)!.value
     );
+}
+
+export function parseRole(roleArg: string): Role {
+    switch (roleArg.toLowerCase()) {
+        case "verifier":
+            return { verifier: {} };
+        case "operator":
+            return { operator: {} };
+        case "organizer":
+            return { organizer: {} };
+        default:
+            throw new Error("Invalid role. Use one of these: 'verifier', 'operator', 'organizer'.");
+    }
 }
 
 export async function buildAndSendTx(

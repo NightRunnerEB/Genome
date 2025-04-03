@@ -54,10 +54,11 @@ export class IxBuilder {
 
   async revokeRoleIx(
     admin: PublicKey,
-    user: PublicKey
+    user: PublicKey,
+    role: any
   ): Promise<TransactionInstruction> {
     return this.program.methods
-      .revokeRole()
+      .revokeRole(role)
       .accountsStrict({
         admin,
         user,

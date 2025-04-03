@@ -20,7 +20,8 @@ pub(crate) struct GenomeConfig {
 #[account]
 #[derive(InitSpace)]
 pub(crate) struct RoleInfo {
-    pub(crate) role: Role,
+    #[max_len(3)]
+    pub(crate) roles: Vec<Role>,
 }
 
 #[derive(PartialEq, AnchorSerialize, AnchorDeserialize, Clone, InitSpace, Default)]

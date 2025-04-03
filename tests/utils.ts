@@ -49,7 +49,7 @@ export async function getUserRole(user: PublicKey) {
   const program = getProgram();
   const rolePda = getGenomePda([getConstant("role"), user.toBuffer()]);
   const userRole = await program.account.roleInfo.fetch(rolePda);
-  return userRole.role;
+  return userRole.roles;
 }
 
 export function checkAnchorError(error: any, errMsg: string) {
@@ -60,4 +60,8 @@ export function checkAnchorError(error: any, errMsg: string) {
     errorMessage = error.message;
   }
   assert.ok(errorMessage.includes(errMsg));
+}
+
+export function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

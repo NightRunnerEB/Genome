@@ -1,11 +1,10 @@
-import { BN, IdlTypes } from "@coral-xyz/anchor";
+import { BN } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import * as assert from "assert";
 
-import { getKeyPairs, getUserRole, checkAnchorError } from "./utils";
+import { getKeyPairs, getUserRole, checkAnchorError, sleep } from "./utils";
 import { IxBuilder } from "../common/ixBuilder";
-import { airdropAll, getConfig, buildAndSendTx, prettify } from "../common/utils";
-import { GenomeContract } from "../target/types/genome_contract";
+import { airdropAll, getConfig, buildAndSendTx, Role } from "../common/utils";
 
 describe("Genome Solana Singlechain", () => {
   const ixBuilder = new IxBuilder();
@@ -88,12 +87,12 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Grant Role by non-admin", async () => {
+    const grantRoleIx = await ixBuilder.grantRoleIx(
+      operator.publicKey,
+      organizer.publicKey,
+      { organizer: {} }
+    );
     try {
-      const grantRoleIx = await ixBuilder.grantRoleIx(
-        operator.publicKey,
-        organizer.publicKey,
-        { organizer: {} }
-      );
       await buildAndSendTx([grantRoleIx], [operator]);
       throw new Error("Expected error was not thrown");
     } catch (error) {
@@ -102,7 +101,6 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Grant role", async () => {
-    type Role = IdlTypes<GenomeContract>["role"];
     const roles: [PublicKey, Role][] = [
       [operator.publicKey, { operator: {} }],
       [organizer.publicKey, { organizer: {} }],
@@ -119,55 +117,52 @@ describe("Genome Solana Singlechain", () => {
       console.log("Grant role tx signature:", txSig);
 
       const userRole = await getUserRole(userPubkey);
-      assert.deepEqual(userRole, roleParams);
+      assert.deepEqual(userRole[0], roleParams);
     }
     const config = await getConfig();
-    assert.deepEqual(config.verifierAddresses, [
-      verifier2.publicKey,
-    ]);
+    assert.deepEqual(config.verifierAddresses, [verifier2.publicKey]);
   });
 
   it("Give the role to the same person again", async () => {
+    await sleep(2000);
+    const grantIx = await ixBuilder.grantRoleIx(
+      admin.publicKey,
+      verifier2.publicKey,
+      { verifier: {} }
+    );
     try {
-      const grantIx = await ixBuilder.grantRoleIx(
-        admin.publicKey,
-        verifier2.publicKey,
-        { verifier: {} }
-      );
       await buildAndSendTx([grantIx], [admin]);
       throw new Error("Expected error was not thrown");
     } catch (error) {
-      checkAnchorError(error, "Unable to obtain a new blockhash");
+      checkAnchorError(error, "Role already granted.");
     }
   });
 
   it("Revoke Role", async () => {
-    for (const role of [
-      operator.publicKey,
-      verifier2.publicKey,
-      organizer.publicKey,
-    ]) {
-      const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, role);
+    const roles: [PublicKey, Role][] = [
+      [operator.publicKey, { operator: {} }],
+      [organizer.publicKey, { organizer: {} }],
+      [verifier2.publicKey, { verifier: {} }],
+    ];
+
+    for (const [userPubkey, roleParams] of roles) {
+      const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, userPubkey, roleParams);
       const txSig = await buildAndSendTx([revokeIx], [admin]);
       console.log("Revoke role tx:", txSig);
-      try {
-        await getUserRole(role);
-        throw new Error("Expected error was not thrown");
-      } catch (error) {
-        checkAnchorError(error, "Account does not exist");
-      }
+      const userRole = await getUserRole(userPubkey);
+      assert.ok(!userRole.some((r) => JSON.stringify(r) === JSON.stringify(roleParams)));
     }
     const config = await getConfig();
     assert.deepEqual(config.verifierAddresses, []);
   });
 
   it("Revoke Role of a non-existent person", async () => {
+    const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, operator.publicKey, { operator: {} });
     try {
-      const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, operator.publicKey);
       await buildAndSendTx([revokeIx], [admin]);
       throw new Error("Expected error was not thrown");
     } catch (error) {
-      checkAnchorError(error, "The program expected this account to be already initialized");
+      checkAnchorError(error, "Role not found");
     }
   });
 });
