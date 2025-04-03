@@ -2,9 +2,9 @@ import { BN } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import * as assert from "assert";
 
-import { getKeyPairs, getUserRole, checkAnchorError, sleep } from "./utils";
+import { getKeyPairs, getUserRole, checkAnchorError, sleep, createGenomeMint } from "./utils";
 import { IxBuilder } from "../common/ixBuilder";
-import { airdropAll, getConfig, buildAndSendTx, getTokenInfo, Role } from "../common/utils";
+import { airdropAll, getConfig, buildAndSendTx, getTokenInfo, Role, getProgram, getProvider } from "../common/utils";
 
 describe("Genome Solana Singlechain", () => {
   const ixBuilder = new IxBuilder();
@@ -37,6 +37,8 @@ describe("Genome Solana Singlechain", () => {
       ],
       10
     );
+
+    await createGenomeMint();
   });
 
   it("Initialize Genome Solana with Invalid Params", async () => {
@@ -93,6 +95,9 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Grant role", async () => {
+    const beforeInfo = await getProvider().connection.getAccountInfo(ixBuilder.configPda);
+    const beforeLamports = beforeInfo?.lamports ?? 0;
+
     const roles: [PublicKey, Role][] = [
       [operator.publicKey, { operator: {} }],
       [organizer.publicKey, { organizer: {} }],
@@ -111,12 +116,19 @@ describe("Genome Solana Singlechain", () => {
       const userRole = await getUserRole(userPubkey);
       assert.deepEqual(userRole[0], roleParams);
     }
+
+    const afterInfo = await getProvider().connection.getAccountInfo(ixBuilder.configPda);
+    const afterLamports = afterInfo?.lamports ?? 0;
+    assert.notEqual(beforeLamports - afterLamports, 0)
+    console.log("Config lamports before grant:", beforeLamports);
+    console.log("Config lamports after grant:", afterLamports);
+
     const config = await getConfig();
     assert.deepEqual(config.verifierAddresses, [verifier2.publicKey]);
   });
 
   it("Give the role to the same person again", async () => {
-    await sleep(2000);
+    await sleep(3000);
     const grantIx = await ixBuilder.grantRoleIx(
       admin.publicKey,
       verifier2.publicKey,
@@ -139,7 +151,7 @@ describe("Genome Solana Singlechain", () => {
 
     const tokenInfo = await getTokenInfo(token.publicKey);
     assert.deepEqual(tokenInfo.assetMint, token.publicKey);
-    assert.equal(tokenInfo.minEntryPool.toNumber(), minEntryPool.toNumber());
+    assert.equal(tokenInfo.minEntryFee.toNumber(), minEntryPool.toNumber());
     assert.equal(tokenInfo.minSponsorPool.toNumber(), minSponsorPool.toNumber());
   });
 
@@ -155,6 +167,9 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Revoke Role", async () => {
+    const beforeInfo = await getProvider().connection.getAccountInfo(ixBuilder.configPda);
+    const beforeLamports = beforeInfo?.lamports ?? 0;
+
     const roles: [PublicKey, Role][] = [
       [operator.publicKey, { operator: {} }],
       [organizer.publicKey, { organizer: {} }],
@@ -168,6 +183,12 @@ describe("Genome Solana Singlechain", () => {
       const userRole = await getUserRole(userPubkey);
       assert.ok(!userRole.some((r) => JSON.stringify(r) === JSON.stringify(roleParams)));
     }
+    const afterInfo = await getProvider().connection.getAccountInfo(ixBuilder.configPda);
+    const afterLamports = afterInfo?.lamports ?? 0;
+    assert.notEqual(beforeLamports - afterLamports, 0)
+    console.log("Config lamports before revoke:", beforeLamports);
+    console.log("Config lamports after revoke:", afterLamports);
+
     const config = await getConfig();
     assert.deepEqual(config.verifierAddresses, []);
   });

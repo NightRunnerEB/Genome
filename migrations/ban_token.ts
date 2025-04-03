@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { getKeypairFromFile } from "@solana-developers/node-helpers";
+import { getKeypairFromFile } from "@solana-developers/helpers";
 import { Transaction } from "@solana/web3.js";
 
 import { IxBuilder } from "../common/ixBuilder";

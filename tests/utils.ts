@@ -1,7 +1,8 @@
 import { AnchorError } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { assert } from "chai";
-import { getConstant, getGenomePda, getProgram } from "../common/utils";
+import { getConstant, getGenomePda, getProgram, getProvider } from "../common/utils";
+import { createMint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export function getKeyPairs(): {
   admin: Keypair,
@@ -68,4 +69,20 @@ export function checkAnchorError(error: any, errMsg: string) {
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function createGenomeMint() {
+  let { admin, token } = getKeyPairs();
+
+  const mint = await createMint(
+    getProvider().connection,
+    admin,
+    admin.publicKey,
+    null,
+    6,
+    token,
+    undefined,
+    TOKEN_PROGRAM_ID
+  );
+  console.log("Genome mint:", mint.toBase58());
 }

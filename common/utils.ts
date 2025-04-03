@@ -61,15 +61,14 @@ export async function getConfig() {
     };
 }
 
-export async function getTokenInfo(token: PublicKey) {
-    const tokenPda = getGenomePda([getConstant("token"), token.toBuffer()]);
+export async function getTokenInfo(assetMint: PublicKey) {
+    const tokenPda = getGenomePda([getConstant("token"), assetMint.toBuffer()]);
     const tokenInfo = await PROGRAM.account.tokenInfo.fetch(tokenPda);
     return {
         assetMint: tokenInfo.assetMint,
         minSponsorPool: tokenInfo.minSponsorPool,
-        minEntryPool: tokenInfo.minEntryFee,
-    }
-
+        minEntryFee: tokenInfo.minEntryFee,
+    };
 }
 
 export function getGenomePda(seeds: Array<Buffer | Uint8Array>): PublicKey {

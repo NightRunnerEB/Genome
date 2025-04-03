@@ -1,8 +1,8 @@
 import * as anchor from "@coral-xyz/anchor";
-import { getKeypairFromFile } from "@solana-developers/node-helpers";
-import { Transaction } from "@solana/web3.js";
+import { getKeypairFromFile } from "@solana-developers/helpers";
 
 import { IxBuilder } from "../common/ixBuilder";
+import { buildAndSendTx } from "../common/utils";
 
 async function main() {
     const operatorKeypairPath = process.argv[2];
@@ -16,9 +16,6 @@ async function main() {
     console.log(`operator: ${operator.publicKey.toBase58()}`);
     console.log(`assetMint: ${assetMint.toBase58()}`);
 
-    const provider = anchor.AnchorProvider.env();
-    anchor.setProvider(provider);
-
     const ixBuilder = new IxBuilder();
     const approveTokenIx = await ixBuilder.approveTokenIx(
         operator.publicKey,
@@ -27,8 +24,7 @@ async function main() {
         minEntryFee
     );
 
-    const tx = new Transaction().add(approveTokenIx);
-    const txSignature = await provider.sendAndConfirm(tx, [operator]);
+    const txSignature = await buildAndSendTx([approveTokenIx], [operator]);
     console.log("Approve token tx signature:", txSignature);
 }
 

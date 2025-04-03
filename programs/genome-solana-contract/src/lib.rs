@@ -8,6 +8,7 @@ use anchor_lang::{
     solana_program::{program::invoke, pubkey::PUBKEY_BYTES, system_instruction},
 };
 
+use anchor_spl::token_interface::Mint;
 use data::{GenomeConfig, Role, RoleInfo, TokenInfo};
 use error::TournamentError;
 
@@ -44,7 +45,6 @@ mod genome_contract {
 
         if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
-
             let current_len = config.verifier_addresses.len();
             let new_len = current_len + 1;
             let new_space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + (new_len * PUBKEY_BYTES);
@@ -65,8 +65,13 @@ mod genome_contract {
         if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
             let user_key = ctx.accounts.user.key();
-            if let Some(index) = config.verifier_addresses.iter().position(|&k| k == user_key) {
-                config.verifier_addresses.remove(index);
+            let current_len = config.verifier_addresses.len();
+            let new_len = current_len - 1;
+            let new_space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + (new_len * PUBKEY_BYTES);
+
+            realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_space)?;
+            if let Some(indx) = config.verifier_addresses.iter().position(|&k| k == user_key) {
+                config.verifier_addresses.remove(indx);
             }
         }
         ctx.accounts.role_info.roles.remove(index);
@@ -164,11 +169,11 @@ struct RevokeRole<'info> {
 pub struct ApproveToken<'info> {
     #[account(mut)]
     operator: Signer<'info>,
-    pub asset_mint: SystemAccount<'info>,
+    asset_mint: InterfaceAccount<'info, Mint>,
     #[account(
         seeds = [GENOME_ROOT, ROLE, operator.key().as_ref()],
         bump,
-        constraint = role_info.role == Role::Operator @ TournamentError::NotAllowed
+        constraint = role_info.roles.contains(&Role::Operator) @ TournamentError::NotAllowed
     )]
     role_info: Account<'info, RoleInfo>,
     #[account(
@@ -186,11 +191,11 @@ pub struct ApproveToken<'info> {
 pub struct BanToken<'info> {
     #[account(mut)]
     operator: Signer<'info>,
-    asset_mint: SystemAccount<'info>,
+    asset_mint: InterfaceAccount<'info, Mint>,
     #[account(
         seeds = [GENOME_ROOT, ROLE, operator.key().as_ref()],
         bump,
-        constraint = role_info.role == Role::Operator @ TournamentError::NotAllowed
+        constraint = role_info.roles.contains(&Role::Operator) @ TournamentError::NotAllowed
     )]
     role_info: Account<'info, RoleInfo>,
     #[account(

@@ -20,3 +20,5 @@ initialize = "yarn run ts-node migrations/initialize.ts keys/deployer.json 4LZ7r
 airdrop = "yarn run ts-node migrations/airdrop.ts"
 grant-role = "yarn run ts-node migrations/grant_role.ts keys/admin.json"
 revoke-role = "yarn run ts-node migrations/revoke_role.ts keys/admin.json"
+approve-token = "yarn run ts-node migrations/approve_token.ts"
+ban-token = "yarn run ts-node migrations/ban_token.ts"

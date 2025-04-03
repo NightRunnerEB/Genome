@@ -12,13 +12,15 @@ const PROGRAM = getProgram();
 
 export class IxBuilder {
   public program: Program<GenomeContract>;
-  private configPda: PublicKey;
+  public configPda: PublicKey;
   private roleSeed: Uint8Array;
+  private tokenSeed: Uint8Array;
 
   constructor() {
     this.program = PROGRAM;
     this.configPda = getGenomePda([getConstant("config")]);
     this.roleSeed = getConstant("role");
+    this.tokenSeed = getConstant("token");
   }
 
   async initializeIx(
@@ -80,7 +82,7 @@ export class IxBuilder {
         operator,
         assetMint,
         roleInfo: getGenomePda([this.roleSeed, operator.toBuffer()]),
-        tokenInfo: getGenomePda([getConstant("token"), assetMint.toBuffer()]),
+        tokenInfo: getGenomePda([this.tokenSeed, assetMint.toBuffer()]),
         systemProgram: SystemProgram.programId
       })
       .instruction();
@@ -96,7 +98,7 @@ export class IxBuilder {
         operator,
         assetMint,
         roleInfo: getGenomePda([this.roleSeed, operator.toBuffer()]),
-        tokenInfo: getGenomePda([getConstant("token"), assetMint.toBuffer()]),
+        tokenInfo: getGenomePda([this.tokenSeed, assetMint.toBuffer()]),
       })
       .instruction();
   }
