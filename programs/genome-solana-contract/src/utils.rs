@@ -49,5 +49,6 @@ pub fn initialize_bloom_filter(
     let items_count = tournament.tournament_data.max_teams * tournament.tournament_data.team_size;
     let bloom = Bloom::new(*false_precision, items_count as usize);
     bloom_filter.data = bincode::serialize(&bloom).expect("Failed to serialize bloom filter");
+    msg!("Bloom filter memory: {}", bloom_filter.data.len());
     Ok(())
 }
