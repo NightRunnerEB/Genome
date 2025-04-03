@@ -4,7 +4,7 @@ import * as assert from "assert";
 
 import { getKeyPairs, getUserRole, checkAnchorError, sleep, createGenomeMint } from "./utils";
 import { IxBuilder } from "../common/ixBuilder";
-import { airdropAll, getConfig, buildAndSendTx, getTokenInfo, Role, getProgram, getProvider } from "../common/utils";
+import { airdropAll, getConfig, buildAndSendTx, getTokenInfo, Role, getProvider } from "../common/utils";
 
 describe("Genome Solana Singlechain", () => {
   const ixBuilder = new IxBuilder();

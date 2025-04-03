@@ -1,4 +1,4 @@
-import * as anchor from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
 import { getKeypairFromFile } from "@solana-developers/helpers";
 
 import { IxBuilder } from "../common/ixBuilder";
@@ -9,7 +9,7 @@ async function main() {
     const assetMintAddress = process.argv[3];
 
     const operator = await getKeypairFromFile(operatorKeypairPath);
-    const assetMint = new anchor.web3.PublicKey(assetMintAddress);
+    const assetMint = new PublicKey(assetMintAddress);
 
     console.log(`operator: ${operator.publicKey.toBase58()}`);
     console.log(`assetMint: ${assetMint.toBase58()}`);
