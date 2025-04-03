@@ -1,5 +1,5 @@
 import { BN } from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import * as assert from "assert";
 
 import { getKeyPairs, getUserRole, checkAnchorError, sleep, createGenomeMint } from "./utils";
@@ -128,7 +128,7 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Give the role to the same person again", async () => {
-    await sleep(3000);
+    await sleep(4000);
     const grantIx = await ixBuilder.grantRoleIx(
       admin.publicKey,
       verifier2.publicKey,
@@ -201,5 +201,32 @@ describe("Genome Solana Singlechain", () => {
     } catch (error) {
       checkAnchorError(error, "Role not found");
     }
+  });
+
+  it("Grant 128 random Verifier roles", async () => {
+    const randomVerifiers = Array.from({ length: 128 }, () => Keypair.generate());
+
+    const grantRolePromises = randomVerifiers.map(async (verifier) => {
+      const grantRoleIx = await ixBuilder.grantRoleIx(
+        admin.publicKey,
+        verifier.publicKey,
+        { verifier: {} }
+      );
+      const txSig = await buildAndSendTx([grantRoleIx], [admin]);
+      console.log("Grant role (verifier) tx:", txSig);
+      const userRole = await getUserRole(verifier.publicKey);
+      assert.deepEqual(userRole[0], { verifier: {} });
+    });
+
+    await Promise.all(grantRolePromises);
+
+    const config = await getConfig();
+    console.log("Total verifiers stored in contract:", config.verifierAddresses.length);
+    assert.equal(config.verifierAddresses.length, 128, "Expected 128 verifier addresses in config");
+
+    randomVerifiers.forEach(verifier => {
+      const found = config.verifierAddresses.some(addr => addr.equals(verifier.publicKey));
+      assert.ok(found, `Verifier pubkey ${verifier.publicKey.toBase58()} not found in config`);
+    });
   });
 });
