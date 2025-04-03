@@ -1,5 +1,5 @@
 use anchor_lang::{
-    prelude::{Account, Result},
+    prelude::{msg, Account, Result},
     require,
 };
 use growable_bloom_filter::GrowableBloom as Bloom;
@@ -16,9 +16,9 @@ pub fn calculate_bloom_memory(participants_count: u16, false_precision: f64) -> 
     let num_slices = ((1.0_f64 / false_precision).log2()).ceil();
     let ln2 = std::f64::consts::LN_2;
     let max_participants_count = (((MAX_MEMORY - overhead) as f64 * 8.0 * ln2) / num_slices).floor() as u16;
-    if participants_count > max_participants_count {
-        return Err(TournamentError::MaxPlayersExceeded.into());
-    }
+    msg!("Max participants count: {}", max_participants_count);
+    require!(participants_count <= max_participants_count, TournamentError::MaxPlayersExceeded);
+
     let slice_len_bits = (participants_count as f64 / 2f64.ln()).ceil();
     let total_bits = num_slices * slice_len_bits;
     let buffer_bytes = ((total_bits + 7.0) / 8.0) as usize;

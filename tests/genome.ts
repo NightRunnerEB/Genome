@@ -148,7 +148,7 @@ describe("Genome Solana Singlechain", () => {
   });
 
   it("Give the role to the same person again", async () => {
-    await sleep(3000);
+    await sleep(4000);
     const grantIx = await ixBuilder.grantRoleIx(
       admin.publicKey,
       verifier2.publicKey,

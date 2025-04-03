@@ -21,6 +21,7 @@ async function main() {
     const organizer = await getKeypairFromFile(organizerPath);
     const mint = new PublicKey(mintAddress);
     const sponsor = new PublicKey(sponsorAddress);
+    console.log(1);
 
     const ixBuilder = new IxBuilder();
     const createTournamentIx = await ixBuilder.createTournamentIx(
@@ -29,15 +30,17 @@ async function main() {
         mint,
         {
             organizer: organizer.publicKey,
-            asset_mint: mintAddress,
-            organizer_fee: new BN(organizerFeeStr),
-            sponsor_pool: new BN(sponsorPoolStr),
-            entry_fee: new BN(entryFeeStr),
-            team_size: parseInt(teamSizeStr),
-            min_teams: parseInt(minTeamsStr),
-            max_teams: parseInt(maxTeamsStr),
+            assetMint: mint,
+            organizerFee: new BN(organizerFeeStr),
+            sponsorPool: new BN(sponsorPoolStr),
+            entryFee: new BN(entryFeeStr),
+            teamSize: parseInt(teamSizeStr),
+            minTeams: parseInt(minTeamsStr),
+            maxTeams: parseInt(maxTeamsStr),
         }
     );
+    
+    console.log(2);
     const txSignature = await buildAndSendTx([createTournamentIx], [organizer]);
     console.log("Create tournament tx signature:", txSignature);
 
