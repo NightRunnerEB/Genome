@@ -40,34 +40,37 @@ mod genome_contract {
 
     #[instruction(discriminator = b"grntrole")]
     pub fn grant_role(ctx: Context<GrantRole>, role: Role) -> Result<()> {
+        require!(!ctx.accounts.role_info.roles.contains(&role), TournamentError::RoleAlreadyGranted,);
+
         if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
 
-            if config.verifier_addresses.len() >= config.verifier_addresses.capacity() {
-                let current_capacity = config.verifier_addresses.capacity();
-                let new_capacity = current_capacity + 1;
+            let current_len = config.verifier_addresses.len();
+            let new_len = current_len + 1;
+            let new_space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + (new_len * PUBKEY_BYTES);
 
-                let new_size = GenomeConfig::DISCRIMINATOR.len()
-                    + GenomeConfig::INIT_SPACE
-                    + (new_capacity * PUBKEY_BYTES);
-                realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_size)?;
-            }
+            realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_space)?;
             config.verifier_addresses.push(ctx.accounts.user.key());
         }
-        ctx.accounts.role_info.role = role;
+
+        ctx.accounts.role_info.roles.push(role);
 
         Ok(())
     }
 
     #[instruction(discriminator = b"revkrole")]
-    pub fn revoke_role(ctx: Context<RevokeRole>) -> Result<()> {
-        if ctx.accounts.role_info.role == Role::Verifier {
+    pub fn revoke_role(ctx: Context<RevokeRole>, role: Role) -> Result<()> {
+        let index = ctx.accounts.role_info.roles.iter().position(|r| *r == role).ok_or(TournamentError::RoleNotFound)?;
+
+        if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
-            let verifier = ctx.accounts.user.key();
-            if let Some(index) = config.verifier_addresses.iter().position(|&key| key == verifier) {
+            let user_key = ctx.accounts.user.key();
+            if let Some(index) = config.verifier_addresses.iter().position(|&k| k == user_key) {
                 config.verifier_addresses.remove(index);
             }
         }
+        ctx.accounts.role_info.roles.remove(index);
+
         Ok(())
     }
 
@@ -91,17 +94,18 @@ mod genome_contract {
     }
 }
 
-fn realloc<'info>(
-    account: AccountInfo<'info>,
-    payer: AccountInfo<'info>,
-    space: usize,
-) -> Result<()> {
+fn realloc<'info>(account: AccountInfo<'info>, payer: AccountInfo<'info>, space: usize) -> Result<()> {
     let rent_lamports = Rent::get()?.minimum_balance(space);
     let current_lamports = account.lamports();
     account.realloc(space, false)?;
+
     if rent_lamports > current_lamports {
         system_transfer(payer, account, rent_lamports - current_lamports)?;
+    } else {
+        account.sub_lamports(current_lamports - rent_lamports)?;
+        payer.add_lamports(current_lamports - rent_lamports)?;
     }
+
     Ok(())
 }
 
@@ -135,7 +139,7 @@ struct GrantRole<'info> {
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     config: Box<Account<'info, GenomeConfig>>,
     #[account(
-        init,
+        init_if_needed,
         payer = admin,
         space = RoleInfo::DISCRIMINATOR.len() + RoleInfo::INIT_SPACE,
         seeds = [GENOME_ROOT, ROLE, user.key().as_ref()],
@@ -152,12 +156,7 @@ struct RevokeRole<'info> {
     user: SystemAccount<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
     config: Account<'info, GenomeConfig>,
-    #[account(
-        mut,
-        seeds = [GENOME_ROOT, ROLE, user.key().as_ref()],
-        bump,
-        close = admin
-    )]
+    #[account(mut, seeds = [GENOME_ROOT, ROLE, user.key().as_ref()], bump)]
     role_info: Account<'info, RoleInfo>,
 }
 

@@ -1,6 +1,6 @@
 reorder_imports = true
 brace_style = "SameLineWhere"
 where_single_line = true
-chain_width = 100
+max_width = 170
 fn_call_width = 92
 imports_granularity = "Crate"

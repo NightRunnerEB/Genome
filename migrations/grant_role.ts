@@ -2,7 +2,7 @@ import { getKeypairFromFile } from "@solana-developers/helpers";
 import { TransactionInstruction, PublicKey } from "@solana/web3.js";
 
 import { IxBuilder } from "../common/ixBuilder";
-import { buildAndSendTx } from "../common/utils";
+import { buildAndSendTx, parseRole } from "../common/utils";
 
 async function main(): Promise<void> {
   const adminKeypairPath = process.argv[2];
@@ -11,23 +11,7 @@ async function main(): Promise<void> {
 
   const admin = await getKeypairFromFile(adminKeypairPath);
   const user = new PublicKey(userAddress);
-
-  let role;
-  switch (roleArg.toLowerCase()) {
-    case "verifier":
-      role = { verifier: {} };
-      break;
-    case "operator":
-      role = { operator: {} };
-      break;
-    case "organizer":
-      role = { organizer: {} };
-      break;
-    default:
-      throw new Error(
-        "Invalid role. Use one of these: 'verifier', 'operator', 'organizer'."
-      );
-  }
+  const role = parseRole(roleArg);
 
     console.log(`admin: ${admin.publicKey.toBase58()}`);
     console.log(`user: ${user.toBase58()}`);

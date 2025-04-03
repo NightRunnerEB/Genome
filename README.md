@@ -11,8 +11,8 @@ Genome is a decentralized platform built on Solana for creating, managing, and p
 - **Platform Initialization:**  
   - The owner configures the platform by setting up parameters in the `GenomeConfig`.
 - **Grant/Revoke Role**  
-  - The platform admin assigns roles to users using the grant_role instruction. Roles can be Verifier, Operator, or Organizer.
-  - Conversely, the revoke_role instruction allows the admin to remove a user’s role; in the case of verifiers, their address is removed from the configuration.
+  - The platform admin can assign one or more roles to a user using the grant_role instruction. Roles can be Verifier, Operator, or Organizer.
+  - Conversely, the revoke_role instruction allows the admin to remove a specific role from a user. In the case of verifiers, the user’s address is also removed from the configuration.
 - **Approve/Ban Token**  
   - The operator registers (approves) a token via the approve_token instruction. This action creates or updates a dedicated token account (PDA) containing parameters such as the minimum sponsor pool and entry fee thresholds.
   - Additionally, the operator can disable a token using the ban_token instruction, ensuring that only authorized tokens are used on the platform.
@@ -136,8 +136,12 @@ anchor run grant-role -- <user-pubkey> <role>
 Revoke:
 
 ```rs
-anchor run revoke-role -- <user-pubkey>
-// Example: anchor run revoke-role -- GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7
+anchor run revoke-role -- <user-pubkey> <role>
+/* Example: 
+    anchor run revoke-role -- GVQyxwHxVZBY9PB5hfSf1owN7F8QX4qF4HdurMA3bbr7 verifier
+    anchor run revoke-role -- 6Agqn5YD4fAncrnB9VrvwTfaufw2Tx1pphGca79uWruT operator
+    anchor run revoke-role -- ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz organizer
+*/
 ```
 
 #### Approve/Ban Token

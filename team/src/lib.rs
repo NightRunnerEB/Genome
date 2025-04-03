@@ -56,8 +56,7 @@ impl Team {
     }
 
     pub fn refund_participant(&mut self, participant: &Pubkey) -> Result<usize> {
-        let info =
-            self.participants.get_mut(participant).ok_or(TournamentError::ParticipantNotFound)?;
+        let info = self.participants.get_mut(participant).ok_or(TournamentError::ParticipantNotFound)?;
 
         if info.refunded {
             return Ok(0);
