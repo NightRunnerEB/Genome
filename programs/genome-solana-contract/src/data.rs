@@ -18,9 +18,10 @@ pub(crate) struct GenomeConfig {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
-pub(crate) struct TournamentData {
+pub(crate) struct TournamentConfig {
     pub(crate) organizer: Pubkey,
     pub(crate) organizer_fee: u64,
+    pub(crate) expiration_time: u64,
     pub(crate) sponsor_pool: u64,
     pub(crate) entry_fee: u64,
     pub(crate) team_size: u16,
@@ -33,8 +34,8 @@ pub(crate) struct TournamentData {
 #[derive(InitSpace)]
 pub(crate) struct Tournament {
     pub(crate) id: u32,
+    pub(crate) config: TournamentConfig,
     pub(crate) team_count: u32,
-    pub(crate) tournament_data: TournamentData,
     pub(crate) status: TournamentStatus,
 }
 
@@ -47,16 +48,16 @@ pub(crate) enum TournamentStatus {
 }
 
 impl Tournament {
-    pub fn initialize(&mut self, id: u32, tournament_data: TournamentData) {
+    pub fn initialize(&mut self, id: u32, tournament_config: TournamentConfig) {
         self.id = id;
-        self.tournament_data = tournament_data;
+        self.config = tournament_config;
     }
 }
 
 #[event]
 pub(crate) struct TournamentCreated {
     pub(crate) id: u32,
-    pub(crate) tournament_data: TournamentData,
+    pub(crate) config: TournamentConfig,
 }
 
 #[account]

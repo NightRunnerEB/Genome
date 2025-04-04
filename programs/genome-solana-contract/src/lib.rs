@@ -9,8 +9,11 @@ use anchor_lang::{
     solana_program::{program::invoke, pubkey::PUBKEY_BYTES, system_instruction},
 };
 
-use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, TokenAccount, TokenInterface}};
-use data::{BloomFilter, GenomeConfig, Role, RoleInfo, TokenInfo, Tournament, TournamentData};
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token_interface::{Mint, TokenAccount, TokenInterface},
+};
+use data::{BloomFilter, GenomeConfig, Role, RoleInfo, TokenInfo, Tournament, TournamentConfig};
 use error::TournamentError;
 use utils::calculate_bloom_memory;
 
@@ -36,14 +39,17 @@ const TOKEN: &[u8] = b"token";
 mod genome_contract {
     use anchor_spl::token::{transfer_checked, TransferChecked};
 
-    use crate::{data::TournamentCreated, utils::{initialize_bloom_filter, validate_params}};
+    use crate::{
+        data::TournamentCreated,
+        utils::{initialize_bloom_filter, validate_params},
+    };
 
     use super::*;
 
     #[instruction(discriminator = b"initsngl")]
     pub fn initialize(ctx: Context<Initialize>, config_params: GenomeConfig) -> Result<()> {
         if !config_params.verifier_addresses.is_empty() {
-            return Err(TournamentError::InvalidParams.into());
+            return Err(TournamentError::InvalidGenomeConfig.into());
         }
         ctx.accounts.config.set_inner(config_params);
         Ok(())
@@ -51,13 +57,18 @@ mod genome_contract {
 
     #[instruction(discriminator = b"grntrole")]
     pub fn grant_role(ctx: Context<GrantRole>, role: Role) -> Result<()> {
-        require!(!ctx.accounts.role_info.roles.contains(&role), TournamentError::RoleAlreadyGranted,);
+        require!(
+            !ctx.accounts.role_info.roles.contains(&role),
+            TournamentError::RoleAlreadyGranted,
+        );
 
         if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
             let current_len = config.verifier_addresses.len();
             let new_len = current_len + 1;
-            let new_space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + (new_len * PUBKEY_BYTES);
+            let new_space = GenomeConfig::DISCRIMINATOR.len()
+                + GenomeConfig::INIT_SPACE
+                + (new_len * PUBKEY_BYTES);
 
             realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_space)?;
             config.verifier_addresses.push(ctx.accounts.user.key());
@@ -70,17 +81,29 @@ mod genome_contract {
 
     #[instruction(discriminator = b"revkrole")]
     pub fn revoke_role(ctx: Context<RevokeRole>, role: Role) -> Result<()> {
-        let index = ctx.accounts.role_info.roles.iter().position(|r| *r == role).ok_or(TournamentError::RoleNotFound)?;
+        let index = ctx
+            .accounts
+            .role_info
+            .roles
+            .iter()
+            .position(|r| *r == role)
+            .ok_or(TournamentError::RoleNotFound)?;
 
         if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
             let user_key = ctx.accounts.user.key();
             let current_len = config.verifier_addresses.len();
             let new_len = current_len - 1;
-            let new_space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + (new_len * PUBKEY_BYTES);
+            let new_space = GenomeConfig::DISCRIMINATOR.len()
+                + GenomeConfig::INIT_SPACE
+                + (new_len * PUBKEY_BYTES);
 
             realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_space)?;
-            if let Some(indx) = config.verifier_addresses.iter().position(|&k| k == user_key) {
+            if let Some(indx) = config
+                .verifier_addresses
+                .iter()
+                .position(|&k| k == user_key)
+            {
                 config.verifier_addresses.remove(indx);
             }
         }
@@ -90,7 +113,11 @@ mod genome_contract {
     }
 
     #[instruction(discriminator = b"aprvtokn")]
-    pub fn approve_token(ctx: Context<ApproveToken>, min_sponsor_pool: u64, min_entry_fee: u64) -> Result<()> {
+    pub fn approve_token(
+        ctx: Context<ApproveToken>,
+        min_sponsor_pool: u64,
+        min_entry_fee: u64,
+    ) -> Result<()> {
         let info = &mut ctx.accounts.token_info;
         info.asset_mint = ctx.accounts.asset_mint.key();
         info.min_sponsor_pool = min_sponsor_pool;
@@ -105,36 +132,61 @@ mod genome_contract {
     }
 
     #[instruction(discriminator = b"crtntmnt")]
-    pub fn create_tournament(ctx: Context<CreateTournament>, tournament_data: TournamentData) -> Result<()> {
+    pub fn create_tournament(
+        ctx: Context<CreateTournament>,
+        tournament_config: TournamentConfig,
+    ) -> Result<()> {
         let tournament = &mut ctx.accounts.tournament;
-        validate_params(&tournament_data, &ctx.accounts.config, &ctx.accounts.token_info)?;
-        initialize_bloom_filter(tournament, &ctx.accounts.config.false_precision, &mut ctx.accounts.bloom_filter)?;
+        validate_params(&tournament_config, &ctx.accounts.config, &ctx.accounts.token_info)?;
+        initialize_bloom_filter(
+            &tournament_config,
+            &ctx.accounts.config.false_precision,
+            &mut ctx.accounts.bloom_filter,
+        )?;
         let id = &mut ctx.accounts.config.tournament_nonce;
-        tournament.initialize(*id, tournament_data.clone());
+        tournament.initialize(*id, tournament_config.clone());
         *id += 1;
 
-        if tournament.tournament_data.sponsor_pool > 0 {
+        if tournament.config.sponsor_pool > 0 {
             let accounts = TransferChecked {
                 from: ctx.accounts.sponsor_ata.to_account_info(),
                 to: ctx.accounts.prize_pool_ata.to_account_info(),
-                mint: ctx.accounts.mint.to_account_info(),
+                mint: ctx.accounts.asset_mint.to_account_info(),
                 authority: ctx.accounts.organizer.to_account_info(),
             };
 
             let cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), accounts);
-            transfer_checked(cpi, tournament.tournament_data.sponsor_pool, ctx.accounts.mint.decimals)?;
+            transfer_checked(
+                cpi,
+                tournament.config.sponsor_pool,
+                ctx.accounts.asset_mint.decimals,
+            )?;
         }
+
+        let accounts = TransferChecked {
+            from: ctx.accounts.organizer_ata.to_account_info(),
+            to: ctx.accounts.platform_pool_ata.to_account_info(),
+            mint: ctx.accounts.nome_mint.to_account_info(),
+            authority: ctx.accounts.organizer.to_account_info(),
+        };
+
+        let cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), accounts);
+        transfer_checked(cpi, ctx.accounts.config.platform_fee, ctx.accounts.nome_mint.decimals)?;
 
         emit!(TournamentCreated {
             id: tournament.id,
-            tournament_data: tournament_data
+            config: tournament_config
         });
 
         Ok(())
     }
 }
 
-fn realloc<'info>(account: AccountInfo<'info>, payer: AccountInfo<'info>, space: usize) -> Result<()> {
+fn realloc<'info>(
+    account: AccountInfo<'info>,
+    payer: AccountInfo<'info>,
+    space: usize,
+) -> Result<()> {
     let rent_lamports = Rent::get()?.minimum_balance(space);
     let current_lamports = account.lamports();
     account.realloc(space, false)?;
@@ -173,7 +225,7 @@ struct Initialize<'info> {
 
 #[derive(Accounts)]
 struct GrantRole<'info> {
-    #[account(signer, mut, address = config.admin @ TournamentError::NotAllowed)]
+    #[account(mut, address = config.admin @ TournamentError::NotAllowed)]
     admin: Signer<'info>,
     user: SystemAccount<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
@@ -191,7 +243,7 @@ struct GrantRole<'info> {
 
 #[derive(Accounts)]
 struct RevokeRole<'info> {
-    #[account(mut, signer, address = config.admin @ TournamentError::NotAllowed)]
+    #[account(mut, address = config.admin @ TournamentError::NotAllowed)]
     admin: Signer<'info>,
     user: SystemAccount<'info>,
     #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
@@ -243,7 +295,7 @@ struct BanToken<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(tournament_data: TournamentData)]
+#[instruction(tournament_data: TournamentConfig)]
 struct CreateTournament<'info> {
     #[account(mut)]
     organizer: Signer<'info>,
@@ -264,16 +316,18 @@ struct CreateTournament<'info> {
         bump
     )]
     tournament: Account<'info, Tournament>,
-    mint: InterfaceAccount<'info, Mint>,
+    asset_mint: InterfaceAccount<'info, Mint>,
+    #[account(constraint = nome_mint.key() == config.nome_mint @ TournamentError::InvalidNome)]
+    nome_mint: InterfaceAccount<'info, Mint>,
     #[account(
-        seeds = [GENOME_ROOT, TOKEN, mint.key().as_ref()],
+        seeds = [GENOME_ROOT, TOKEN, asset_mint.key().as_ref()],
         bump,
     )]
     token_info: Account<'info, TokenInfo>,
     #[account(
         init,
         payer = organizer,
-        associated_token::mint = mint,
+        associated_token::mint = asset_mint,
         associated_token::authority = tournament,
         associated_token::token_program = token_program,
     )]
@@ -281,11 +335,25 @@ struct CreateTournament<'info> {
     #[account(
         init_if_needed,
         payer = organizer,
-        associated_token::mint = mint,
+        associated_token::mint = asset_mint,
         associated_token::authority = sponsor,
         associated_token::token_program = token_program,
     )]
     sponsor_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    #[account(
+        mut,
+        associated_token::mint = nome_mint,
+        associated_token::authority = organizer,
+        associated_token::token_program = token_program,
+    )]
+    organizer_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    #[account(
+        mut,
+        associated_token::mint = nome_mint,
+        associated_token::authority = config.platform_wallet,
+        associated_token::token_program = token_program,
+    )]
+    platform_pool_ata: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
         init,
         payer = organizer,

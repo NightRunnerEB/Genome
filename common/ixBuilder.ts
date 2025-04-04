@@ -4,7 +4,7 @@ import {
   TransactionInstruction,
   SystemProgram,
 } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 import { GenomeContract } from "../target/types/genome_contract";
 
@@ -42,17 +42,42 @@ export class IxBuilder {
   async createTournamentIx(
     organizer: PublicKey,
     sponsor: PublicKey,
-    mint: PublicKey,
+    assetMint: PublicKey,
     params: any
   ): Promise<TransactionInstruction> {
+    const configData = await this.program.account.genomeConfig.fetch(this.configPda);
+    const idBuffer = Buffer.alloc(4);
+    idBuffer.writeUInt32LE(configData.tournamentNonce, 0);
+    const tournamentPda = getGenomePda([getConstant("tournament"), idBuffer]);
+    const bloomPda = getGenomePda([getConstant("bloom"), idBuffer]);
+    const rolePda = getGenomePda([getConstant("role"), organizer.toBuffer()]);
+    const tokenPda = getGenomePda([getConstant("token"), assetMint.toBuffer()]);
+  
+    const prizePoolAta = await getAssociatedTokenAddress(assetMint, tournamentPda, true);
+    const sponsorAta = await getAssociatedTokenAddress(assetMint, sponsor, true);
+    const platformPoolAta = await getAssociatedTokenAddress(configData.nomeMint, configData.platformWallet, true);
+    const organizerAta = await getAssociatedTokenAddress(configData.nomeMint, organizer, true);
+
     return this.program.methods
       .createTournament(params)
-      .accounts({
-        organizer: organizer,
-        sponsor: sponsor,
-        mint: mint,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
+    .accountsStrict({
+      organizer,
+      sponsor,
+      config: this.configPda,
+      roleInfo: rolePda,
+      tournament: tournamentPda,
+      assetMint,
+      nomeMint: configData.nomeMint,
+      tokenInfo: tokenPda,
+      prizePoolAta,
+      sponsorAta,
+      organizerAta,
+      platformPoolAta,
+      bloomFilter: bloomPda,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    })
       .instruction();
   }
 

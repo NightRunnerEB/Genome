@@ -1,10 +1,10 @@
 import { BN } from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import * as assert from "assert";
 
-import { getKeyPairs, checkAnchorError, sleep, createGenomeMint, delegateAccount, getUserRole } from "./utils";
+import { getKeyPairs, checkAnchorError, sleep, createGenomeMint, delegateAccount, getUserRole, createTournamentMint } from "./utils";
 import { IxBuilder } from "../common/ixBuilder";
-import { airdropAll, getConfig, buildAndSendTx, getTokenInfo, Role, getProgram, getProvider, getSponsorAta, getTournament, getPrizePoolAta } from "../common/utils";
+import { airdropAll, getConfig, buildAndSendTx, getTokenInfo, getTournament, Role, getProgram, getProvider, getSponsorAtaInfo, getPrizePoolAtaInfo, getOrganizerAtaInfo } from "../common/utils";
 
 describe("Genome Solana Singlechain", () => {
   const ixBuilder = new IxBuilder();
@@ -12,10 +12,13 @@ describe("Genome Solana Singlechain", () => {
   const { admin, deployer, platform, token, sponsor, organizer, nome, verifier1, verifier2, operator } = getKeyPairs();
   let assetMint: PublicKey;
   let sponsorAta: PublicKey;
+  let organizerAta: PublicKey;
+  let platformAta: PublicKey;
 
-  const tournamentDataMock = {
+  const tournamentConfigMock = {
     organizer: organizer.publicKey,
     organizerFee: new BN(100),
+    expirationTime: new BN(1748736000),
     sponsorPool: new BN(1000),
     entryFee: new BN(150),
     teamSize: 10,
@@ -62,12 +65,13 @@ describe("Genome Solana Singlechain", () => {
       await buildAndSendTx([initIx], [deployer]);
       throw new Error("Expected error was not thrown");
     } catch (error) {
-      checkAnchorError(error, "Invalid Params");
+      checkAnchorError(error, "The list of verifiers must be empty");
     }
   });
 
   it("Create mint", async () => {
-    ({ assetMint, sponsorAta } = await createGenomeMint());
+    ({ assetMint, sponsorAta } = await createTournamentMint());
+    ({ organizerAta, platformAta } = await createGenomeMint());
   });
 
   it("Delegate", async () => {
@@ -188,12 +192,7 @@ describe("Genome Solana Singlechain", () => {
 
   it("Create a Tournament with banned token", async () => {
     try {
-      const ix = await ixBuilder.createTournamentIx(
-        organizer.publicKey,
-        sponsor.publicKey,
-        token.publicKey,
-        tournamentDataMock
-      );
+      const ix = await ixBuilder.createTournamentIx(organizer.publicKey, sponsor.publicKey, token.publicKey, tournamentConfigMock);
       await buildAndSendTx([ix], [organizer]);
     } catch (error) {
       checkAnchorError(error, "expected this account to be already initialized");
@@ -208,34 +207,43 @@ describe("Genome Solana Singlechain", () => {
     let txSig = await buildAndSendTx([ix], [operator]);
     console.log("Approve token tx signature:", txSig);
 
-    const sponsorAtaBefore = await getSponsorAta(sponsorAta);
-    ix = await ixBuilder.createTournamentIx(organizer.publicKey, sponsor.publicKey, assetMint, tournamentDataMock);
+    const sponsorAtaBefore = await getSponsorAtaInfo(sponsorAta);
+    const organizerAtaBefore = await getOrganizerAtaInfo(organizerAta);
+    const platformAtaBefore = await getOrganizerAtaInfo(platformAta);
+
+    ix = await ixBuilder.createTournamentIx(organizer.publicKey, sponsor.publicKey, assetMint, tournamentConfigMock);
     txSig = await buildAndSendTx([ix], [organizer]);
     console.log("Create Tournament tx signature:", txSig);
 
-    const sponsorAtaAfter = await getSponsorAta(sponsorAta);
+    const sponsorAtaAfter = await getSponsorAtaInfo(sponsorAta);
+    const organizerAtaAfter = await getOrganizerAtaInfo(organizerAta);
+    const platformAtaAfter = await getOrganizerAtaInfo(platformAta);
     const configData = await getConfig();
     const tournamentAccount = await getTournament(configData.tournamentNonce - 1);
 
     assert.equal(tournamentAccount.id, configData.tournamentNonce - 1);
     assert.equal(tournamentAccount.teamCount, 0);
-    assert.equal(tournamentAccount.tournamentData.sponsorPool.toNumber(), tournamentDataMock.sponsorPool.toNumber());
-    assert.equal(tournamentAccount.tournamentData.organizerFee.toNumber(), tournamentDataMock.organizerFee.toNumber());
-    assert.equal(tournamentAccount.tournamentData.entryFee.toNumber(), tournamentDataMock.entryFee.toNumber());
-    assert.equal(tournamentAccount.tournamentData.organizer.toBase58(), tournamentDataMock.organizer.toBase58());
-    assert.equal(tournamentAccount.tournamentData.assetMint.toBase58(), tournamentDataMock.assetMint.toBase58());
-    assert.equal(tournamentAccount.tournamentData.teamSize, tournamentDataMock.teamSize);
-    assert.equal(tournamentAccount.tournamentData.minTeams, tournamentDataMock.minTeams);
-    assert.equal(tournamentAccount.tournamentData.maxTeams, tournamentDataMock.maxTeams);
     assert.ok(tournamentAccount.status.new);
+    assert.equal(tournamentAccount.config.sponsorPool.toNumber(), tournamentConfigMock.sponsorPool.toNumber());
+    assert.equal(tournamentAccount.config.organizerFee.toNumber(), tournamentConfigMock.organizerFee.toNumber());
+    assert.equal(tournamentAccount.config.expirationTime.toNumber(), tournamentConfigMock.expirationTime.toNumber());
+    assert.equal(tournamentAccount.config.entryFee.toNumber(), tournamentConfigMock.entryFee.toNumber());
+    assert.equal(tournamentAccount.config.organizer.toBase58(), tournamentConfigMock.organizer.toBase58());
+    assert.equal(tournamentAccount.config.assetMint.toBase58(), tournamentConfigMock.assetMint.toBase58());
+    assert.equal(tournamentAccount.config.teamSize, tournamentConfigMock.teamSize);
+    assert.equal(tournamentAccount.config.minTeams, tournamentConfigMock.minTeams);
+    assert.equal(tournamentAccount.config.maxTeams, tournamentConfigMock.maxTeams);
 
-    const prizePoolAta = await getPrizePoolAta(assetMint, tournamentAccount.tournamentPda);
+    assert.equal(organizerAtaBefore.amount - organizerAtaAfter.amount, BigInt(configData.platformFee.toNumber()));
+    assert.equal(platformAtaAfter.amount - platformAtaBefore.amount, BigInt(configData.platformFee.toNumber()));
+
+    const prizePoolAta = await getPrizePoolAtaInfo(assetMint, tournamentAccount.tournamentPda);
     assert.equal(sponsorAtaBefore.amount - sponsorAtaAfter.amount, prizePoolAta.amount);
   });
 
   it("Create a Tournament by a non-organizer", async () => {
     try {
-      const ix = await ixBuilder.createTournamentIx(operator.publicKey, sponsor.publicKey, assetMint, tournamentDataMock);
+      const ix = await ixBuilder.createTournamentIx(operator.publicKey, sponsor.publicKey, assetMint, tournamentConfigMock);
       await buildAndSendTx([ix], [operator]);
     } catch (error) {
       checkAnchorError(error, "Not Allowed");
@@ -244,7 +252,7 @@ describe("Genome Solana Singlechain", () => {
 
   it("Invalid organizer fee", async () => {
     try {
-      const invalidData = { ...tournamentDataMock, organizerFee: new BN(9999999) };
+      const invalidData = { ...tournamentConfigMock, organizerFee: new BN(9999999) };
       const ix = await ixBuilder.createTournamentIx(organizer.publicKey, sponsor.publicKey, assetMint, invalidData);
       await buildAndSendTx([ix], [organizer]);
     } catch (error) {
@@ -254,7 +262,7 @@ describe("Genome Solana Singlechain", () => {
 
   it("Invalid entry fee", async () => {
     try {
-      const invalidData = { ...tournamentDataMock, entryFee: new BN(1) };
+      const invalidData = { ...tournamentConfigMock, entryFee: new BN(1) };
       const ix = await ixBuilder.createTournamentIx(organizer.publicKey, sponsor.publicKey, assetMint, invalidData);
       await buildAndSendTx([ix], [organizer]);
     } catch (error) {
@@ -264,7 +272,7 @@ describe("Genome Solana Singlechain", () => {
 
   it("Invalid team limit (minTeams, maxTeams)", async () => {
     try {
-      const invalidData = { ...tournamentDataMock, maxTeams: 100 };
+      const invalidData = { ...tournamentConfigMock, maxTeams: 100 };
       const ix = await ixBuilder.createTournamentIx(organizer.publicKey, sponsor.publicKey, assetMint, invalidData);
       await buildAndSendTx([ix], [organizer]);
     } catch (error) {
@@ -272,7 +280,7 @@ describe("Genome Solana Singlechain", () => {
     }
 
     try {
-      const invalidData = { ...tournamentDataMock, minTeams: 0 };
+      const invalidData = { ...tournamentConfigMock, minTeams: 0 };
       const ix = await ixBuilder.createTournamentIx(organizer.publicKey, sponsor.publicKey, assetMint, invalidData);
       await buildAndSendTx([ix], [organizer]);
     } catch (error) {
@@ -282,7 +290,7 @@ describe("Genome Solana Singlechain", () => {
 
   it("Invalid prize_pool", async () => {
     try {
-      const invalidData = { ...tournamentDataMock, sponsorPool: new BN(10) };
+      const invalidData = { ...tournamentConfigMock, sponsorPool: new BN(10) };
       const ix = await ixBuilder.createTournamentIx(organizer.publicKey, sponsor.publicKey, assetMint, invalidData);
       await buildAndSendTx([ix], [organizer]);
     } catch (error) {
@@ -292,7 +300,7 @@ describe("Genome Solana Singlechain", () => {
 
   it("Invalid tournament capacity", async () => {
     try {
-      const invalidData = { ...tournamentDataMock, maxTeams: 100, teamSize: 40 };
+      const invalidData = { ...tournamentConfigMock, maxTeams: 100, teamSize: 40 };
       const ix = await ixBuilder.createTournamentIx(organizer.publicKey, sponsor.publicKey, assetMint, invalidData);
       await buildAndSendTx([ix], [organizer]);
     } catch (error) {
@@ -335,5 +343,31 @@ describe("Genome Solana Singlechain", () => {
     } catch (error) {
       checkAnchorError(error, "Role not found");
     }
+  });
+
+  it("Grant 128 random Verifier roles", async () => {
+    const randomVerifiers = Array.from({ length: 128 }, () => Keypair.generate());
+
+    const grantRolePromises = randomVerifiers.map(async (verifier) => {
+      const grantRoleIx = await ixBuilder.grantRoleIx(
+        admin.publicKey,
+        verifier.publicKey,
+        { verifier: {} }
+      );
+      const txSig = await buildAndSendTx([grantRoleIx], [admin]);
+      const userRole = await getUserRole(verifier.publicKey);
+      assert.deepEqual(userRole[0], { verifier: {} });
+    });
+
+    await Promise.all(grantRolePromises);
+
+    const config = await getConfig();
+    console.log("Total verifiers stored in contract:", config.verifierAddresses.length);
+    assert.equal(config.verifierAddresses.length, 128, "Expected 128 verifier addresses in config");
+
+    randomVerifiers.forEach(verifier => {
+      const found = config.verifierAddresses.some(addr => addr.equals(verifier.publicKey));
+      assert.ok(found, `Verifier pubkey ${verifier.publicKey.toBase58()} not found in config`);
+    });
   });
 });

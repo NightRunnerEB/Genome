@@ -59,7 +59,76 @@ export async function getUserRole(user: PublicKey) {
   return userRole.roles;
 }
 
-export async function createGenomeMint(): Promise<{
+export async function createGenomeMint():Promise<{
+  organizerAta: PublicKey;
+  platformAta: PublicKey;
+}> {
+  let { admin, organizer, operator, nome, platform } = getKeyPairs();
+
+  const connection = getProvider().connection;
+
+  const assetMint = await createMint(
+    connection,
+    admin,
+    admin.publicKey,
+    null,
+    9,
+    nome,
+    undefined,
+    TOKEN_PROGRAM_ID
+  );
+  console.log("Genome mint:", assetMint.toBase58());
+
+  const platformAta = await createAssociatedTokenAccount(
+    connection,
+    admin,
+    nome.publicKey,
+    platform.publicKey,
+    undefined,
+    TOKEN_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  console.log("Platform genome ata:", platformAta.toBase58());
+
+  const organizerAta = await createAssociatedTokenAccount(
+    connection,
+    admin,
+    nome.publicKey,
+    organizer.publicKey,
+    undefined,
+    TOKEN_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  console.log("Organizer genome ata:", organizerAta.toBase58());
+
+  const operatorAta = await createAssociatedTokenAccount(
+    connection,
+    admin,
+    nome.publicKey,
+    operator.publicKey,
+    undefined,
+    TOKEN_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  console.log("Operator genome ata:", operatorAta.toBase58());
+
+  let tx = await mintTo(
+    connection,
+    admin,
+    nome.publicKey,
+    organizerAta,
+    admin,
+    1000000000000000,
+    [],
+    {},
+    TOKEN_PROGRAM_ID
+  );
+  console.log("Mint to organizer tx:", tx)
+
+  return { organizerAta, platformAta };
+}
+
+export async function createTournamentMint(): Promise<{
   assetMint: PublicKey;
   sponsorAta: PublicKey;
 }> {
@@ -77,7 +146,7 @@ export async function createGenomeMint(): Promise<{
     undefined,
     TOKEN_PROGRAM_ID
   );
-  console.log("Genome mint:", assetMint.toBase58());
+  console.log("Token mint:", assetMint.toBase58());
 
   const sponsorAta = await createAssociatedTokenAccount(
     connection,
@@ -88,7 +157,7 @@ export async function createGenomeMint(): Promise<{
     TOKEN_PROGRAM_ID,
     ASSOCIATED_TOKEN_PROGRAM_ID
   );
-  console.log("Sponsor genome ata:", sponsorAta.toBase58());
+  console.log("Sponsor token ata:", sponsorAta.toBase58());
 
   const reward_pool_ata = await createAssociatedTokenAccount(
     connection,

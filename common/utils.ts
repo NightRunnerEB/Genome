@@ -79,7 +79,7 @@ export async function getTournament(id: any) {
     const tournament = await PROGRAM.account.tournament.fetch(tournamentPda);
     return {
         id: tournament.id,
-        tournamentData: tournament.tournamentData,
+        config: tournament.config,
         status: tournament.status,
         teamCount: tournament.teamCount,
         tournamentPda: tournamentPda
@@ -87,7 +87,7 @@ export async function getTournament(id: any) {
 
 }
 
-export async function getSponsorAta(
+export async function getSponsorAtaInfo(
     sponsorPoolAta: PublicKey
 ): Promise<SplTokenAccount> {
     const provider = getProvider();
@@ -99,7 +99,19 @@ export async function getSponsorAta(
     );
 }
 
-export async function getPrizePoolAta(
+export async function getOrganizerAtaInfo(
+    organizerAta: PublicKey
+): Promise<SplTokenAccount> {
+    const provider = getProvider();
+    return getAccount(
+        provider.connection,
+        organizerAta,
+        undefined,
+        TOKEN_PROGRAM_ID
+    );
+}
+
+export async function getPrizePoolAtaInfo(
     mint: PublicKey,
     authority: PublicKey
 ): Promise<SplTokenAccount> {

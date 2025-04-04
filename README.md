@@ -198,6 +198,6 @@ anchor run create-tournament -- \
 keys/organizer.json \
 5RuyKrrBCD6URTNQEujCJn9WEB6ssypaAfGWzbU5tGtX \
 6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne \
-100 1000 200 10 4 10
+100 1748736000 1000 200 10 4 10
 */
 ```
