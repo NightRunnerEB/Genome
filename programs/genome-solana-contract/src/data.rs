@@ -116,8 +116,7 @@ mod tests {
         let bloom_bytes = bincode::serialize(&bloom).unwrap();
         let mut bloom_filter_account = BloomFilter { data: bloom_bytes };
 
-        let mut bloom_loaded: GrowableBloom =
-            bincode::deserialize(&bloom_filter_account.data).unwrap();
+        let mut bloom_loaded: GrowableBloom = bincode::deserialize(&bloom_filter_account.data).unwrap();
 
         let test_key = Pubkey::new_unique();
         assert!(!bloom_loaded.contains(&test_key));
@@ -127,8 +126,7 @@ mod tests {
 
         bloom_filter_account.data = bincode::serialize(&bloom_loaded).unwrap();
 
-        let bloom_checked: GrowableBloom =
-            bincode::deserialize(&bloom_filter_account.data).unwrap();
+        let bloom_checked: GrowableBloom = bincode::deserialize(&bloom_filter_account.data).unwrap();
         assert!(bloom_checked.contains(&test_key));
     }
 

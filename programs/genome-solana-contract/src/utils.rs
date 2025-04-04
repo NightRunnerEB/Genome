@@ -15,8 +15,7 @@ pub fn calculate_bloom_memory(participants_count: u16, false_precision: f64) -> 
     let overhead: usize = 76;
     let num_slices = ((1.0_f64 / false_precision).log2()).ceil();
     let ln2 = std::f64::consts::LN_2;
-    let max_participants_count =
-        (((MAX_MEMORY - overhead) as f64 * 8.0 * ln2) / num_slices).floor() as u16;
+    let max_participants_count = (((MAX_MEMORY - overhead) as f64 * 8.0 * ln2) / num_slices).floor() as u16;
     msg!("Max participants count: {}", max_participants_count);
     require!(participants_count <= max_participants_count, TournamentError::MaxPlayersExceeded);
 
@@ -27,21 +26,11 @@ pub fn calculate_bloom_memory(participants_count: u16, false_precision: f64) -> 
     Ok(memory)
 }
 
-pub fn validate_params(
-    params: &TournamentConfig,
-    config: &GenomeConfig,
-    token_info: &TokenInfo,
-) -> Result<()> {
+pub fn validate_params(params: &TournamentConfig, config: &GenomeConfig, token_info: &TokenInfo) -> Result<()> {
     let clock = Clock::get()?;
-    require!(
-        params.organizer_fee <= config.max_organizer_fee,
-        TournamentError::InvalidOrginizerFee
-    );
+    require!(params.organizer_fee <= config.max_organizer_fee, TournamentError::InvalidOrginizerFee);
     require!(params.entry_fee >= token_info.min_entry_fee, TournamentError::InvalidEntryFee);
-    require!(
-        params.sponsor_pool >= token_info.min_sponsor_pool,
-        TournamentError::InvalidSponsorPool
-    );
+    require!(params.sponsor_pool >= token_info.min_sponsor_pool, TournamentError::InvalidSponsorPool);
     require!(
         params.expiration_time >= clock.unix_timestamp as u64,
         TournamentError::InvalidExpirationTime
@@ -53,11 +42,7 @@ pub fn validate_params(
     Ok(())
 }
 
-pub fn initialize_bloom_filter(
-    tournament_config: &TournamentConfig,
-    false_precision: &f64,
-    bloom_filter: &mut Account<BloomFilter>,
-) -> Result<()> {
+pub fn initialize_bloom_filter(tournament_config: &TournamentConfig, false_precision: &f64, bloom_filter: &mut Account<BloomFilter>) -> Result<()> {
     let items_count = tournament_config.max_teams * tournament_config.team_size;
     let bloom = Bloom::new(*false_precision, items_count as usize);
     bloom_filter.data = bincode::serialize(&bloom).expect("Failed to serialize bloom filter");

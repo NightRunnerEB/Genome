@@ -11,11 +11,12 @@ use anchor_lang::{
 
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_interface::{Mint, TokenAccount, TokenInterface},
+    token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
-use data::{BloomFilter, GenomeConfig, Role, RoleInfo, TokenInfo, Tournament, TournamentConfig};
+
+use data::{BloomFilter, GenomeConfig, Role, RoleInfo, TokenInfo, Tournament, TournamentConfig, TournamentCreated};
 use error::TournamentError;
-use utils::calculate_bloom_memory;
+use utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params};
 
 declare_id!("61k9jndWDe36Wb7X1vteVLiWjmwFGwDmFLzzvLKtUPZo");
 
@@ -37,13 +38,6 @@ const TOKEN: &[u8] = b"token";
 
 #[program]
 mod genome_contract {
-    use anchor_spl::token::{transfer_checked, TransferChecked};
-
-    use crate::{
-        data::TournamentCreated,
-        utils::{initialize_bloom_filter, validate_params},
-    };
-
     use super::*;
 
     #[instruction(discriminator = b"initsngl")]
@@ -57,18 +51,13 @@ mod genome_contract {
 
     #[instruction(discriminator = b"grntrole")]
     pub fn grant_role(ctx: Context<GrantRole>, role: Role) -> Result<()> {
-        require!(
-            !ctx.accounts.role_info.roles.contains(&role),
-            TournamentError::RoleAlreadyGranted,
-        );
+        require!(!ctx.accounts.role_info.roles.contains(&role), TournamentError::RoleAlreadyGranted,);
 
         if role == Role::Verifier {
             let config = &mut ctx.accounts.config;
             let current_len = config.verifier_addresses.len();
             let new_len = current_len + 1;
-            let new_space = GenomeConfig::DISCRIMINATOR.len()
-                + GenomeConfig::INIT_SPACE
-                + (new_len * PUBKEY_BYTES);
+            let new_space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + (new_len * PUBKEY_BYTES);
 
             realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_space)?;
             config.verifier_addresses.push(ctx.accounts.user.key());
@@ -94,16 +83,10 @@ mod genome_contract {
             let user_key = ctx.accounts.user.key();
             let current_len = config.verifier_addresses.len();
             let new_len = current_len - 1;
-            let new_space = GenomeConfig::DISCRIMINATOR.len()
-                + GenomeConfig::INIT_SPACE
-                + (new_len * PUBKEY_BYTES);
+            let new_space = GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + (new_len * PUBKEY_BYTES);
 
             realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_space)?;
-            if let Some(indx) = config
-                .verifier_addresses
-                .iter()
-                .position(|&k| k == user_key)
-            {
+            if let Some(indx) = config.verifier_addresses.iter().position(|&k| k == user_key) {
                 config.verifier_addresses.remove(indx);
             }
         }
@@ -113,11 +96,7 @@ mod genome_contract {
     }
 
     #[instruction(discriminator = b"aprvtokn")]
-    pub fn approve_token(
-        ctx: Context<ApproveToken>,
-        min_sponsor_pool: u64,
-        min_entry_fee: u64,
-    ) -> Result<()> {
+    pub fn approve_token(ctx: Context<ApproveToken>, min_sponsor_pool: u64, min_entry_fee: u64) -> Result<()> {
         let info = &mut ctx.accounts.token_info;
         info.asset_mint = ctx.accounts.asset_mint.key();
         info.min_sponsor_pool = min_sponsor_pool;
@@ -132,17 +111,10 @@ mod genome_contract {
     }
 
     #[instruction(discriminator = b"crtntmnt")]
-    pub fn create_tournament(
-        ctx: Context<CreateTournament>,
-        tournament_config: TournamentConfig,
-    ) -> Result<()> {
+    pub fn create_tournament(ctx: Context<CreateTournament>, tournament_config: TournamentConfig) -> Result<()> {
         let tournament = &mut ctx.accounts.tournament;
         validate_params(&tournament_config, &ctx.accounts.config, &ctx.accounts.token_info)?;
-        initialize_bloom_filter(
-            &tournament_config,
-            &ctx.accounts.config.false_precision,
-            &mut ctx.accounts.bloom_filter,
-        )?;
+        initialize_bloom_filter(&tournament_config, &ctx.accounts.config.false_precision, &mut ctx.accounts.bloom_filter)?;
         let id = &mut ctx.accounts.config.tournament_nonce;
         tournament.initialize(*id, tournament_config.clone());
         *id += 1;
@@ -156,11 +128,7 @@ mod genome_contract {
             };
 
             let cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), accounts);
-            transfer_checked(
-                cpi,
-                tournament.config.sponsor_pool,
-                ctx.accounts.asset_mint.decimals,
-            )?;
+            transfer_checked(cpi, tournament.config.sponsor_pool, ctx.accounts.asset_mint.decimals)?;
         }
 
         let accounts = TransferChecked {
@@ -182,11 +150,7 @@ mod genome_contract {
     }
 }
 
-fn realloc<'info>(
-    account: AccountInfo<'info>,
-    payer: AccountInfo<'info>,
-    space: usize,
-) -> Result<()> {
+fn realloc<'info>(account: AccountInfo<'info>, payer: AccountInfo<'info>, space: usize) -> Result<()> {
     let rent_lamports = Rent::get()?.minimum_balance(space);
     let current_lamports = account.lamports();
     account.realloc(space, false)?;
