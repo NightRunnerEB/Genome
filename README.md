@@ -105,12 +105,11 @@ anchor run setup-wallets -- \
   <path-to-sponsor-keypair> \
   <assetMint> \
   <nomeMint> \
-  <deployer-pubkey> \
   <verifier1-pubkey> \
   <verifier2-pubkey> \
   <operator-pubkey> \
-  <admin-pubkey> \
-  <organizer-pubkey>
+  <organizer-pubkey> \
+  <platform-pubkey> \
 
 /* Example: 
   anchor run setup-wallets -- \
@@ -119,12 +118,11 @@ anchor run setup-wallets -- \
   keys/sponsor.json \
   6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne \
   Btzv5f2fxbF5FKSjbEhCxkusvdxridtRGwKWkp1C77dJ \
-  HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7 \
   FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
   9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL \
   6Agqn5YD4fAncrnB9VrvwTfaufw2Tx1pphGca79uWruT \
-  4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB \
-  ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz
+  ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz \
+  9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe
   */
 ```
 

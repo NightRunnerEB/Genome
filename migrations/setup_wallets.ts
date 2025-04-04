@@ -6,17 +6,18 @@ import { airdropAll, getProvider } from "../common/utils";
 
 async function main(): Promise<void> {
   const [
+    adminAddress,
+    deployerAddress,
     authorityPath,
     payerPath,
     sponsorPath,
     assentMintAddress,
     nomeMintAddress,
-    deployerAddress,
     verifier1Address,
     verifier2Address,
     operatorAddress,
-    adminAddress,
-    organizerAddress
+    organizerAddress,
+    platformAddress,
   ] = process.argv.slice(2);
 
 
@@ -29,15 +30,16 @@ async function main(): Promise<void> {
   const admin = new PublicKey(adminAddress);
   const deployer = new PublicKey(deployerAddress);
   const organizer = new PublicKey(organizerAddress);
+  const platform = new PublicKey(platformAddress);
   const verifier1 = new PublicKey(verifier1Address);
   const verifier2 = new PublicKey(verifier2Address);
 
-  const recipients = [operator, admin, deployer, organizer, verifier1, verifier2];
+  const recipients = [operator, admin, deployer, organizer, verifier1, verifier2, platform];
   const connection = getProvider().connection;
 
   await airdropAll(recipients, 10);
   await createAtaAndMint(connection, payer, assetMint, mintAuthority, recipients, 1e8);
-  await createAtaAndMint(connection, payer, nomeMint, mintAuthority, [organizer], 1e8);
+  await createAtaAndMint(connection, payer, nomeMint, mintAuthority, [organizer, platform], 1e8);
 
   const sponsorAta = await createAssociatedTokenAccount(
     connection,

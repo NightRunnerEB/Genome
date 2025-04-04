@@ -17,7 +17,7 @@ wallet = "~/.config/solana/id.json"
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/genome.ts"
 initialize = "yarn run ts-node migrations/initialize.ts keys/deployer.json 4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB"
-setup-wallets = "yarn run ts-node migrations/setup-wallets.ts"
+setup-wallets = "yarn run ts-node migrations/setup_wallets.ts 4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7"
 grant-role = "yarn run ts-node migrations/grant_role.ts keys/admin.json"
 revoke-role = "yarn run ts-node migrations/revoke_role.ts keys/admin.json"
 approve-token = "yarn run ts-node migrations/approve_token.ts"
