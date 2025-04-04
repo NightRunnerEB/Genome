@@ -3,16 +3,22 @@ use anchor_lang::{
     solana_program::{program::invoke, pubkey::PUBKEY_BYTES, system_instruction},
 };
 
+use crate::{
+    data::{GenomeSingleConfig, Role, RoleInfo},
+    error::GenomeError,
+    GENOME_ROOT, ROLE, SINGLE_CONFIG,
+};
 
 pub fn handle_grant_role(ctx: Context<GrantRole>, role: Role) -> Result<()> {
-    require!(!ctx.accounts.role_info.roles.contains(&role), TournamentError::RoleAlreadyGranted,);
+    require!(!ctx.accounts.role_info.roles.contains(&role), GenomeError::RoleAlreadyGranted,);
 
     if role == Role::Verifier {
         let config = &mut ctx.accounts.config;
         let current_len = config.verifier_addresses.len();
         let new_len = current_len + 1;
-        let new_space =
-            GenomeConfig::DISCRIMINATOR.len() + GenomeConfig::INIT_SPACE + (new_len * PUBKEY_BYTES);
+        let new_space = GenomeSingleConfig::DISCRIMINATOR.len()
+            + GenomeSingleConfig::INIT_SPACE
+            + (new_len * PUBKEY_BYTES);
 
         realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_space)?;
         config.verifier_addresses.push(ctx.accounts.user.key());
@@ -49,12 +55,12 @@ fn system_transfer<'a>(from: AccountInfo<'a>, to: AccountInfo<'a>, amount: u64) 
 }
 
 #[derive(Accounts)]
-struct GrantRole<'info> {
-    #[account(mut, address = config.admin @ TournamentError::NotAllowed)]
+pub struct GrantRole<'info> {
+    #[account(mut, address = config.admin @ GenomeError::NotAllowed)]
     admin: Signer<'info>,
     user: SystemAccount<'info>,
-    #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
-    config: Box<Account<'info, GenomeConfig>>,
+    #[account(mut, seeds = [GENOME_ROOT, SINGLE_CONFIG], bump)]
+    config: Box<Account<'info, GenomeSingleConfig>>,
     #[account(
         init_if_needed,
         payer = admin,

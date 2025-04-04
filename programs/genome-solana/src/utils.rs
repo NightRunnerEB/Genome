@@ -5,7 +5,7 @@ use anchor_lang::{
 use growable_bloom_filter::GrowableBloom as Bloom;
 
 use crate::{
-    data::{BloomFilter, GenomeConfig, TokenInfo, TournamentConfig},
+    data::{BloomFilter, GenomeSingleConfig, TokenInfo, TournamentConfig},
     error::GenomeError,
 };
 
@@ -29,7 +29,7 @@ pub fn calculate_bloom_memory(participants_count: u16, false_precision: f64) -> 
 
 pub fn validate_params(
     params: &TournamentConfig,
-    config: &GenomeConfig,
+    config: &GenomeSingleConfig,
     token_info: &TokenInfo,
 ) -> Result<()> {
     let clock = Clock::get()?;

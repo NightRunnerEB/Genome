@@ -2,68 +2,54 @@ use anchor_lang::prelude::*;
 
 #[account]
 #[derive(InitSpace)]
-pub struct GenomeConfig {
-    pub admin: Pubkey,
-    pub platform_wallet: Pubkey,
-    #[max_len(0)]
-    pub verifier_addresses: Pubkey,
-    pub consensus_rate: u64,
-    pub false_precision: u64,
-    pub platform_fee: u64,
-    pub min_entry_fee: u64,
-    pub min_sponsor_pool: u64,
-    pub max_organizer_fee: u64,
-    pub tournament_nonce: u32,
-    pub min_teams: u16,
-    pub max_teams: u16,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct TournamentData {
-    pub organizer: Pubkey,
-    pub sponsor: Pubkey,
-    pub organizer_fee: u64,
-    pub expiration_time: u64,
-    pub sponsor_pool: u64,
-    pub entry_fee: u64,
-    pub team_size: u16,
-    pub min_teams: u16,
-    pub max_teams: u16,
-    pub asset_mint: Pubkey,
+pub(crate) struct GenomeOmniConfig {
+    pub(crate) admin: Pubkey,
+    pub(crate) uts_program: Pubkey,
+    pub(crate) bridge_fee: u64,
+    pub(crate) genome_chain_id: u64,
 }
 
 #[account]
 #[derive(InitSpace)]
-pub struct Tournament {
-    pub id: u32,
-    pub team_count: u32,
-    pub organizer: Pubkey,
-    pub sponsor: Pubkey,
-    pub asset_mint: Pubkey,
-    pub organizer_fee: u64,
-    pub sponsor_pool: u64,
-    pub expiration_time: u64,
-    pub entry_fee: u64,
-    pub team_size: u16,
-    pub min_teams: u16,
-    pub max_teams: u16,
-    pub status: TournamentStatus,
-    pub bump: u8,
-    pub finish_metadata: FinishTournamentMetadata
+pub(crate) struct GenomeSingleConfig {
+    pub(crate) admin: Pubkey,
+    #[max_len(0)]
+    pub(crate) verifier_addresses: Vec<Pubkey>,
+    pub(crate) tournament_nonce: u32,
+    pub(crate) consensus_rate: f64,
+    pub(crate) platform_wallet: Pubkey,
+    pub(crate) nome_mint: Pubkey,
+    pub(crate) false_precision: f64,
+    pub(crate) platform_fee: u64,
+    pub(crate) max_organizer_fee: u64,
+    pub(crate) min_teams: u16,
+    pub(crate) max_teams: u16,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Default, Clone, InitSpace)]
-pub struct FinishTournamentMetadata {
-    #[max_len(0)]
-    pub winners: Vec<Pubkey>,
-    #[max_len(0)]
-    pub rewarded_winners: Vec<bool>,
-    pub remaining_prize_pool: u64,
-    pub total_prize_pool: u64,
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub(crate) struct TournamentConfig {
+    pub(crate) organizer: Pubkey,
+    pub(crate) organizer_fee: u64,
+    pub(crate) expiration_time: u64,
+    pub(crate) sponsor_pool: u64,
+    pub(crate) entry_fee: u64,
+    pub(crate) team_size: u16,
+    pub(crate) min_teams: u16,
+    pub(crate) max_teams: u16,
+    pub(crate) asset_mint: Pubkey,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, InitSpace)]
-pub enum TournamentStatus {
+#[account]
+#[derive(InitSpace)]
+pub(crate) struct Tournament {
+    pub(crate) id: u32,
+    pub(crate) config: TournamentConfig,
+    pub(crate) team_count: u32,
+    pub(crate) status: TournamentStatus,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub(crate) enum TournamentStatus {
     New,
     Started,
     Finished,
@@ -71,24 +57,45 @@ pub enum TournamentStatus {
 }
 
 impl Tournament {
-    pub fn initialize(&mut self, id: u32, tournament_data: TournamentData) {
+    pub fn initialize(&mut self, id: u32, tournament_config: TournamentConfig) {
         self.id = id;
-        self.organizer = tournament_data.organizer;
-        self.organizer_fee = tournament_data.organizer_fee;
-        self.sponsor = tournament_data.sponsor;
-        self.entry_fee = tournament_data.entry_fee;
-        self.expiration_time = tournament_data.expiration_time;
-        self.sponsor_pool = tournament_data.sponsor_pool;
-        self.team_size = tournament_data.team_size;
-        self.min_teams = tournament_data.min_teams;
-        self.max_teams = tournament_data.max_teams;
-        self.asset_mint = tournament_data.asset_mint;
+        self.config = tournament_config;
     }
 }
 
+#[event]
+pub(crate) struct TournamentCreated {
+    pub(crate) id: u32,
+    pub(crate) config: TournamentConfig,
+}
+
 #[account]
-pub struct BloomFilter {
-    pub data: Vec<u8>,
+#[derive(InitSpace)]
+pub(crate) struct TokenInfo {
+    pub(crate) asset_mint: Pubkey,
+    pub(crate) min_sponsor_pool: u64,
+    pub(crate) min_entry_fee: u64,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub(crate) struct RoleInfo {
+    #[max_len(3)]
+    pub(crate) roles: Vec<Role>,
+}
+
+#[derive(PartialEq, AnchorSerialize, AnchorDeserialize, Clone, InitSpace, Default)]
+pub(crate) enum Role {
+    #[default]
+    None,
+    Operator,
+    Verifier,
+    Organizer,
+}
+
+#[account]
+pub(crate) struct BloomFilter {
+    pub(crate) data: Vec<u8>,
 }
 
 #[cfg(test)]
@@ -118,8 +125,7 @@ mod tests {
         let bloom_bytes = bincode::serialize(&bloom).unwrap();
         let mut bloom_filter_account = BloomFilter { data: bloom_bytes };
 
-        let mut bloom_loaded: GrowableBloom =
-            bincode::deserialize(&bloom_filter_account.data).unwrap();
+        let mut bloom_loaded: GrowableBloom = bincode::deserialize(&bloom_filter_account.data).unwrap();
 
         let test_key = Pubkey::new_unique();
         assert!(!bloom_loaded.contains(&test_key));
@@ -129,8 +135,7 @@ mod tests {
 
         bloom_filter_account.data = bincode::serialize(&bloom_loaded).unwrap();
 
-        let bloom_checked: GrowableBloom =
-            bincode::deserialize(&bloom_filter_account.data).unwrap();
+        let bloom_checked: GrowableBloom = bincode::deserialize(&bloom_filter_account.data).unwrap();
         assert!(bloom_checked.contains(&test_key));
     }
 

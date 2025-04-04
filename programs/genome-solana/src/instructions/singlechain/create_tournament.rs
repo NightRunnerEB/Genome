@@ -5,10 +5,11 @@ use anchor_spl::{
 };
 
 use crate::{
-    data::{BloomFilter, GenomeConfig, Tournament, TournamentData},
-    utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params},
+    data::{
+        BloomFilter, GenomeSingleConfig, Role, RoleInfo, TokenInfo, Tournament, TournamentConfig,
+        TournamentCreated,
+    }, error::GenomeError, utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params}, BLOOM, GENOME_ROOT, ROLE, SINGLE_CONFIG, TOKEN, TOURNAMENT
 };
-
 
 pub fn handle_create_tournament(
     ctx: Context<CreateTournament>,
@@ -34,11 +35,7 @@ pub fn handle_create_tournament(
         };
 
         let cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), accounts);
-        transfer_checked(
-            cpi,
-            tournament.config.sponsor_pool,
-            ctx.accounts.asset_mint.decimals,
-        )?;
+        transfer_checked(cpi, tournament.config.sponsor_pool, ctx.accounts.asset_mint.decimals)?;
     }
 
     let accounts = TransferChecked {
@@ -61,16 +58,16 @@ pub fn handle_create_tournament(
 
 #[derive(Accounts)]
 #[instruction(tournament_data: TournamentConfig)]
-struct CreateTournament<'info> {
+pub struct CreateTournament<'info> {
     #[account(mut)]
     organizer: Signer<'info>,
     sponsor: SystemAccount<'info>,
-    #[account(mut, seeds = [GENOME_ROOT, CONFIG], bump)]
-    pub config: Account<'info, GenomeConfig>,
+    #[account(mut, seeds = [GENOME_ROOT, SINGLE_CONFIG], bump)]
+    pub config: Account<'info, GenomeSingleConfig>,
     #[account(
         seeds = [GENOME_ROOT, ROLE, organizer.key().as_ref()],
         bump,
-        constraint = role_info.roles.contains(&Role::Organizer) @ TournamentError::NotAllowed
+        constraint = role_info.roles.contains(&Role::Organizer) @ GenomeError::NotAllowed
     )]
     role_info: Account<'info, RoleInfo>,
     #[account(
@@ -82,7 +79,7 @@ struct CreateTournament<'info> {
     )]
     tournament: Account<'info, Tournament>,
     asset_mint: InterfaceAccount<'info, Mint>,
-    #[account(constraint = nome_mint.key() == config.nome_mint @ TournamentError::InvalidNome)]
+    #[account(constraint = nome_mint.key() == config.nome_mint @ GenomeError::InvalidNome)]
     nome_mint: InterfaceAccount<'info, Mint>,
     #[account(
         seeds = [GENOME_ROOT, TOKEN, asset_mint.key().as_ref()],

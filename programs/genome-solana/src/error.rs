@@ -12,6 +12,8 @@ pub(crate) enum GenomeError {
     InvalidSponsorPool,
     #[msg("Invalid teams count")]
     InvalidTeamsCount,
+    #[msg("Invalid false precision")]
+    InvalidPrecision,
     #[msg("Invalid organizer fee")]
     InvalidOrginizerFee,
     #[msg("Expiration time is in the past")]

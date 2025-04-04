@@ -3,19 +3,14 @@
 mod data;
 mod error;
 mod instructions;
-mod team;
 mod utils;
 
 use instructions::*;
 
-use anchor_lang::{
-    prelude::*,
-    solana_program::{program::invoke, pubkey::PUBKEY_BYTES, system_instruction},
-};
+use anchor_lang::prelude::*;
 
-use data::{BloomFilter, GenomeConfig, Role, RoleInfo, TokenInfo, Tournament, TournamentConfig};
+use data::{GenomeOmniConfig, GenomeSingleConfig, Role, TournamentConfig};
 use error::GenomeError;
-
 
 declare_id!("9SK6NkuZHbPHYqL2qpcN5gwpfnjtPLj36mLn6PGfe3R8");
 
@@ -23,6 +18,16 @@ declare_id!("9SK6NkuZHbPHYqL2qpcN5gwpfnjtPLj36mLn6PGfe3R8");
 const GENOME_ROOT: &[u8] = b"genome-0";
 #[constant]
 const OMNI_CONFIG_SEED: &[u8] = b"omni-config";
+#[constant]
+const SINGLE_CONFIG: &[u8] = b"single-config";
+#[constant]
+const BLOOM: &[u8] = b"bloom";
+#[constant]
+const TOURNAMENT: &[u8] = b"tournament";
+#[constant]
+const ROLE: &[u8] = b"role";
+#[constant]
+const TOKEN: &[u8] = b"token";
 
 #[cfg(feature = "localnet")]
 const DEPLOYER: Pubkey = pubkey!("ESUEU5vr1FJxBBC4qaHviseqcr8hzZsoTjji1o947Yzy");
@@ -32,24 +37,18 @@ mod genome_solana {
     use super::*;
 
     #[instruction(discriminator = b"initsngl")]
-    pub fn initialize(ctx: Context<Initialize>, config_params: GenomeConfig) -> Result<()> {
-        if !config_params.verifier_addresses.is_empty() {
-            return Err(TournamentError::InvalidGenomeConfig.into());
-        }
-        ctx.accounts.config.set_inner(config_params);
-        Ok(())
+    pub fn initialize(ctx: Context<Initialize>, config_params: GenomeSingleConfig) -> Result<()> {
+        handle_initialize_single(ctx, config_params)
     }
 
     #[instruction(discriminator = b"grntrole")]
     pub fn grant_role(ctx: Context<GrantRole>, role: Role) -> Result<()> {
-        instructions::grant_role::handle_grant_role(ctx, role)?;
-        Ok(())
+        handle_grant_role(ctx, role)
     }
 
     #[instruction(discriminator = b"revkrole")]
     pub fn revoke_role(ctx: Context<RevokeRole>, role: Role) -> Result<()> {
-        instructions::revoke_role::handle_revoke_role(ctx, role)?;
-        Ok(())
+        handle_revoke_role(ctx, role)
     }
 
     #[instruction(discriminator = b"aprvtokn")]
@@ -58,18 +57,12 @@ mod genome_solana {
         min_sponsor_pool: u64,
         min_entry_fee: u64,
     ) -> Result<()> {
-        instructions::approve_token::handle_approve_token(
-            ctx,
-            min_sponsor_pool,
-            min_entry_fee,
-        )?;
-        Ok(())
+        handle_approve_token(ctx, min_sponsor_pool, min_entry_fee)
     }
 
     #[instruction(discriminator = b"bantokn")]
     pub fn ban_token(ctx: Context<BanToken>) -> Result<()> {
-        instructions::ban_token::handle_ban_token(ctx)?;
-        Ok(())
+        handle_ban_token(ctx)
     }
 
     #[instruction(discriminator = b"crtntmnt")]
@@ -77,11 +70,12 @@ mod genome_solana {
         ctx: Context<CreateTournament>,
         tournament_config: TournamentConfig,
     ) -> Result<()> {
-        instructions::create_tournament::handle_create_tournament(
-            ctx,
-            tournament_config,
-        )?;
-        Ok(())
+        handle_create_tournament(ctx, tournament_config)
+    }
+
+    #[instruction(discriminator = b"bloomprc")]
+    pub fn set_bloom_precision(ctx: Context<SetBloomPrecision>, new_precision: f64) -> Result<()> {
+        handle_set_bloom_precision(ctx, new_precision)
     }
 
     //
@@ -96,66 +90,11 @@ mod genome_solana {
         ctx: Context<InitializeOmni>,
         omni_config: GenomeOmniConfig,
     ) -> Result<()> {
-        ctx.accounts.omni_config.set_inner(omni_config);
-        Ok(())
+        handle_initialize_omni(ctx, omni_config)
     }
 
     #[instruction(discriminator = b"bridgefe")]
     pub fn set_bridge_fee(ctx: Context<SetBridgeFee>, bridge_fee: u64) -> Result<()> {
-        ctx.accounts.omni_config.bridge_fee = bridge_fee;
-        Ok(())
+        handle_set_bridge_fee(ctx, bridge_fee)
     }
-}
-
-#[derive(Accounts)]
-struct InitializeOmni<'info> {
-    #[account(mut, address = DEPLOYER @ CustomError::NotAllowed)]
-    deployer: Signer<'info>,
-
-    #[account(
-        init,
-        payer = deployer,
-        space = GenomeOmniConfig::DISCRIMINATOR.len() + GenomeOmniConfig::INIT_SPACE,
-        seeds = [GENOME_ROOT, OMNI_CONFIG_SEED],
-        bump
-    )]
-    omni_config: Box<Account<'info, GenomeOmniConfig>>,
-
-    system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-struct SetBridgeFee<'info> {
-    #[account(mut, address = omni_config.admin @ CustomError::NotAllowed)]
-    admin: Signer<'info>,
-
-    #[account(mut, seeds = [GENOME_ROOT, OMNI_CONFIG_SEED], bump)]
-    omni_config: Box<Account<'info, GenomeOmniConfig>>,
-
-    system_program: Program<'info, System>,
-}
-
-#[account]
-#[derive(InitSpace)]
-struct GenomeOmniConfig {
-    admin: Pubkey,
-    uts_program: Pubkey,
-    bridge_fee: u64,
-    genome_chain_id: u64,
-}
-
-#[derive(Accounts)]
-#[instruction(config_params: GenomeSingleConfig)]
-struct Initialize<'info> {
-    #[account(mut, address = DEPLOYER @ TournamentError::NotAllowed)]
-    deployer: Signer<'info>,
-    #[account(
-        init,
-        payer = deployer,
-        space = GenomeSingleConfig::DISCRIMINATOR.len() + GenomeSingleConfig::INIT_SPACE,
-        seeds = [GENOME_ROOT, CONFIG],
-        bump
-    )]
-    config: Account<'info, GenomeSingleConfig>,
-    system_program: Program<'info, System>,
 }
