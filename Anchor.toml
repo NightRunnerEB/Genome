@@ -12,19 +12,17 @@ url = "https://api.apr.dev"
 
 [provider]
 cluster = "Localnet"
-wallet = "keys/admin.json"
+wallet = "~/.config/solana/id.json"
 
 [scripts]
 test-omni = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/genomeOmni.test.ts --grep 'required'"
-test-single = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/genomeSingle.test.ts"
+test-single = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/genomeSingle.test.ts --grep 'required'"
 test-all = "anchor run test-ci && pkill -9 solana-test-validator"
 test-ci = "sh run_tests.sh"
-
 initialize-omni = "yarn run ts-node migrations/omnichain/initializeOmnichain.ts keys/deployer.json"
 set-bridge-fee = "yarn run ts-node migrations/omnichain/setBridgeFee.ts keys/admin.json"
-
-initialize-single = "yarn run ts-node migrations/singlechain/initializeSinglechain.ts keys/deployer.json 4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB"
-setup-wallets = "yarn run ts-node migrations/singlechain/setupWallets.ts 4LZ7rPVF6jDEwjNsvTYjUNc3qPC6rW6qzoGbAJHGcBeB HCoTZ78773EUD6EjAgAdAD9mNF3sEDbsW9KGAvUPGEU7"
+initialize-single = "yarn run ts-node migrations/singlechain/initializeSinglechain.ts keys/deployer.json 6MurAyX9MiuLV8ufEeAN26w1KTbT1yDKCAcQF1bHQHCx"
+setup-wallets = "yarn run ts-node migrations/singlechain/setupWallets.ts 6MurAyX9MiuLV8ufEeAN26w1KTbT1yDKCAcQF1bHQHCx CB39FqtnDdACX9XkwjsA2gYGd7ZfxjveMewhxRoB9c8k"
 grant-role = "yarn run ts-node migrations/singlechain/grantRole.ts keys/admin.json"
 revoke-role = "yarn run ts-node migrations/singlechain/revokeRole.ts keys/admin.json"
 approve-token = "yarn run ts-node migrations/singlechain/approveToken.ts"

@@ -1,21 +1,14 @@
 import * as anchor from "@coral-xyz/anchor";
 import { assert } from "chai";
 
-import { checkAnchorError, getKeypairs } from "./utils";
+import { checkAnchorError, getKeypairs, MARKS } from "./utils";
 import {
   buildAndSendTx,
   GENOME_OMNI_CONFIG,
   getGenomePda,
   getProgram,
   IxBuilder,
-} from "../common";
-
-const MARKS = {
-  // Run using `anchor test`
-  required: "required",
-  // Run using `anchor run test-all`
-  negative: "negative",
-};
+} from "../common/ixBuilder";
 
 describe("Genome Solana Omnichain", () => {
   const UTS_PROGRAM = new anchor.web3.PublicKey(
@@ -34,7 +27,7 @@ describe("Genome Solana Omnichain", () => {
     ixBuilder = new IxBuilder();
   });
 
-  it(`Initialize Genome Omnichain [${MARKS.required}] `, async () => {
+  it(`Initialize Genome Omnichain [${MARKS.required}]`, async () => {
     const bridgeFee = new anchor.BN(1234567);
     const ix = await ixBuilder.initializeOmnichain(deployer, {
       admin: admin.publicKey,

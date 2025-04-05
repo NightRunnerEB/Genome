@@ -151,7 +151,7 @@ export async function airdropAll(
 }
 
 export function getProgram() {
-    return workspace.GenomeContract as Program<GenomeSolana>;
+    return workspace.GenomeSolana as Program<GenomeSolana>;
 }
 
 export function getProvider() {

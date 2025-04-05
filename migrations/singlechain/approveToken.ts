@@ -2,8 +2,8 @@ import { BN } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { getKeypairFromFile } from "@solana-developers/helpers";
 
-import { IxBuilder } from "../common/ixBuilder";
-import { buildAndSendTx } from "../common/utils";
+import { IxBuilder } from "../../common/ixBuilder";
+import { buildAndSendTx } from "../../common/utils";
 
 async function main() {
     const operatorKeypairPath = process.argv[2];
