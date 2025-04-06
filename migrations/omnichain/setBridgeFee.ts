@@ -2,7 +2,8 @@ import { BN } from "@coral-xyz/anchor";
 import { Keypair } from "@solana/web3.js";
 import { getKeypairFromFile } from "@solana-developers/helpers";
 
-import { buildAndSendTx, IxBuilder } from "../common";
+import { IxBuilder } from "../../common/ixBuilder";
+import { buildAndSendTx } from "../../common/utils";
 
 async function main() {
   const adminPath = process.argv[2];
@@ -19,7 +20,7 @@ async function main() {
 
 async function setBridgeFee(admin: Keypair, bridgeFee: number) {
   const ixBuilder = new IxBuilder();
-  const ix = await ixBuilder.setBridgeFee(admin, new BN(bridgeFee));
+  const ix = await ixBuilder.setBridgeFeeIx(admin.publicKey, new BN(bridgeFee));
   const txSignature = await buildAndSendTx([ix], [admin]);
   console.log("Set bridge fee tx: ", txSignature);
 }

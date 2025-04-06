@@ -2,7 +2,7 @@ import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { getKeypairFromFile } from "@solana-developers/helpers";
 import { approveChecked, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
-import { airdropAll, getProvider } from "../common/utils";
+import { airdropAll, getProvider } from "../../common/utils";
 
 async function main(): Promise<void> {
   const [

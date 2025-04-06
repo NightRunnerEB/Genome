@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::{data::GenomeOmniConfig, error::GenomeError, DEPLOYER, GENOME_ROOT, OMNI_CONFIG_SEED};
+use crate::{data::GenomeOmniConfig, error::GenomeError, DEPLOYER, GENOME_ROOT, OMNI_CONFIG};
 
 pub fn handle_initialize_omni(
     ctx: Context<InitializeOmni>,
@@ -18,7 +18,7 @@ pub struct InitializeOmni<'info> {
         init,
         payer = deployer,
         space = GenomeOmniConfig::DISCRIMINATOR.len() + GenomeOmniConfig::INIT_SPACE,
-        seeds = [GENOME_ROOT, OMNI_CONFIG_SEED],
+        seeds = [GENOME_ROOT, OMNI_CONFIG],
         bump
     )]
     omni_config: Box<Account<'info, GenomeOmniConfig>>,

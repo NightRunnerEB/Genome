@@ -2,7 +2,8 @@ import { BN } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { getKeypairFromFile } from "@solana-developers/helpers";
 
-import { buildAndSendTx, IxBuilder } from "../common";
+import { IxBuilder } from "../../common/ixBuilder";
+import { buildAndSendTx } from "../../common/utils";
 
 async function main() {
   const deployerPath = process.argv[2];
@@ -40,7 +41,7 @@ async function initializeOmnichain(
   genomeChainId: number
 ) {
   const ixBuilder = new IxBuilder();
-  const initializeOmniIx = await ixBuilder.initializeOmnichain(deployer, {
+  const initializeOmniIx = await ixBuilder.initializeOmnichainIx(deployer.publicKey, {
     admin,
     utsProgram,
     bridgeFee: new BN(bridgeFee),

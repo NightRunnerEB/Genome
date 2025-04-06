@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+
 use crate::{data::GenomeSingleConfig, GenomeError, GENOME_ROOT};
 
 pub fn handle_set_bloom_precision(

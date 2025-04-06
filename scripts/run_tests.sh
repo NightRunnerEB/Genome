@@ -7,4 +7,5 @@ while ! nc -z 127.0.0.1 8899; do
   sleep 1
 done
 
+# yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/genomeSingle.test.ts
 yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*test.ts

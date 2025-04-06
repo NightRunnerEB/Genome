@@ -10,6 +10,8 @@ import {
     createGenomeMint,
     delegateAccount,
     createTournamentMint,
+    TournamentConfig,
+    GenomeSingleConfig,
     MARKS,
 } from "./utils";
 import { IxBuilder } from "../common/ixBuilder";
@@ -25,24 +27,22 @@ import {
     getPrizePoolAtaInfo,
     getOrganizerAtaInfo,
     getGenomePda,
-    getConstant,
+    GENOME_SINGLE_CONFIG,
 } from "../common/utils";
-import { GenomeContract } from "../target/types/genome_contract";
+import { GenomeSolana } from "../target/types/genome_solana";
 
 describe("Genome Solana Singlechain", () => {
-    const ixBuilder = new IxBuilder();
-    const {
-        admin,
-        deployer,
-        platform,
-        token,
-        sponsor,
-        organizer,
-        nome,
-        verifier1,
-        verifier2,
-        operator,
-    } = getKeyPairs();
+    let ixBuilder: IxBuilder;
+    let admin: Keypair,
+        deployer: Keypair,
+        platform: Keypair,
+        token: Keypair,
+        sponsor: Keypair,
+        organizer: Keypair,
+        nome: Keypair,
+        verifier1: Keypair,
+        verifier2: Keypair,
+        operator: Keypair;
 
     let assetMint: PublicKey;
     let sponsorAta: PublicKey;
@@ -50,32 +50,38 @@ describe("Genome Solana Singlechain", () => {
     let platformAta: PublicKey;
     let configPda: PublicKey;
 
-    const tournamentConfigMock = {
-        organizer: organizer.publicKey,
-        organizerFee: new BN(100),
-        expirationTime: new BN(1748736000), // 1 June 2025
-        sponsorPool: new BN(1000),
-        entryFee: new BN(150),
-        teamSize: 10,
-        minTeams: 4,
-        maxTeams: 10,
-        assetMint: token.publicKey,
-    };
-
-    const configData = {
-        admin: admin.publicKey,
-        platformFee: new BN(10),
-        platformWallet: platform.publicKey,
-        nomeMint: nome.publicKey,
-        minTeams: 2,
-        maxTeams: 20,
-        falsePrecision: 0.000065,
-        maxOrganizerFee: new BN(5000),
-        consensusRate: 66.0,
-        verifierAddresses: [],
-    };
+    let tournamentConfigMock: TournamentConfig;
+    let configData: GenomeSingleConfig;
 
     before(async () => {
+        ixBuilder = new IxBuilder();
+        ({ admin, deployer, platform, token, sponsor, organizer, nome, verifier1, verifier2, operator } = await getKeyPairs());
+
+        tournamentConfigMock = {
+            organizer: organizer.publicKey,
+            organizerFee: new BN(100),
+            expirationTime: new BN(1748736000), // 1 June 2025
+            sponsorPool: new BN(1000),
+            entryFee: new BN(150),
+            teamSize: 10,
+            minTeams: 4,
+            maxTeams: 10,
+            assetMint: token.publicKey,
+        };
+
+        configData = {
+            admin: admin.publicKey,
+            platformFee: new BN(10),
+            platformWallet: platform.publicKey,
+            nomeMint: nome.publicKey,
+            minTeams: 2,
+            maxTeams: 20,
+            falsePrecision: 0.000065,
+            maxOrganizerFee: new BN(5000),
+            consensusRate: 66.0,
+            verifierAddresses: [],
+        };
+
         await airdropAll(
             [
                 admin.publicKey,
@@ -87,11 +93,10 @@ describe("Genome Solana Singlechain", () => {
             ],
             10
         );
-        configPda = await getGenomePda([getConstant("singleConfig")]);
+        configPda = await getGenomePda([GENOME_SINGLE_CONFIG]);
     });
 
     it(`Initialize Genome Solana with Invalid Params [${MARKS.negative}]`, async () => {
-        console.log("5");
         try {
             const configDataInvalid = {
                 ...configData,
@@ -108,7 +113,6 @@ describe("Genome Solana Singlechain", () => {
             await buildAndSendTx([initIx], [deployer]);
             throw new Error("Expected error was not thrown");
         } catch (error) {
-            console.log("6");
             checkAnchorError(error, "The list of verifiers must be empty");
         }
     });
@@ -163,7 +167,7 @@ describe("Genome Solana Singlechain", () => {
         const beforeInfo = await getProvider().connection.getAccountInfo(configPda);
         const beforeLamports = beforeInfo?.lamports ?? 0;
 
-        const roles: [PublicKey, IdlTypes<GenomeContract>["role"]][] = [
+        const roles: [PublicKey, IdlTypes<GenomeSolana>["role"]][] = [
             [operator.publicKey, { operator: {} }],
             [organizer.publicKey, { organizer: {} }],
             [verifier2.publicKey, { verifier: {} }],

@@ -12,12 +12,12 @@ use anchor_lang::prelude::*;
 use data::{GenomeOmniConfig, GenomeSingleConfig, Role, TournamentConfig};
 use error::GenomeError;
 
-declare_id!("9SK6NkuZHbPHYqL2qpcN5gwpfnjtPLj36mLn6PGfe3R8");
+declare_id!("572G4eB1NNusfqGj3DVTZw1ZooweLBiaA3ko7fLhSsV2");
 
 #[constant]
 const GENOME_ROOT: &[u8] = b"genome-0";
 #[constant]
-const OMNI_CONFIG_SEED: &[u8] = b"omni-config";
+const OMNI_CONFIG: &[u8] = b"omni-config";
 #[constant]
 const SINGLE_CONFIG: &[u8] = b"single-config";
 #[constant]
@@ -30,7 +30,7 @@ const ROLE: &[u8] = b"role";
 const TOKEN: &[u8] = b"token";
 
 #[cfg(feature = "localnet")]
-const DEPLOYER: Pubkey = pubkey!("ESUEU5vr1FJxBBC4qaHviseqcr8hzZsoTjji1o947Yzy");
+const DEPLOYER: Pubkey = pubkey!("CB39FqtnDdACX9XkwjsA2gYGd7ZfxjveMewhxRoB9c8k");
 
 #[program]
 mod genome_solana {

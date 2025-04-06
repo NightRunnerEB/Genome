@@ -1,8 +1,8 @@
 import { getKeypairFromFile } from "@solana-developers/helpers";
 import { TransactionInstruction, PublicKey } from "@solana/web3.js";
 
-import { IxBuilder } from "../common/ixBuilder";
-import { buildAndSendTx, parseRole } from "../common/utils";
+import { IxBuilder } from "../../common/ixBuilder";
+import { buildAndSendTx, parseRole } from "../../common/utils";
 
 async function main(): Promise<void> {
   const adminKeypairPath = process.argv[2];

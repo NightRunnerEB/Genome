@@ -1,15 +1,23 @@
-import * as anchor from "@coral-xyz/anchor";
+import { BN } from "@coral-xyz/anchor";
 import { approveChecked, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccount, createMint, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { getKeypairFromFile } from "@solana-developers/helpers";
 import { AnchorError } from "@coral-xyz/anchor";
 import { assert } from "chai";
 
 import { getProgram, getConstant, getGenomePda, getProvider } from "../common/utils";
+import { getKeypairFromFile } from "@solana-developers/helpers";
 
 const DEPLOYER_PATH = "./keys/deployer.json";
 const ADMIN_PATH = "./keys/admin.json";
 const ATTACKER_PATH = "./keys/attacker.json";
+const ORGANIZER_PATH = "./keys/organizer.json";
+const SPONSOR_PATH = "./keys/sponsor.json";
+const TOKEN_PATH = "./keys/token.json";
+const PLATFORM_PATH = "./keys/platform_wallet.json";
+const VERIFIER1_PATH = "./keys/verifier1.json";
+const VERIFIER2_PATH = "./keys/verifier2.json";
+const OPERATOR_PATH = "./keys/operator.json";
+const NOME_PATH = "./keys/nome.json";
 
 export const MARKS = {
   // Run using `anchor test`
@@ -18,22 +26,30 @@ export const MARKS = {
   negative: "negative",
 };
 
-// export async function getKeypairs(): Promise<{
-//   deployer: Keypair;
-//   admin: Keypair;
-//   attacker: Keypair;
-// }> {
-//   const deployer = await getKeypairFromFile(DEPLOYER_PATH);
-//   const admin = await getKeypairFromFile(ADMIN_PATH);
-//   const attacker = await getKeypairFromFile(ATTACKER_PATH);
+export interface TournamentConfig {
+  organizer: PublicKey;
+  organizerFee: BN;
+  expirationTime: BN;
+  sponsorPool: BN;
+  entryFee: BN;
+  teamSize: number;
+  minTeams: number;
+  maxTeams: number;
+  assetMint: PublicKey;
+}
 
-//   await Promise.all(
-//     [admin, deployer, attacker].map(async (keypair) =>
-//       airdrop(keypair.publicKey, 10)
-//     )
-//   );
-//   return { deployer, admin, attacker };
-// }
+export interface GenomeSingleConfig {
+  admin: PublicKey;
+  verifierAddresses: PublicKey[];
+  consensusRate: number;
+  platformWallet: PublicKey;
+  nomeMint: PublicKey;
+  falsePrecision: number;
+  platformFee: BN;
+  maxOrganizerFee: BN;
+  minTeams: number;
+  maxTeams: number;
+}
 
 export function checkAnchorError(error: any, errMsg: string) {
   let errorMessage: string;
@@ -45,7 +61,8 @@ export function checkAnchorError(error: any, errMsg: string) {
   assert.ok(errorMessage.includes(errMsg));
 }
 
-export function getKeyPairs(): {
+export async function getKeyPairs(): Promise<{
+  attacker: Keypair;
   admin: Keypair,
   organizer: Keypair,
   sponsor: Keypair,
@@ -56,41 +73,20 @@ export function getKeyPairs(): {
   verifier2: Keypair,
   operator: Keypair,
   nome: Keypair
-} {
-  const adminSecret = Uint8Array.from(require("../keys/admin.json"));
-  const organizerSecret = Uint8Array.from(require("../keys/organizer.json"));
-  const sponsorSecret = Uint8Array.from(require("../keys/sponsor.json"));
-  const deployerSecret = Uint8Array.from(require("../keys/deployer.json"));
-  const tokenSecret = Uint8Array.from(require("../keys/token.json"));
-  const platformSecret = Uint8Array.from(require("../keys/platform_wallet.json"));
-  const verifier1Secret = Uint8Array.from(require("../keys/verifier1.json"));
-  const verifier2Secret = Uint8Array.from(require("../keys/verifier2.json"));
-  const operatorSecret = Uint8Array.from(require("../keys/operator.json"));
-  const nomeSecret = Uint8Array.from(require("../keys/nome.json"));
+}> {
+  const attacker = await getKeypairFromFile(ATTACKER_PATH);
+  const admin = await getKeypairFromFile(ADMIN_PATH);
+  const organizer = await getKeypairFromFile(ORGANIZER_PATH);
+  const sponsor = await getKeypairFromFile(SPONSOR_PATH);
+  const deployer = await getKeypairFromFile(DEPLOYER_PATH);
+  const token = await getKeypairFromFile(TOKEN_PATH);
+  const platform = await getKeypairFromFile(PLATFORM_PATH);
+  const verifier1 = await getKeypairFromFile(VERIFIER1_PATH);
+  const verifier2 = await getKeypairFromFile(VERIFIER2_PATH);
+  const operator = await getKeypairFromFile(OPERATOR_PATH);
+  const nome = await getKeypairFromFile(NOME_PATH);
 
-  const admin = Keypair.fromSecretKey(adminSecret);
-  const organizer = Keypair.fromSecretKey(organizerSecret);
-  const sponsor = Keypair.fromSecretKey(sponsorSecret);
-  const deployer = Keypair.fromSecretKey(deployerSecret);
-  const token = Keypair.fromSecretKey(tokenSecret);
-  const platform = Keypair.fromSecretKey(platformSecret);
-  const verifier1 = Keypair.fromSecretKey(verifier1Secret);
-  const verifier2 = Keypair.fromSecretKey(verifier2Secret);
-  const operator = Keypair.fromSecretKey(operatorSecret);
-  const nome = Keypair.fromSecretKey(nomeSecret);
-
-  return {
-    admin,
-    organizer,
-    sponsor,
-    deployer,
-    token,
-    platform,
-    verifier1,
-    verifier2,
-    operator,
-    nome
-  };
+  return { attacker, admin, organizer, sponsor, deployer, token, platform, verifier1, verifier2, operator, nome };
 }
 
 export async function getUserRole(user: PublicKey) {
@@ -104,7 +100,7 @@ export async function createGenomeMint(): Promise<{
   organizerAta: PublicKey;
   platformAta: PublicKey;
 }> {
-  let { admin, organizer, operator, nome, platform } = getKeyPairs();
+  let { admin, organizer, operator, nome, platform } = await getKeyPairs();
 
   const connection = getProvider().connection;
 
@@ -173,7 +169,7 @@ export async function createTournamentMint(): Promise<{
   assetMint: PublicKey;
   sponsorAta: PublicKey;
 }> {
-  let { admin, sponsor, organizer, token } = getKeyPairs();
+  let { admin, sponsor, organizer, token } = await getKeyPairs();
 
   const connection = getProvider().connection;
 
@@ -229,7 +225,7 @@ export async function createTournamentMint(): Promise<{
 
 export async function delegateAccount(sponsorAta: PublicKey): Promise<String> {
   let provider = getProvider();
-  let { admin, sponsor, organizer, token } = getKeyPairs();
+  let { admin, sponsor, organizer, token } = await getKeyPairs();
   return approveChecked(
     provider.connection,
     admin,

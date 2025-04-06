@@ -22,7 +22,7 @@ export class IxBuilder {
   constructor() {
     this.program = PROGRAM;
     this.singleConfigSeed = getConstant("singleConfig");
-    this.omniConfig = getConstant("omniConfigSeed");
+    this.omniConfig = getConstant("omniConfig");
     this.roleSeed = getConstant("role");
     this.tokenSeed = getConstant("token");
   }

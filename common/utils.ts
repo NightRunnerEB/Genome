@@ -20,8 +20,10 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, getAccount, getAssociatedTokenAddress, Acc
 import { getKeypairFromFile } from "@solana-developers/helpers";
 
 const PROGRAM = getProgram();
-const GENOME_ROOT = getConstant("genomeRoot");
+export const GENOME_OMNI_CONFIG = getConstant("omniConfig");
+export const GENOME_SINGLE_CONFIG = getConstant("singleConfig");
 const GENOME_PROGRAM_PATH = "./keys/genome-program.json";
+const GENOME_ROOT = getConstant("genomeRoot");
 
 export type Role = IdlTypes<GenomeSolana>["role"];
 
@@ -48,7 +50,7 @@ export function prettify(obj: any): string {
 }
 
 export async function getConfig() {
-    const configPda = await getGenomePda([getConstant("config")]);
+    const configPda = await getGenomePda([GENOME_SINGLE_CONFIG]);
     const config = await PROGRAM.account.genomeSingleConfig.fetch(configPda);
     return {
         admin: config.admin,
