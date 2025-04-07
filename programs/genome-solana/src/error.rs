@@ -4,6 +4,8 @@ use anchor_lang::prelude::*;
 pub(crate) enum GenomeError {
     #[msg("Max players exceeded")]
     MaxPlayersExceeded,
+    #[msg("Participant not found")]
+    ParticipantNotFound,
     #[msg("The list of verifiers must be empty")]
     InvalidGenomeConfig,
     #[msg("Invalid entry fee")]

@@ -1,164 +1,134 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    token_2022::TransferChecked,
-    token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface},
+use anchor_spl::token_interface::{
+    transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 use growable_bloom_filter::GrowableBloom as Bloom;
 
 use crate::{
     data::{BloomFilter, GenomeSingleConfig, Tournament, TournamentStatus},
     error::GenomeError,
-    team::Team,
-    BLOOM, SINGLE_CONFIG, GENOME_ROOT, TEAM, TOURNAMENT,
+    team::{ParticipantInfo, Team},
+    BLOOM, GENOME_ROOT, SINGLE_CONFIG, TEAM, TOURNAMENT,
 };
 
 pub fn handle_register_tournament(
-    ctx: Context<RegisterParticipantToTournamentSinglechain>,
+    ctx: Context<RegisterParticipant>,
     register_params: RegisterParams,
 ) -> Result<()> {
     let tournament = &mut ctx.accounts.tournament;
-    require!(
-        tournament.status == TournamentStatus::New,
-        GenomeError::InvalidStatus
-    );
+    require!(tournament.status == TournamentStatus::New, GenomeError::InvalidStatus);
     let team = &mut ctx.accounts.team;
     let bloom_filter = &mut ctx.accounts.bloom_filter;
     let mut bloom: Bloom =
-        bincode::deserialize(&bloom_filter.data).expect("Error deserialize GrowableBloom");
+        bincode::deserialize(&bloom_filter.data).expect("Error deserialize Bloom");
+
+    bloom_check(&register_params, &mut bloom)?;
 
     if !register_params.teammates.is_empty() {
-        check_and_transfer(
-            &mut bloom,
-            tournament,
-            register_params.participant,
-            ctx.accounts.payer_ata.to_account_info(),
-            ctx.accounts.reward_pool_ata.to_account_info(),
-            ctx.accounts.mint.to_account_info(),
-            ctx.accounts.participant.to_account_info(),
-            ctx.accounts.token_program.to_account_info(),
-            ctx.accounts.mint.decimals,
-        )?;
-
         **team = Team::new(register_params.participant, tournament.config.team_size);
         tournament.team_count += 1;
-        team.add_participant_by_captain(register_params.participant)?;
 
-        for teammate in register_params.teammates {
-            check_and_transfer(
-                &mut bloom,
-                tournament,
-                teammate,
-                ctx.accounts.payer_ata.to_account_info(),
-                ctx.accounts.reward_pool_ata.to_account_info(),
-                ctx.accounts.mint.to_account_info(),
-                ctx.accounts.participant.to_account_info(),
-                ctx.accounts.token_program.to_account_info(),
-                ctx.accounts.mint.decimals,
-            )?;
-            team.add_participant_by_captain(teammate)?;
-        }
-    } else {
-        check_and_transfer(
-            &mut bloom,
-            tournament,
-            register_params.participant,
-            ctx.accounts.payer_ata.to_account_info(),
-            ctx.accounts.reward_pool_ata.to_account_info(),
-            ctx.accounts.mint.to_account_info(),
-            ctx.accounts.participant.to_account_info(),
+        let cpi_ctx = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
+            TransferChecked {
+                from: ctx.accounts.participant_ata.to_account_info(),
+                to: ctx.accounts.reward_pool_ata.to_account_info(),
+                mint: ctx.accounts.mint.to_account_info(),
+                authority: ctx.accounts.participant.to_account_info(),
+            },
+        );
+
+        let mut all_participants = vec![register_params.participant];
+        all_participants.extend(register_params.teammates);
+
+        transfer_checked(
+            cpi_ctx,
+            all_participants.len() as u64 * tournament.config.entry_fee,
             ctx.accounts.mint.decimals,
         )?;
+        team.add_participants_by_captain(all_participants)?;
+    } else {
+        let cpi_ctx = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            TransferChecked {
+                from: ctx.accounts.participant_ata.to_account_info(),
+                to: ctx.accounts.reward_pool_ata.to_account_info(),
+                mint: ctx.accounts.mint.to_account_info(),
+                authority: ctx.accounts.participant.to_account_info(),
+            },
+        );
+        transfer_checked(cpi_ctx, tournament.config.entry_fee, ctx.accounts.mint.decimals)?;
+
         team.add_participant(register_params.participant)?;
     }
 
-    bloom_filter.data = bincode::serialize(&bloom).expect("msg");
+    bloom_filter.data = bincode::serialize(&bloom).expect("Error serialize Bloom");
     Ok(())
 }
 
-fn check_and_transfer<'info>(
-    bloom: &mut Bloom,
-    tournament: &mut Tournament,
-    participant: Pubkey,
-    payer_ata: AccountInfo<'info>,
-    reward_pool_ata: AccountInfo<'info>,
-    mint: AccountInfo<'info>,
-    payer: AccountInfo<'info>,
-    token_program: AccountInfo<'info>,
-    decimals: u8,
-) -> Result<()> {
-    if !bloom.insert(&participant) {
-        return Err(GenomeError::AlreadyRegistered.into());
+fn bloom_check(register_params: &RegisterParams, bloom: &mut Bloom) -> Result<()> {
+    require!(bloom.insert(register_params.participant), GenomeError::AlreadyRegistered);
+
+    for teammate in &register_params.teammates {
+        require!(bloom.insert(teammate), GenomeError::AlreadyRegistered);
     }
 
-    let cpi_ctx = CpiContext::new(
-        token_program.clone(),
-        TransferChecked {
-            from: payer_ata,
-            to: reward_pool_ata,
-            mint,
-            authority: payer,
-        },
-    );
-    transfer_checked(cpi_ctx, tournament.config.entry_fee, decimals)?;
-    
     Ok(())
 }
 
 #[derive(Accounts)]
 #[instruction(register_params: RegisterParams)]
-pub struct RegisterParticipantToTournamentSinglechain<'info> {
+pub struct RegisterParticipant<'info> {
     #[account(mut)]
-    pub participant: Signer<'info>,
+    participant: Signer<'info>,
     #[account(mut, seeds = [GENOME_ROOT, SINGLE_CONFIG], bump)]
-    pub config: Account<'info, GenomeSingleConfig>,
+    config: Account<'info, GenomeSingleConfig>,
     #[account(
         mut,
         seeds = [GENOME_ROOT, TOURNAMENT, register_params.tournament_id.to_le_bytes().as_ref()],
         bump
     )]
-    pub tournament: Account<'info, Tournament>,
+    tournament: Account<'info, Tournament>,
     #[account(
         init_if_needed,
         payer = participant,
-        space = Team::DISCRIMINATOR.len() + Team::INIT_SPACE + (32 + 2 + 1)*tournament.config.team_size as usize,
+        space = 8 + Team::INIT_SPACE + ParticipantInfo::INIT_SPACE * tournament.config.team_size as usize,
         seeds = [GENOME_ROOT, TEAM, register_params.tournament_id.to_le_bytes().as_ref(), register_params.captain.as_ref()],
         bump
     )]
-    pub team: Account<'info, Team>,
+    team: Account<'info, Team>,
     #[account(address = tournament.config.asset_mint @ GenomeError::InvalidToken)]
-    pub mint: InterfaceAccount<'info, Mint>,
+    mint: InterfaceAccount<'info, Mint>,
     #[account(
         mut,
         associated_token::mint = mint,
         associated_token::authority = participant,
         associated_token::token_program = token_program,
     )]
-    pub payer_ata: InterfaceAccount<'info, TokenAccount>,
+    participant_ata: InterfaceAccount<'info, TokenAccount>,
     #[account(
         mut,
         associated_token::mint = mint,
         associated_token::authority = tournament,
         associated_token::token_program = token_program,
     )]
-    pub reward_pool_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    reward_pool_ata: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(mut, seeds = [GENOME_ROOT, BLOOM, register_params.tournament_id.to_le_bytes().as_ref()], bump)]
-    pub bloom_filter: Box<Account<'info, BloomFilter>>,
-    pub system_program: Program<'info, System>,
-    pub token_program: Interface<'info, TokenInterface>,
+    bloom_filter: Box<Account<'info, BloomFilter>>,
+    system_program: Program<'info, System>,
+    token_program: Interface<'info, TokenInterface>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct RegisterParams {
-    pub tournament_id: u32,
-    pub participant: Pubkey,
-    pub captain: Pubkey,
-    pub teammates: Vec<Pubkey>,
+    tournament_id: u32,
+    participant: Pubkey,
+    captain: Pubkey,
+    teammates: Vec<Pubkey>,
 }
 
-#[derive(Debug)]
 #[event]
 pub struct ParticipantRegistered {
-    pub participant: Pubkey,
-    pub captain: Pubkey,
+    participant: Pubkey,
+    captain: Pubkey,
 }

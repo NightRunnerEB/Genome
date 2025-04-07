@@ -9,10 +9,14 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_PROGRAM_I
 import { GenomeSolana } from "../target/types/genome_solana";
 
 import { getConstant, getGenomePda, getProgram } from "./utils";
+import { RegisterParams } from "../tests/utils";
 
 export class IxBuilder {
   public program: Program<GenomeSolana>;
   private singleConfigSeed: Uint8Array;
+  private tournamentSeed: Uint8Array;
+  private teamSeed: Uint8Array;
+  private bloomSeed: Uint8Array;
   private roleSeed: Uint8Array;
   private tokenSeed: Uint8Array;
   private omniConfigSeed: Uint8Array;
@@ -21,6 +25,9 @@ export class IxBuilder {
     this.program = getProgram();
     this.singleConfigSeed = getConstant("singleConfig");
     this.omniConfigSeed = getConstant("omniConfig");
+    this.tournamentSeed = getConstant("tournament");
+    this.teamSeed = getConstant("team");
+    this.bloomSeed = getConstant("bloom");
     this.roleSeed = getConstant("role");
     this.tokenSeed = getConstant("token");
   }
@@ -77,10 +84,10 @@ export class IxBuilder {
     const configData = await this.program.account.genomeSingleConfig.fetch(configPda);
     const idBuffer = Buffer.alloc(4);
     idBuffer.writeUInt32LE(configData.tournamentNonce, 0);
-    const tournamentPda = await getGenomePda([getConstant("tournament"), idBuffer]);
-    const bloomPda = await getGenomePda([getConstant("bloom"), idBuffer]);
-    const rolePda = await getGenomePda([getConstant("role"), organizer.toBuffer()]);
-    const tokenPda = await getGenomePda([getConstant("token"), assetMint.toBuffer()]);
+    const tournamentPda = await getGenomePda([this.tournamentSeed, idBuffer]);
+    const bloomPda = await getGenomePda([this.bloomSeed, idBuffer]);
+    const rolePda = await getGenomePda([this.roleSeed, organizer.toBuffer()]);
+    const tokenPda = await getGenomePda([this.tokenSeed, assetMint.toBuffer()]);
     const prizePoolAta = await getAssociatedTokenAddress(assetMint, tournamentPda, true);
     const sponsorAta = await getAssociatedTokenAddress(assetMint, sponsor, true);
     const platformPoolAta = await getAssociatedTokenAddress(configData.nomeMint, configData.platformWallet, true);
@@ -172,6 +179,39 @@ export class IxBuilder {
         assetMint,
         roleInfo: await getGenomePda([this.roleSeed, operator.toBuffer()]),
         tokenInfo: await getGenomePda([this.tokenSeed, assetMint.toBuffer()]),
+      })
+      .instruction();
+  }
+
+  async registerTournamentIx(
+    participant: PublicKey,
+    registerParams: RegisterParams,
+    mintPubkey: PublicKey
+  ): Promise<TransactionInstruction> {
+    const idBuffer = Buffer.alloc(4);
+    idBuffer.writeUInt32LE(registerParams.tournamentId, 0);
+
+    const configPda = await getGenomePda([this.singleConfigSeed]);
+    const tournamentPda = await getGenomePda([this.tournamentSeed, idBuffer]);
+    const teamPda = await getGenomePda([this.teamSeed, idBuffer, registerParams.captain.toBuffer()]);
+    const bloomPda = await getGenomePda([this.bloomSeed, idBuffer]);
+
+    const participantAta = await getAssociatedTokenAddress(mintPubkey, participant, true);
+    const rewardPoolAta = await getAssociatedTokenAddress(mintPubkey, tournamentPda, true);
+
+    return this.program.methods
+      .registerTournament(registerParams)
+      .accountsStrict({
+        participant,       // Signer
+        config: configPda,
+        tournament: tournamentPda,
+        team: teamPda,
+        mint: mintPubkey,
+        participantAta,
+        rewardPoolAta,
+        bloomFilter: bloomPda,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
       })
       .instruction();
   }

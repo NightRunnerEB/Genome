@@ -1,6 +1,7 @@
 #![allow(unexpected_cfgs)]
 
 mod data;
+mod team;
 mod error;
 mod instructions;
 mod utils;
@@ -77,7 +78,7 @@ mod genome_solana {
 
     #[instruction(discriminator = b"regtmnt")]
     pub fn register_tournament(
-        ctx: Context<RegisterParticipantToTournamentSinglechain>,
+        ctx: Context<RegisterParticipant>,
         register_params: RegisterParams,
     ) -> Result<()> {
         handle_register_tournament(ctx, register_params)

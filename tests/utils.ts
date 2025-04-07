@@ -18,6 +18,9 @@ const VERIFIER1_PATH = "./keys/verifier1.json";
 const VERIFIER2_PATH = "./keys/verifier2.json";
 const OPERATOR_PATH = "./keys/operator.json";
 const NOME_PATH = "./keys/nome.json";
+const PARTICIPANT1_PATH = "./keys/participant1.json";
+const PARTICIPANT2_PATH = "./keys/participant1.json";
+const PARTICIPANT3_PATH = "./keys/participant1.json";
 
 export const MARKS = {
   // Run using `anchor test`
@@ -51,6 +54,13 @@ export interface GenomeSingleConfig {
   maxTeams: number;
 }
 
+export interface RegisterParams {
+  tournamentId: number;
+  participant: PublicKey;
+  captain: PublicKey;
+  teammates: PublicKey[];
+}
+
 export function checkAnchorError(error: any, errMsg: string) {
   let errorMessage: string;
   if (error instanceof AnchorError) {
@@ -72,7 +82,10 @@ export async function getKeyPairs(): Promise<{
   verifier1: Keypair,
   verifier2: Keypair,
   operator: Keypair,
-  nome: Keypair
+  nome: Keypair,
+  participant1: Keypair,
+  participant2: Keypair,
+  participant3: Keypair
 }> {
   const attacker = await getKeypairFromFile(ATTACKER_PATH);
   const admin = await getKeypairFromFile(ADMIN_PATH);
@@ -85,8 +98,11 @@ export async function getKeyPairs(): Promise<{
   const verifier2 = await getKeypairFromFile(VERIFIER2_PATH);
   const operator = await getKeypairFromFile(OPERATOR_PATH);
   const nome = await getKeypairFromFile(NOME_PATH);
+  const participant1 = await getKeypairFromFile(PARTICIPANT1_PATH);
+  const participant2 = await getKeypairFromFile(PARTICIPANT2_PATH);
+  const participant3 = await getKeypairFromFile(PARTICIPANT3_PATH);
 
-  return { attacker, admin, organizer, sponsor, deployer, token, platform, verifier1, verifier2, operator, nome };
+  return { attacker, admin, organizer, sponsor, deployer, token, platform, verifier1, verifier2, operator, nome, participant1, participant2, participant3 };
 }
 
 export async function getUserRole(user: PublicKey) {

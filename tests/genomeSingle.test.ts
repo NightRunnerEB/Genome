@@ -42,7 +42,10 @@ describe("Genome Solana Singlechain", () => {
         nome: Keypair,
         verifier1: Keypair,
         verifier2: Keypair,
-        operator: Keypair;
+        operator: Keypair,
+        participant1: Keypair,
+        participant2: Keypair,
+        participant3: Keypair;
 
     let assetMint: PublicKey;
     let sponsorAta: PublicKey;
@@ -55,7 +58,7 @@ describe("Genome Solana Singlechain", () => {
 
     before(async () => {
         ixBuilder = new IxBuilder();
-        ({ admin, deployer, platform, token, sponsor, organizer, nome, verifier1, verifier2, operator } = await getKeyPairs());
+        ({ admin, deployer, platform, token, sponsor, organizer, nome, verifier1, verifier2, operator, participant1, participant2, participant3 } = await getKeyPairs());
 
         tournamentConfigMock = {
             organizer: organizer.publicKey,
