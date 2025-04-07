@@ -7,7 +7,7 @@ use crate::{
     GENOME_ROOT, ROLE, TOKEN,
 };
 
-pub fn handle_approve_token(
+pub(crate) fn handle_approve_token(
     ctx: Context<ApproveToken>,
     min_sponsor_pool: u64,
     min_entry_fee: u64,
@@ -21,7 +21,7 @@ pub fn handle_approve_token(
 }
 
 #[derive(Accounts)]
-pub struct ApproveToken<'info> {
+pub(crate) struct ApproveToken<'info> {
     #[account(mut)]
     operator: Signer<'info>,
     asset_mint: InterfaceAccount<'info, Mint>,

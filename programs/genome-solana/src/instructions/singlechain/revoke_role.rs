@@ -9,7 +9,7 @@ use crate::{
     GENOME_ROOT, ROLE, SINGLE_CONFIG,
 };
 
-pub fn handle_revoke_role(ctx: Context<RevokeRole>, role: Role) -> Result<()> {
+pub(crate) fn handle_revoke_role(ctx: Context<RevokeRole>, role: Role) -> Result<()> {
     let index = ctx
         .accounts
         .role_info
@@ -38,7 +38,7 @@ pub fn handle_revoke_role(ctx: Context<RevokeRole>, role: Role) -> Result<()> {
 }
 
 #[derive(Accounts)]
-pub struct RevokeRole<'info> {
+pub(crate) struct RevokeRole<'info> {
     #[account(mut, address = config.admin @ GenomeError::NotAllowed)]
     admin: Signer<'info>,
     user: SystemAccount<'info>,

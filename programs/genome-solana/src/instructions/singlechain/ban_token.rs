@@ -7,12 +7,12 @@ use crate::{
     GENOME_ROOT, ROLE, TOKEN,
 };
 
-pub fn handle_ban_token(_ctx: Context<BanToken>) -> Result<()> {
+pub(crate) fn handle_ban_token(_ctx: Context<BanToken>) -> Result<()> {
     Ok(())
 }
 
 #[derive(Accounts)]
-pub struct BanToken<'info> {
+pub(crate) struct BanToken<'info> {
     #[account(mut)]
     operator: Signer<'info>,
     asset_mint: InterfaceAccount<'info, Mint>,

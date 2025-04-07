@@ -9,7 +9,7 @@ use crate::{
     GENOME_ROOT, ROLE, SINGLE_CONFIG,
 };
 
-pub fn handle_grant_role(ctx: Context<GrantRole>, role: Role) -> Result<()> {
+pub(crate) fn handle_grant_role(ctx: Context<GrantRole>, role: Role) -> Result<()> {
     require!(!ctx.accounts.role_info.roles.contains(&role), GenomeError::RoleAlreadyGranted,);
 
     if role == Role::Verifier {
@@ -55,7 +55,7 @@ fn system_transfer<'a>(from: AccountInfo<'a>, to: AccountInfo<'a>, amount: u64) 
 }
 
 #[derive(Accounts)]
-pub struct GrantRole<'info> {
+pub(crate) struct GrantRole<'info> {
     #[account(mut, address = config.admin @ GenomeError::NotAllowed)]
     admin: Signer<'info>,
     user: SystemAccount<'info>,

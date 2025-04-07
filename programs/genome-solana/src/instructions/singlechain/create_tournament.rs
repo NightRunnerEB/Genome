@@ -14,7 +14,7 @@ use crate::{
     BLOOM, GENOME_ROOT, ROLE, SINGLE_CONFIG, TOKEN, TOURNAMENT,
 };
 
-pub fn handle_create_tournament(
+pub(crate) fn handle_create_tournament(
     ctx: Context<CreateTournament>,
     tournament_config: TournamentConfig,
 ) -> Result<()> {
@@ -61,7 +61,7 @@ pub fn handle_create_tournament(
 
 #[derive(Accounts)]
 #[instruction(tournament_data: TournamentConfig)]
-pub struct CreateTournament<'info> {
+pub(crate) struct CreateTournament<'info> {
     #[account(mut)]
     organizer: Signer<'info>,
     sponsor: SystemAccount<'info>,

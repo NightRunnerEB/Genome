@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::{data::GenomeOmniConfig, error::GenomeError, DEPLOYER, GENOME_ROOT, OMNI_CONFIG};
 
-pub fn handle_initialize_omni(
+pub(crate) fn handle_initialize_omni(
     ctx: Context<InitializeOmni>,
     omni_config: GenomeOmniConfig,
 ) -> Result<()> {
@@ -11,7 +11,7 @@ pub fn handle_initialize_omni(
 }
 
 #[derive(Accounts)]
-pub struct InitializeOmni<'info> {
+pub(crate) struct InitializeOmni<'info> {
     #[account(mut, address = DEPLOYER @ GenomeError::NotAllowed)]
     deployer: Signer<'info>,
     #[account(

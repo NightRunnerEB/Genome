@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::{data::GenomeSingleConfig, GenomeError, GENOME_ROOT, SINGLE_CONFIG};
 
-pub fn handle_set_bloom_precision(
+pub(crate) fn handle_set_bloom_precision(
     ctx: Context<SetBloomPrecision>,
     new_precision: f64,
 ) -> Result<()> {
@@ -15,7 +15,7 @@ pub fn handle_set_bloom_precision(
 }
 
 #[derive(Accounts)]
-pub struct SetBloomPrecision<'info> {
+pub(crate) struct SetBloomPrecision<'info> {
     #[account(mut, address = config.admin @ GenomeError::NotAllowed)]
     pub admin: Signer<'info>,
     #[account(mut, seeds = [GENOME_ROOT, SINGLE_CONFIG], bump)]

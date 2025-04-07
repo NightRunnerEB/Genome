@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::{data::GenomeSingleConfig, error::GenomeError, DEPLOYER, GENOME_ROOT, SINGLE_CONFIG};
 
-pub fn handle_initialize_single(
+pub(crate) fn handle_initialize_single(
     ctx: Context<Initialize>,
     config_params: GenomeSingleConfig,
 ) -> Result<()> {
@@ -15,7 +15,7 @@ pub fn handle_initialize_single(
 
 #[derive(Accounts)]
 #[instruction(config_params: GenomeSingleConfig)]
-pub struct Initialize<'info> {
+pub(crate) struct Initialize<'info> {
     #[account(mut, address = DEPLOYER @ GenomeError::NotAllowed)]
     deployer: Signer<'info>,
     #[account(
