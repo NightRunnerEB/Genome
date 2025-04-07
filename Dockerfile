@@ -5,7 +5,8 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     pkg-config \
     libudev-dev llvm libclang-dev \
-    ca-certificates protobuf-compiler libssl-dev netcat-traditional
+    ca-certificates protobuf-compiler libssl-dev netcat-traditional \
+    nodejs npm
 
 RUN npm install -g yarn
     
