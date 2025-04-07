@@ -23,5 +23,5 @@ RUN yarn install
 RUN npm install -g ts-mocha
 RUN export PATH="/root/.cargo/bin:$PATH" && export PATH="/root/.local/share/solana/install/active_release/bin:$PATH" && anchor build
 
-RUN chmod +x /app/run_tests.sh
+RUN chmod +x /app/scripts/run_tests.sh
 CMD ["bash", "/app/scripts/run_tests.sh"]
