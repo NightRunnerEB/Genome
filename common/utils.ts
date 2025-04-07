@@ -49,7 +49,7 @@ export function prettify(obj: any): string {
     return JSON.stringify(prettyObj, null, 2);
 }
 
-export async function getConfig() {
+export async function getSingleConfig() {
     const configPda = await getGenomePda([GENOME_SINGLE_CONFIG]);
     const config = await PROGRAM.account.genomeSingleConfig.fetch(configPda);
     return {

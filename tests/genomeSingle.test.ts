@@ -17,7 +17,7 @@ import {
 import { IxBuilder } from "../common/ixBuilder";
 import {
     airdropAll,
-    getConfig,
+    getSingleConfig,
     buildAndSendTx,
     getTokenInfo,
     getTournament,
@@ -135,7 +135,7 @@ describe("Genome Solana Singlechain", () => {
         const initTxSig = await buildAndSendTx([initIx], [deployer]);
         console.log("Initialize Genome tx:", initTxSig);
 
-        const config = await getConfig();
+        const config = await getSingleConfig();
         assert.equal(config.tournamentNonce, 0);
         assert.deepEqual(config.admin, configData.admin);
         assert.deepEqual(config.platformWallet, configData.platformWallet);
@@ -192,7 +192,7 @@ describe("Genome Solana Singlechain", () => {
         console.log("Config lamports before grant:", beforeLamports);
         console.log("Config lamports after grant:", afterLamports);
 
-        const config = await getConfig();
+        const config = await getSingleConfig();
         assert.deepEqual(config.verifierAddresses, [verifier2.publicKey]);
     });
 
@@ -273,7 +273,7 @@ describe("Genome Solana Singlechain", () => {
         const sponsorAtaBefore = await getSponsorAtaInfo(sponsorAta);
         const organizerAtaBefore = await getOrganizerAtaInfo(organizerAta);
         const platformAtaBefore = await getOrganizerAtaInfo(platformAta);
-        
+
         ix = await ixBuilder.createTournamentIx(
             organizer.publicKey,
             sponsor.publicKey,
@@ -286,7 +286,7 @@ describe("Genome Solana Singlechain", () => {
         const sponsorAtaAfter = await getSponsorAtaInfo(sponsorAta);
         const organizerAtaAfter = await getOrganizerAtaInfo(organizerAta);
         const platformAtaAfter = await getOrganizerAtaInfo(platformAta);
-        const configData = await getConfig();
+        const configData = await getSingleConfig();
         const tournamentAccount = await getTournament(configData.tournamentNonce - 1);
 
         assert.ok(tournamentAccount.status.new);
@@ -434,7 +434,7 @@ describe("Genome Solana Singlechain", () => {
         console.log("Config lamports before revoke:", beforeLamports);
         console.log("Config lamports after revoke:", afterLamports);
 
-        const config = await getConfig();
+        const config = await getSingleConfig();
         assert.deepEqual(config.verifierAddresses, []);
     });
 
@@ -464,7 +464,7 @@ describe("Genome Solana Singlechain", () => {
 
         await Promise.all(grantRolePromises);
 
-        const config = await getConfig();
+        const config = await getSingleConfig();
         console.log("Total verifiers stored in contract:", config.verifierAddresses.length);
         assert.equal(config.verifierAddresses.length, 128, "Expected 128 verifier addresses in config");
 
@@ -474,5 +474,27 @@ describe("Genome Solana Singlechain", () => {
             );
             assert.ok(found, `Verifier pubkey ${verifier.publicKey.toBase58()} not found in config`);
         });
+    });
+
+    it(`Set Bloom Precision with valid value [${MARKS.required}]`, async () => {
+        const newPrecision = 0.05;
+
+        const setBloomIx = await ixBuilder.setBloomPrecisionIx(admin.publicKey, newPrecision);
+        const txSig = await buildAndSendTx([setBloomIx], [admin]);
+        console.log("Set Bloom Precision tx signature:", txSig);
+
+        const config = await getSingleConfig();
+        assert.equal(config.falsePrecision, newPrecision);
+    });
+
+    it(`Set Bloom Precision with invalid value [${MARKS.negative}]`, async () => {
+        const newPrecision = 0;
+        const setBloomIx = await ixBuilder.setBloomPrecisionIx(admin.publicKey, newPrecision);
+        try {
+            await buildAndSendTx([setBloomIx], [admin]);
+            throw new Error("Expected error was not thrown");
+        } catch (error) {
+            checkAnchorError(error, "InvalidPrecision");
+        }
     });
 });

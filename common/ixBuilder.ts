@@ -175,4 +175,17 @@ export class IxBuilder {
       })
       .instruction();
   }
+
+  async setBloomPrecisionIx(
+    admin: PublicKey,
+    newPrecision: number
+  ): Promise<TransactionInstruction> {
+    return this.program.methods
+      .setBloomPrecision(newPrecision)
+      .accountsStrict({
+        admin,
+        config: await getGenomePda([this.singleConfigSeed]),
+      })
+      .instruction();
+  }
 }

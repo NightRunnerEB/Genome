@@ -3,6 +3,7 @@ import { assert } from "chai";
 
 import { checkAnchorError, getKeyPairs, MARKS } from "./utils";
 import {
+  airdropAll,
   buildAndSendTx,
   GENOME_OMNI_CONFIG,
   getGenomePda,
@@ -24,6 +25,14 @@ describe("Genome Solana Omnichain", () => {
 
   before(async () => {
     ({ deployer, admin, attacker } = await getKeyPairs());
+    await airdropAll(
+      [
+        admin.publicKey,
+        deployer.publicKey,
+        attacker.publicKey,
+      ],
+      10
+    );
     ixBuilder = new IxBuilder();
   });
 

@@ -1,4 +1,7 @@
-use anchor_lang::{prelude::*, solana_program::{program::invoke, pubkey::PUBKEY_BYTES, system_instruction}};
+use anchor_lang::{
+    prelude::*,
+    solana_program::{program::invoke, pubkey::PUBKEY_BYTES, system_instruction},
+};
 
 use crate::{
     data::{GenomeSingleConfig, Role, RoleInfo},
@@ -45,7 +48,11 @@ pub struct RevokeRole<'info> {
     role_info: Account<'info, RoleInfo>,
 }
 
-fn realloc<'info>(account: AccountInfo<'info>, payer: AccountInfo<'info>, space: usize) -> Result<()> {
+fn realloc<'info>(
+    account: AccountInfo<'info>,
+    payer: AccountInfo<'info>,
+    space: usize,
+) -> Result<()> {
     let rent_lamports = Rent::get()?.minimum_balance(space);
     let current_lamports = account.lamports();
     account.realloc(space, false)?;

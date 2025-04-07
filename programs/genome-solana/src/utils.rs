@@ -33,15 +33,9 @@ pub fn validate_params(
     token_info: &TokenInfo,
 ) -> Result<()> {
     let clock = Clock::get()?;
-    require!(
-        params.organizer_fee <= config.max_organizer_fee,
-        GenomeError::InvalidOrginizerFee
-    );
+    require!(params.organizer_fee <= config.max_organizer_fee, GenomeError::InvalidOrginizerFee);
     require!(params.entry_fee >= token_info.min_entry_fee, GenomeError::InvalidEntryFee);
-    require!(
-        params.sponsor_pool >= token_info.min_sponsor_pool,
-        GenomeError::InvalidSponsorPool
-    );
+    require!(params.sponsor_pool >= token_info.min_sponsor_pool, GenomeError::InvalidSponsorPool);
     require!(
         params.expiration_time >= clock.unix_timestamp as u64,
         GenomeError::InvalidExpirationTime

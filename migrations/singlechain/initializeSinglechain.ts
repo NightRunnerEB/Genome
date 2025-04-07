@@ -2,7 +2,7 @@ import { BN } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { getKeypairFromFile } from "@solana-developers/helpers";
 
-import { buildAndSendTx, getConfig, prettify } from "../../common/utils";
+import { buildAndSendTx, getSingleConfig, prettify } from "../../common/utils";
 import { IxBuilder } from "../../common/ixBuilder";
 
 async function main() {
@@ -46,7 +46,7 @@ async function main() {
   const txSignature = await buildAndSendTx([initializeIx], [deployer]);
   console.log("Initialize Genome tx:", txSignature);
 
-  const config = await getConfig();
+  const config = await getSingleConfig();
   console.log(`GenomeConfig: ${prettify(config)}`);
 }
 

@@ -8,7 +8,10 @@ use crate::{
     data::{
         BloomFilter, GenomeSingleConfig, Role, RoleInfo, TokenInfo, Tournament, TournamentConfig,
         TournamentCreated,
-    }, error::GenomeError, utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params}, BLOOM, GENOME_ROOT, ROLE, SINGLE_CONFIG, TOKEN, TOURNAMENT
+    },
+    error::GenomeError,
+    utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params},
+    BLOOM, GENOME_ROOT, ROLE, SINGLE_CONFIG, TOKEN, TOURNAMENT,
 };
 
 pub fn handle_create_tournament(
