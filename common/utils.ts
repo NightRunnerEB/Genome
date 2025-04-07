@@ -77,7 +77,7 @@ export async function getTokenInfo(assetMint: PublicKey) {
     };
 }
 
-export async function getTournament(id: any) {
+export async function getTournament(id: number) {
     const idBuffer = Buffer.alloc(4);
     idBuffer.writeUInt32LE(id, 0);
     const tournamentPda = await getGenomePda([getConstant("tournament"), idBuffer]);
@@ -185,7 +185,7 @@ export async function buildAndSendTx(
     ixs: TransactionInstruction[],
     signers: Keypair[]
 ): Promise<string> {
-    const connection = getProgram().provider.connection;
+    const connection = PROGRAM.provider.connection;
     const tx = new Transaction().add(...ixs);
     return await sendAndConfirmTransaction(connection, tx, signers);
 }

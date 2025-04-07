@@ -119,7 +119,7 @@ pub struct CreateTournament<'info> {
     #[account(
         init,
         payer = organizer,
-        space = 8 + calculate_bloom_memory(tournament_data.max_teams * tournament_data.team_size, config.false_precision)?,
+        space = BloomFilter::DISCRIMINATOR.len() + calculate_bloom_memory(tournament_data.max_teams * tournament_data.team_size, config.false_precision)?,
         seeds = [GENOME_ROOT, BLOOM, config.tournament_nonce.to_le_bytes().as_ref()],
         bump
     )]

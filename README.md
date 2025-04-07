@@ -69,7 +69,7 @@ anchor run test-single
 
 ```sh
 # Run the whole test suite (including negative tests)
-anchor run test-all
+anchor run test-single-all
 ```
 
 ---
@@ -211,7 +211,7 @@ anchor run test-omni
 
 ```sh
 # Run the whole test suite (including negative tests)
-anchor run test-all
+anchor run test-omni-all
 ```
 
 ### Run scripts

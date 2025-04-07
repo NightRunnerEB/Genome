@@ -16,7 +16,9 @@ wallet = "keys/admin.json"
 
 [scripts]
 test-omni = "sh scripts/run_required_tests_omni.sh && pkill -9 solana-test-validator"
+test-omni-all = "sh scripts/run_tests_omni.sh && pkill -9 solana-test-validator"
 test-single = "sh scripts/run_required_tests_single.sh && pkill -9 solana-test-validator"
+test-single-all = "sh scripts/run_tests_single.sh && pkill -9 solana-test-validator"
 test-all = "anchor run test-ci && pkill -9 solana-test-validator"
 test-ci = "sh scripts/run_tests.sh"
 initialize-omni = "yarn run ts-node migrations/omnichain/initializeOmnichain.ts keys/deployer.json"

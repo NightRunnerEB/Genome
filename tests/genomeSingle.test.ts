@@ -273,7 +273,7 @@ describe("Genome Solana Singlechain", () => {
         const sponsorAtaBefore = await getSponsorAtaInfo(sponsorAta);
         const organizerAtaBefore = await getOrganizerAtaInfo(organizerAta);
         const platformAtaBefore = await getOrganizerAtaInfo(platformAta);
-
+        
         ix = await ixBuilder.createTournamentIx(
             organizer.publicKey,
             sponsor.publicKey,
