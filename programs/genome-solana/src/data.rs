@@ -48,7 +48,7 @@ pub(crate) struct Tournament {
     pub(crate) status: TournamentStatus,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+#[derive(AnchorSerialize, AnchorDeserialize, PartialEq, Clone, InitSpace)]
 pub(crate) enum TournamentStatus {
     New,
     Started,

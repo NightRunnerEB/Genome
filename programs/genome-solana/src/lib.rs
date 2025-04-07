@@ -25,6 +25,8 @@ const BLOOM: &[u8] = b"bloom";
 #[constant]
 const TOURNAMENT: &[u8] = b"tournament";
 #[constant]
+const TEAM: &[u8] = b"team";
+#[constant]
 const ROLE: &[u8] = b"role";
 #[constant]
 const TOKEN: &[u8] = b"token";
@@ -71,6 +73,14 @@ mod genome_solana {
         tournament_config: TournamentConfig,
     ) -> Result<()> {
         handle_create_tournament(ctx, tournament_config)
+    }
+
+    #[instruction(discriminator = b"regtmnt")]
+    pub fn register_tournament(
+        ctx: Context<RegisterParticipantToTournamentSinglechain>,
+        register_params: RegisterParams,
+    ) -> Result<()> {
+        handle_register_tournament(ctx, register_params)
     }
 
     #[instruction(discriminator = b"bloomprc")]

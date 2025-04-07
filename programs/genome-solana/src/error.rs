@@ -20,10 +20,16 @@ pub(crate) enum GenomeError {
     InvalidExpirationTime,
     #[msg("Invalid nome mint")]
     InvalidNome,
+    #[msg("Invalid tournament mint")]
+    InvalidToken,
     #[msg("Role already granted")]
     RoleAlreadyGranted,
     #[msg("Role not found")]
     RoleNotFound,
     #[msg("Not Allowed")]
     NotAllowed,
+    #[msg("Invalid tournament status")]
+    InvalidStatus,
+    #[msg("Participant already registered")]
+    AlreadyRegistered,
 }
