@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libudev-dev llvm libclang-dev \
     ca-certificates protobuf-compiler libssl-dev netcat-traditional
+
+RUN npm install -g yarn
     
 ENV PATH="/root/.local/share/solana/install/active_release/bin:/root/.cargo/bin:/root/.nvm/versions/node/v23.10.0/lib/node_modules/ts-mocha:/root/.nvm/versions/node/v23.10.0/bin:$PATH"
 
