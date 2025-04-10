@@ -1,21 +1,15 @@
 import * as anchor from "@coral-xyz/anchor";
 import { assert } from "chai";
 
-import { checkAnchorError, getKeypairs } from "./utils";
+import { checkAnchorError, getKeyPairs, MARKS } from "./utils";
 import {
+  airdropAll,
   buildAndSendTx,
   GENOME_OMNI_CONFIG,
   getGenomePda,
   getProgram,
-  IxBuilder,
-} from "../common";
-
-const MARKS = {
-  // Run using `anchor test`
-  required: "required",
-  // Run using `anchor run test-all`
-  negative: "negative",
-};
+} from "../common/utils";
+import { IxBuilder } from "../common/ixBuilder";
 
 describe("Genome Solana Omnichain", () => {
   const UTS_PROGRAM = new anchor.web3.PublicKey(
@@ -30,13 +24,21 @@ describe("Genome Solana Omnichain", () => {
   let ixBuilder: IxBuilder;
 
   before(async () => {
-    ({ deployer, admin, attacker } = await getKeypairs());
+    ({ deployer, admin, attacker } = await getKeyPairs());
+    await airdropAll(
+      [
+        admin.publicKey,
+        deployer.publicKey,
+        attacker.publicKey,
+      ],
+      10
+    );
     ixBuilder = new IxBuilder();
   });
 
-  it(`Initialize Genome Omnichain [${MARKS.required}] `, async () => {
+  it(`Initialize Genome Omnichain [${MARKS.required}]`, async () => {
     const bridgeFee = new anchor.BN(1234567);
-    const ix = await ixBuilder.initializeOmnichain(deployer, {
+    const ix = await ixBuilder.initializeOmnichainIx(deployer.publicKey, {
       admin: admin.publicKey,
       utsProgram: UTS_PROGRAM,
       bridgeFee: bridgeFee,
@@ -55,7 +57,7 @@ describe("Genome Solana Omnichain", () => {
 
   it(`Should fail reinitializing Genome Omnichain [${MARKS.negative}]`, async () => {
     try {
-      const ix = await ixBuilder.initializeOmnichain(deployer, {
+      const ix = await ixBuilder.initializeOmnichainIx(deployer.publicKey, {
         admin: anchor.web3.Keypair.generate().publicKey,
         utsProgram: anchor.web3.Keypair.generate().publicKey,
         bridgeFee: new anchor.BN(1234567),
@@ -69,7 +71,7 @@ describe("Genome Solana Omnichain", () => {
   });
 
   it(`Set bridge fee [${MARKS.required}]`, async () => {
-    const ix = await ixBuilder.setBridgeFee(admin, BRIDGE_FEE);
+    const ix = await ixBuilder.setBridgeFeeIx(admin.publicKey, BRIDGE_FEE);
     const tx = await buildAndSendTx([ix], [admin]);
     console.log("Set bridge fee tx: ", tx);
 
@@ -80,10 +82,10 @@ describe("Genome Solana Omnichain", () => {
 
   it(`Should fail for attacker trying to set bridge fee [${MARKS.negative}]`, async () => {
     try {
-      const ix = await ixBuilder.setBridgeFee(attacker, new anchor.BN(1234321));
+      const ix = await ixBuilder.setBridgeFeeIx(attacker.publicKey, new anchor.BN(1234321));
       await buildAndSendTx([ix], [attacker]);
     } catch (error) {
-      checkAnchorError(error, "Signer is not allowed");
+      checkAnchorError(error, "Not allowed");
     }
   });
 });

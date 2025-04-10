@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-genome_solana = "9SK6NkuZHbPHYqL2qpcN5gwpfnjtPLj36mLn6PGfe3R8"
+genome_solana = "5hBmrTE8HhSad8rhYcHMff7dKm4HyB1nij1FjGrm2Y6b"
 
 [registry]
 url = "https://api.apr.dev"
@@ -15,8 +15,15 @@ cluster = "Localnet"
 wallet = "keys/admin.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*test.ts --grep 'required'"
+test-omni = "sh scripts/run_required_tests_omni.sh && pkill -9 solana-test-validator"
+test-omni-all = "sh scripts/run_tests_omni.sh && pkill -9 solana-test-validator"
+test-single = "sh scripts/run_required_tests_single.sh && pkill -9 solana-test-validator"
+test-single-all = "sh scripts/run_tests_single.sh && pkill -9 solana-test-validator"
 test-all = "anchor run test-ci && pkill -9 solana-test-validator"
-test-ci = "sh run_tests.sh"
-initialize-omni = "yarn run ts-node migrations/initializeOmnichain.ts keys/deployer.json"
-set-bridge-fee = "yarn run ts-node migrations/setBridgeFee.ts keys/admin.json"
+test-ci = "sh scripts/run_tests.sh"
+initialize-omni = "yarn run ts-node migrations/omnichain/initializeOmnichain.ts keys/deployer.json"
+set-bridge-fee = "yarn run ts-node migrations/omnichain/setBridgeFee.ts keys/admin.json"
+initialize-single = "yarn run ts-node migrations/singlechain/initializeSinglechain.ts keys/deployer.json FaYwSTED3Q5zPVKmUuD2w1YQqcwt79fwY5ZGT8CFMU4B"
+setup-wallets = "yarn run ts-node migrations/singlechain/setupWallets.ts FaYwSTED3Q5zPVKmUuD2w1YQqcwt79fwY5ZGT8CFMU4B ESUEU5vr1FJxBBC4qaHviseqcr8hzZsoTjji1o947Yzy"
+grant-role = "yarn run ts-node migrations/singlechain/grantRole.ts keys/admin.json"
+revoke-role = "yarn run ts-node migrations/singlechain/revokeRole.ts keys/admin.json"
