@@ -24,13 +24,16 @@ pub(crate) fn handle_approve_token(
 pub(crate) struct ApproveToken<'info> {
     #[account(mut)]
     operator: Signer<'info>,
+
     asset_mint: InterfaceAccount<'info, Mint>,
+
     #[account(
         seeds = [GENOME_ROOT, ROLE, operator.key().as_ref()],
         bump,
         constraint = role_info.roles.contains(&Role::Operator) @ GenomeError::NotAllowed
     )]
     role_info: Account<'info, RoleInfo>,
+    
     #[account(
         init_if_needed,
         payer = operator,
@@ -39,5 +42,6 @@ pub(crate) struct ApproveToken<'info> {
         bump
     )]
     token_info: Account<'info, TokenInfo>,
+    
     system_program: Program<'info, System>,
 }

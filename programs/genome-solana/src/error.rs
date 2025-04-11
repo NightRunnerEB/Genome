@@ -6,8 +6,6 @@ pub(crate) enum GenomeError {
     MaxPlayersExceeded,
     #[msg("Participant not found")]
     ParticipantNotFound,
-    #[msg("The list of verifiers must be empty")]
-    InvalidGenomeConfig,
     #[msg("Invalid entry fee")]
     InvalidEntryFee,
     #[msg("Invalid sponsor pool")]
@@ -24,14 +22,24 @@ pub(crate) enum GenomeError {
     InvalidNome,
     #[msg("Invalid tournament mint")]
     InvalidToken,
+    #[msg("The list of verifiers must be empty")]
+    InvalidConfig,
     #[msg("Role already granted")]
     RoleAlreadyGranted,
     #[msg("Role not found")]
     RoleNotFound,
+    #[msg("Verifier already voted")]
+    AlreadyVoted,
     #[msg("Not Allowed")]
     NotAllowed,
     #[msg("Invalid tournament status")]
     InvalidStatus,
     #[msg("Participant already registered")]
     AlreadyRegistered,
+    #[msg("Captain not in winners list")]
+    NotInWinnersList,
+    #[msg("Paricipant already claimed")]
+    AlreadyClaimed,
+    #[msg("Insufficient funds")]
+    InsufficientFunds,
 }

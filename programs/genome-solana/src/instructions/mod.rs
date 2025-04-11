@@ -1,5 +1,5 @@
-pub mod singlechain;
-pub use singlechain::*;
+pub(crate) mod singlechain;
+pub(crate) use singlechain::*;
 
-pub mod omnichain;
-pub use omnichain::*;
+pub(crate) mod omnichain;
+pub(crate) use omnichain::*;

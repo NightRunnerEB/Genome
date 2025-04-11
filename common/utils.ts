@@ -20,10 +20,14 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, getAccount, getAssociatedTokenAddress, Acc
 import { getKeypairFromFile } from "@solana-developers/helpers";
 
 const PROGRAM = getProgram();
+const GENOME_PROGRAM_PATH = "./keys/genome-program.json";
 export const GENOME_OMNI_CONFIG = getConstant("omniConfig");
 export const GENOME_SINGLE_CONFIG = getConstant("singleConfig");
-const GENOME_PROGRAM_PATH = "./keys/genome-program.json";
-const GENOME_ROOT = getConstant("genomeRoot");
+export const TEAM = getConstant("team");
+export const GENOME_ROOT = getConstant("genomeRoot");
+export const TOURNAMENT = getConstant("tournament");
+export const ROLE = getConstant("role");
+export const TOKEN = getConstant("token");
 
 export type Role = IdlTypes<GenomeSolana>["role"];
 
@@ -68,7 +72,7 @@ export async function getSingleConfig() {
 }
 
 export async function getTokenInfo(assetMint: PublicKey) {
-    const tokenPda = await getGenomePda([getConstant("token"), assetMint.toBuffer()]);
+    const tokenPda = await getGenomePda([TOKEN, assetMint.toBuffer()]);
     const tokenInfo = await PROGRAM.account.tokenInfo.fetch(tokenPda);
     return {
         assetMint: tokenInfo.assetMint,
@@ -77,19 +81,39 @@ export async function getTokenInfo(assetMint: PublicKey) {
     };
 }
 
+export async function getUserRole(user: PublicKey) {
+    const program = getProgram();
+    const rolePda = await getGenomePda([ROLE, user.toBuffer()]);
+    const userRole = await program.account.roleInfo.fetch(rolePda);
+    return userRole.roles;
+}
+
 export async function getTournament(id: number) {
     const idBuffer = Buffer.alloc(4);
     idBuffer.writeUInt32LE(id, 0);
-    const tournamentPda = await getGenomePda([getConstant("tournament"), idBuffer]);
+    const tournamentPda = await getGenomePda([TOURNAMENT, idBuffer]);
     const tournament = await PROGRAM.account.tournament.fetch(tournamentPda);
     return {
         id: tournament.id,
         config: tournament.config,
         status: tournament.status,
+        organizer: tournament.organizer,
         teamCount: tournament.teamCount,
         tournamentPda: tournamentPda
     };
+}
 
+export async function getTeam(tournamentId: number, captain: PublicKey) {
+    const idBuffer = Buffer.alloc(4);
+    idBuffer.writeUInt32LE(tournamentId, 0);
+    const teamPda = await getGenomePda([TEAM, idBuffer, captain.toBuffer()]);
+    const team = await PROGRAM.account.team.fetch(teamPda);
+    return {
+        captain: team.captain,
+        participants: team.participants,
+        teamSize: team.teamSize,
+        canceled: team.canceled
+    };
 }
 
 export async function getSponsorAtaInfo(

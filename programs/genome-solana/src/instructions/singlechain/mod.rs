@@ -21,3 +21,27 @@ pub use register_tournament::*;
 
 pub mod set_bloom_precision;
 pub use set_bloom_precision::*;
+
+pub mod start_tournament;
+pub use start_tournament::*;
+
+pub mod cancel_tournament;
+pub use cancel_tournament::*;
+
+pub mod finish_tournament;
+pub use finish_tournament::*;
+
+pub mod claim_refund;
+pub use claim_refund::*;
+
+pub mod claim_role_fund;
+pub use claim_role_fund::*;
+
+pub mod claim_sponros_refund;
+pub use claim_sponros_refund::*;
+
+pub mod claim_reward;
+pub use claim_reward::*;
+
+pub mod withdraw;
+pub use withdraw::*;

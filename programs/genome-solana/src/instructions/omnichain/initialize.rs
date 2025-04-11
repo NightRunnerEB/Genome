@@ -14,6 +14,7 @@ pub(crate) fn handle_initialize_omni(
 pub(crate) struct InitializeOmni<'info> {
     #[account(mut, address = DEPLOYER @ GenomeError::NotAllowed)]
     deployer: Signer<'info>,
+
     #[account(
         init,
         payer = deployer,
@@ -22,5 +23,6 @@ pub(crate) struct InitializeOmni<'info> {
         bump
     )]
     omni_config: Box<Account<'info, GenomeOmniConfig>>,
+    
     system_program: Program<'info, System>,
 }

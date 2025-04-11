@@ -11,6 +11,7 @@ async function main() {
     deployerPath,
     adminAddress,
     platformFeeStr,
+    verifierFeeStr,
     minTeamsStr,
     maxTeamsStr,
     falsePrecisionStr,
@@ -32,6 +33,7 @@ async function main() {
     deployer.publicKey,
     {
       platformFee: new BN(platformFeeStr),
+      verifierFee: new BN(verifierFeeStr),
       minTeams: parseInt(minTeamsStr),
       maxTeams: parseInt(maxTeamsStr),
       falsePrecision: parseFloat(falsePrecisionStr),

@@ -134,7 +134,7 @@ anchor run initialize-single -- \
 
 /* Example:
     anchor run initialize-single -- \
-    10 2 20 0.000065 5000 66.0 \
+    10 10 2 20 0.000065 5000 66.0 \
     9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe \
     Btzv5f2fxbF5FKSjbEhCxkusvdxridtRGwKWkp1C77dJ
 */

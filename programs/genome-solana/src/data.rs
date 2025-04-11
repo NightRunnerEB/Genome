@@ -15,6 +15,7 @@ pub(crate) struct GenomeSingleConfig {
     pub(crate) admin: Pubkey,
     #[max_len(0)]
     pub(crate) verifier_addresses: Vec<Pubkey>,
+    pub(crate) verifier_fee: u64,
     pub(crate) tournament_nonce: u32,
     pub(crate) consensus_rate: f64,
     pub(crate) platform_wallet: Pubkey,
@@ -28,7 +29,6 @@ pub(crate) struct GenomeSingleConfig {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub(crate) struct TournamentConfig {
-    pub(crate) organizer: Pubkey,
     pub(crate) organizer_fee: u64,
     pub(crate) expiration_time: u64,
     pub(crate) sponsor_pool: u64,
@@ -36,6 +36,7 @@ pub(crate) struct TournamentConfig {
     pub(crate) team_size: u16,
     pub(crate) min_teams: u16,
     pub(crate) max_teams: u16,
+    pub(crate) sponsor: Pubkey,
     pub(crate) asset_mint: Pubkey,
 }
 
@@ -43,8 +44,9 @@ pub(crate) struct TournamentConfig {
 #[derive(InitSpace)]
 pub(crate) struct Tournament {
     pub(crate) id: u32,
-    pub(crate) config: TournamentConfig,
+    pub(crate) organizer: Pubkey,
     pub(crate) team_count: u32,
+    pub(crate) config: TournamentConfig,
     pub(crate) status: TournamentStatus,
 }
 
@@ -57,16 +59,20 @@ pub(crate) enum TournamentStatus {
 }
 
 impl Tournament {
-    pub fn initialize(&mut self, id: u32, tournament_config: TournamentConfig) {
+    pub fn initialize(&mut self, id: u32, organizer: Pubkey, tournament_config: TournamentConfig) {
         self.id = id;
+        self.organizer = organizer;
         self.config = tournament_config;
     }
 }
 
-#[event]
-pub(crate) struct TournamentCreated {
-    pub(crate) id: u32,
-    pub(crate) config: TournamentConfig,
+#[account]
+#[derive(InitSpace)]
+pub(crate) struct FinishMetaData {
+    pub(crate) tournament_id: u32,
+    #[max_len(0)]
+    pub(crate) captain_winners: Vec<Pubkey>,
+    pub(crate) reward: u64,
 }
 
 #[account]
@@ -82,6 +88,7 @@ pub(crate) struct TokenInfo {
 pub(crate) struct RoleInfo {
     #[max_len(3)]
     pub(crate) roles: Vec<Role>,
+    pub(crate) claim: u64
 }
 
 #[derive(PartialEq, AnchorSerialize, AnchorDeserialize, Clone, InitSpace, Default)]
@@ -92,6 +99,15 @@ pub(crate) enum Role {
     Verifier,
     Organizer,
 }
+
+#[account]
+#[derive(InitSpace)]
+pub(crate) struct Consensus {
+    pub(crate) tournament_id: u32,
+    pub(crate) start_votes: u32,
+    pub(crate) cancel_votes: u32,
+    pub(crate) finish_votes: u32,
+} 
 
 #[account]
 pub(crate) struct BloomFilter {

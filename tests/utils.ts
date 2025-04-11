@@ -4,7 +4,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { AnchorError } from "@coral-xyz/anchor";
 import { assert } from "chai";
 
-import { getProgram, getConstant, getGenomePda, getProvider } from "../common/utils";
+import { getProvider } from "../common/utils";
 import { getKeypairFromFile } from "@solana-developers/helpers";
 
 const DEPLOYER_PATH = "./keys/deployer.json";
@@ -16,50 +16,20 @@ const TOKEN_PATH = "./keys/token.json";
 const PLATFORM_PATH = "./keys/platform_wallet.json";
 const VERIFIER1_PATH = "./keys/verifier1.json";
 const VERIFIER2_PATH = "./keys/verifier2.json";
+const VERIFIER3_PATH = "./keys/verifier3.json";
 const OPERATOR_PATH = "./keys/operator.json";
 const NOME_PATH = "./keys/nome.json";
+const CAPTAIN1_PATH = "./keys/captain1.json";
+const CAPTAIN2_PATH = "./keys/captain2.json";
 const PARTICIPANT1_PATH = "./keys/participant1.json";
-const PARTICIPANT2_PATH = "./keys/participant1.json";
-const PARTICIPANT3_PATH = "./keys/participant1.json";
+const PARTICIPANT2_PATH = "./keys/participant2.json";
 
 export const MARKS = {
-  // Run using `anchor test`
+  // Run using `anchor run test-single`
   required: "required",
   // Run using `anchor run test-all`
   negative: "negative",
 };
-
-export interface TournamentConfig {
-  organizer: PublicKey;
-  organizerFee: BN;
-  expirationTime: BN;
-  sponsorPool: BN;
-  entryFee: BN;
-  teamSize: number;
-  minTeams: number;
-  maxTeams: number;
-  assetMint: PublicKey;
-}
-
-export interface GenomeSingleConfig {
-  admin: PublicKey;
-  verifierAddresses: PublicKey[];
-  consensusRate: number;
-  platformWallet: PublicKey;
-  nomeMint: PublicKey;
-  falsePrecision: number;
-  platformFee: BN;
-  maxOrganizerFee: BN;
-  minTeams: number;
-  maxTeams: number;
-}
-
-export interface RegisterParams {
-  tournamentId: number;
-  participant: PublicKey;
-  captain: PublicKey;
-  teammates: PublicKey[];
-}
 
 export function checkAnchorError(error: any, errMsg: string) {
   let errorMessage: string;
@@ -81,11 +51,13 @@ export async function getKeyPairs(): Promise<{
   platform: Keypair,
   verifier1: Keypair,
   verifier2: Keypair,
+  verifier3: Keypair,
   operator: Keypair,
   nome: Keypair,
+  captain1: Keypair,
+  captain2: Keypair,
   participant1: Keypair,
   participant2: Keypair,
-  participant3: Keypair
 }> {
   const attacker = await getKeypairFromFile(ATTACKER_PATH);
   const admin = await getKeypairFromFile(ADMIN_PATH);
@@ -96,20 +68,15 @@ export async function getKeyPairs(): Promise<{
   const platform = await getKeypairFromFile(PLATFORM_PATH);
   const verifier1 = await getKeypairFromFile(VERIFIER1_PATH);
   const verifier2 = await getKeypairFromFile(VERIFIER2_PATH);
+  const verifier3 = await getKeypairFromFile(VERIFIER3_PATH);
   const operator = await getKeypairFromFile(OPERATOR_PATH);
   const nome = await getKeypairFromFile(NOME_PATH);
   const participant1 = await getKeypairFromFile(PARTICIPANT1_PATH);
   const participant2 = await getKeypairFromFile(PARTICIPANT2_PATH);
-  const participant3 = await getKeypairFromFile(PARTICIPANT3_PATH);
+  const captain1 = await getKeypairFromFile(CAPTAIN1_PATH);
+  const captain2 = await getKeypairFromFile(CAPTAIN2_PATH);
 
-  return { attacker, admin, organizer, sponsor, deployer, token, platform, verifier1, verifier2, operator, nome, participant1, participant2, participant3 };
-}
-
-export async function getUserRole(user: PublicKey) {
-  const program = getProgram();
-  const rolePda = await getGenomePda([getConstant("role"), user.toBuffer()]);
-  const userRole = await program.account.roleInfo.fetch(rolePda);
-  return userRole.roles;
+  return { attacker, admin, organizer, sponsor, deployer, token, platform, verifier1, verifier2, verifier3, operator, nome, captain1, captain2, participant1, participant2 };
 }
 
 export async function createGenomeMint(): Promise<{
@@ -145,7 +112,7 @@ export async function createGenomeMint(): Promise<{
 
   const organizerAta = await createAssociatedTokenAccount(
     connection,
-    admin,
+    organizer,
     nome.publicKey,
     organizer.publicKey,
     undefined,
@@ -156,7 +123,7 @@ export async function createGenomeMint(): Promise<{
 
   const operatorAta = await createAssociatedTokenAccount(
     connection,
-    admin,
+    operator,
     nome.publicKey,
     operator.publicKey,
     undefined,
@@ -167,7 +134,7 @@ export async function createGenomeMint(): Promise<{
 
   let tx = await mintTo(
     connection,
-    admin,
+    organizer,
     nome.publicKey,
     organizerAta,
     admin,
@@ -185,7 +152,16 @@ export async function createTournamentMint(): Promise<{
   assetMint: PublicKey;
   sponsorAta: PublicKey;
 }> {
-  let { admin, sponsor, organizer, token } = await getKeyPairs();
+  const {
+    admin,
+    sponsor,
+    organizer,
+    captain1,
+    captain2,
+    participant1,
+    participant2,
+    token,
+  } = await getKeyPairs();
 
   const connection = getProvider().connection;
 
@@ -199,33 +175,20 @@ export async function createTournamentMint(): Promise<{
     undefined,
     TOKEN_PROGRAM_ID
   );
-  console.log("Token mint:", assetMint.toBase58());
 
   const sponsorAta = await createAssociatedTokenAccount(
     connection,
-    admin,
+    sponsor,
     token.publicKey,
     sponsor.publicKey,
     undefined,
     TOKEN_PROGRAM_ID,
     ASSOCIATED_TOKEN_PROGRAM_ID
   );
-  console.log("Sponsor token ata:", sponsorAta.toBase58());
 
-  const reward_pool_ata = await createAssociatedTokenAccount(
+  await mintTo(
     connection,
-    admin,
-    token.publicKey,
-    organizer.publicKey,
-    undefined,
-    TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-  console.log("Tournament pool ata:", reward_pool_ata.toBase58());
-
-  let tx = await mintTo(
-    connection,
-    admin,
+    sponsor,
     token.publicKey,
     sponsorAta,
     admin,
@@ -234,7 +197,37 @@ export async function createTournamentMint(): Promise<{
     {},
     TOKEN_PROGRAM_ID
   );
-  console.log("Mint to sponsor tx:", tx);
+
+  const otherAccounts = [
+    organizer,
+    captain1,
+    captain2,
+    participant1,
+    participant2,
+  ];
+
+  for (const account of otherAccounts) {
+    const ata = await createAssociatedTokenAccount(
+      connection,
+      account,
+      token.publicKey,
+      account.publicKey,
+      undefined,
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+    await mintTo(
+      connection,
+      account,
+      token.publicKey,
+      ata,
+      admin,
+      1000000000000000,
+      [],
+      {},
+      TOKEN_PROGRAM_ID
+    );
+  }
 
   return { assetMint, sponsorAta };
 }

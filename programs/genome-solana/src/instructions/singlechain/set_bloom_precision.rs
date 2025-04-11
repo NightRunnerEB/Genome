@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::{data::GenomeSingleConfig, GenomeError, GENOME_ROOT, SINGLE_CONFIG};
+use crate::{data::GenomeSingleConfig, error::GenomeError, GENOME_ROOT, SINGLE_CONFIG};
 
 pub(crate) fn handle_set_bloom_precision(
     ctx: Context<SetBloomPrecision>,
@@ -18,6 +18,7 @@ pub(crate) fn handle_set_bloom_precision(
 pub(crate) struct SetBloomPrecision<'info> {
     #[account(mut, address = config.admin @ GenomeError::NotAllowed)]
     pub admin: Signer<'info>,
+    
     #[account(mut, seeds = [GENOME_ROOT, SINGLE_CONFIG], bump)]
     pub config: Account<'info, GenomeSingleConfig>,
 }

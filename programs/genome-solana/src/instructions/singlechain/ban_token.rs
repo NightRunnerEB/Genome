@@ -15,13 +15,16 @@ pub(crate) fn handle_ban_token(_ctx: Context<BanToken>) -> Result<()> {
 pub(crate) struct BanToken<'info> {
     #[account(mut)]
     operator: Signer<'info>,
+
     asset_mint: InterfaceAccount<'info, Mint>,
+
     #[account(
         seeds = [GENOME_ROOT, ROLE, operator.key().as_ref()],
         bump,
         constraint = role_info.roles.contains(&Role::Operator) @ GenomeError::NotAllowed
     )]
     role_info: Account<'info, RoleInfo>,
+    
     #[account(
         mut,
         seeds = [GENOME_ROOT, TOKEN, asset_mint.key().as_ref()],

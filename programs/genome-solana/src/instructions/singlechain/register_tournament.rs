@@ -17,14 +17,16 @@ pub fn handle_register_tournament(
 ) -> Result<()> {
     let tournament = &mut ctx.accounts.tournament;
     require!(tournament.status == TournamentStatus::New, GenomeError::InvalidStatus);
+
     let team = &mut ctx.accounts.team;
     let bloom_filter = &mut ctx.accounts.bloom_filter;
+
     let mut bloom: Bloom =
         bincode::deserialize(&bloom_filter.data).expect("Error deserialize Bloom");
 
     bloom_check(&register_params, &mut bloom)?;
 
-    if !register_params.teammates.is_empty() {
+    if !register_params.teammates.is_empty() || register_params.participant == register_params.captain {
         **team = Team::new(register_params.participant, tournament.config.team_size);
         tournament.team_count += 1;
 
@@ -81,24 +83,29 @@ fn bloom_check(register_params: &RegisterParams, bloom: &mut Bloom) -> Result<()
 pub struct RegisterParticipant<'info> {
     #[account(mut)]
     participant: Signer<'info>,
+
     #[account(mut, seeds = [GENOME_ROOT, SINGLE_CONFIG], bump)]
     config: Account<'info, GenomeSingleConfig>,
+
     #[account(
         mut,
         seeds = [GENOME_ROOT, TOURNAMENT, register_params.tournament_id.to_le_bytes().as_ref()],
         bump
     )]
     tournament: Account<'info, Tournament>,
+
     #[account(
         init_if_needed,
         payer = participant,
-        space = 8 + Team::INIT_SPACE + ParticipantInfo::INIT_SPACE * tournament.config.team_size as usize,
+        space = Team::DISCRIMINATOR.len() + Team::INIT_SPACE + ParticipantInfo::INIT_SPACE * tournament.config.team_size as usize,
         seeds = [GENOME_ROOT, TEAM, register_params.tournament_id.to_le_bytes().as_ref(), register_params.captain.as_ref()],
         bump
     )]
     team: Account<'info, Team>,
+
     #[account(address = tournament.config.asset_mint @ GenomeError::InvalidToken)]
     mint: InterfaceAccount<'info, Mint>,
+
     #[account(
         mut,
         associated_token::mint = mint,
@@ -106,15 +113,19 @@ pub struct RegisterParticipant<'info> {
         associated_token::token_program = token_program,
     )]
     participant_ata: InterfaceAccount<'info, TokenAccount>,
+
     #[account(
         mut,
         associated_token::mint = mint,
         associated_token::authority = tournament,
         associated_token::token_program = token_program,
     )]
+
     reward_pool_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
     #[account(mut, seeds = [GENOME_ROOT, BLOOM, register_params.tournament_id.to_le_bytes().as_ref()], bump)]
     bloom_filter: Box<Account<'info, BloomFilter>>,
+
     system_program: Program<'info, System>,
     token_program: Interface<'info, TokenInterface>,
 }

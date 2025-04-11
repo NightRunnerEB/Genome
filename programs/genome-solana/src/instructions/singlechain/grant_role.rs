@@ -58,9 +58,12 @@ fn system_transfer<'a>(from: AccountInfo<'a>, to: AccountInfo<'a>, amount: u64) 
 pub(crate) struct GrantRole<'info> {
     #[account(mut, address = config.admin @ GenomeError::NotAllowed)]
     admin: Signer<'info>,
+
     user: SystemAccount<'info>,
+
     #[account(mut, seeds = [GENOME_ROOT, SINGLE_CONFIG], bump)]
     config: Box<Account<'info, GenomeSingleConfig>>,
+    
     #[account(
         init_if_needed,
         payer = admin,
@@ -69,5 +72,6 @@ pub(crate) struct GrantRole<'info> {
         bump
     )]
     role_info: Box<Account<'info, RoleInfo>>,
+    
     system_program: Program<'info, System>,
 }

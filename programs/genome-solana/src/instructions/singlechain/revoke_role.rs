@@ -41,9 +41,12 @@ pub(crate) fn handle_revoke_role(ctx: Context<RevokeRole>, role: Role) -> Result
 pub(crate) struct RevokeRole<'info> {
     #[account(mut, address = config.admin @ GenomeError::NotAllowed)]
     admin: Signer<'info>,
+
     user: SystemAccount<'info>,
+
     #[account(mut, seeds = [GENOME_ROOT, SINGLE_CONFIG], bump)]
     config: Account<'info, GenomeSingleConfig>,
+    
     #[account(mut, seeds = [GENOME_ROOT, ROLE, user.key().as_ref()], bump)]
     role_info: Account<'info, RoleInfo>,
 }
