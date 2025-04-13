@@ -36,8 +36,8 @@ pub(crate) enum GenomeError {
     InvalidStatus,
     #[msg("Participant already registered")]
     AlreadyRegistered,
-    #[msg("Captain not in winners list")]
-    NotInWinnersList,
+    #[msg("Captain is not winner")]
+    NotWinner,
     #[msg("Paricipant already claimed")]
     AlreadyClaimed,
     #[msg("Insufficient funds")]

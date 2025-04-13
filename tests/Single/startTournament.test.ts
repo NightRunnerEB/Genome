@@ -110,9 +110,11 @@ describe("Start Tournament", () => {
     }
   });
 
-  it("Create AddressLookupTable", async () => {
+  it(`Create AddressLookupTable [${MARKS.required}]`, async () => {
     lookupTableAddress1 = await createLookupTable(verifier1);
     await addAddressesToTable(lookupTableAddress1, verifier1, teamPDAs);
+
+    await sleep(250000);
     lookupTableAddress2 = await createLookupTable(verifier2);
     await addAddressesToTable(lookupTableAddress2, verifier2, teamPDAs);
   });
@@ -136,6 +138,7 @@ describe("Start Tournament", () => {
   // });
 
   it(`Start tournament, then allow reward claim [${MARKS.required}]`, async () => {
+    await sleep(10000);
     const lookupTable1 = (await CONNECTION.getAddressLookupTable(lookupTableAddress1)).value;
     const startIx1 = await ixBuilder.startTournamentIx(verifier1.publicKey, tournamentId);
     await createAndSendV0TxWithALT([startIx1], lookupTable1, verifier1);
@@ -165,7 +168,7 @@ describe("Start Tournament", () => {
 });
 
 async function createAndSendV0Tx(txInstructions: TransactionInstruction[], payer: Keypair) {
-  let latestBlockhash = await CONNECTION.getLatestBlockhash('finalized');
+  let latestBlockhash = await CONNECTION.getLatestBlockhash('confirmed');
   const messageV0 = new TransactionMessage({
       payerKey: payer.publicKey,
       recentBlockhash: latestBlockhash.blockhash,
@@ -236,7 +239,7 @@ async function addAddressesToTable(alt: PublicKey, payer: Keypair, accounts: Pub
 }
 
 async function createAndSendV0TxWithALT(txInstructions: TransactionInstruction[], lookupTable: AddressLookupTableAccount, payer: Keypair): Promise<String> {
-  let latestBlockhash = await CONNECTION.getLatestBlockhash('finalized');
+  let latestBlockhash = await CONNECTION.getLatestBlockhash('confirmed');
   const messageWithLookupTable = new TransactionMessage({
       payerKey: payer.publicKey,
       recentBlockhash: latestBlockhash.blockhash,

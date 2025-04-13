@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked};
 
@@ -7,7 +9,7 @@ use crate::{
     Role, CONSENSUS, FINISH, GENOME_ROOT, ROLE, SINGLE_CONFIG, TOURNAMENT
 };
 
-pub fn handle_finish_tournament(ctx: Context<FinishTournament>, tournament_id: u32, captain_winners: Vec<Pubkey>) -> Result<()> {
+pub fn handle_finish_tournament(ctx: Context<FinishTournament>, tournament_id: u32, captain_winner: Pubkey) -> Result<()> {
     let config = &ctx.accounts.config;
     let consensus = &mut ctx.accounts.consensus;
     let tournament = &mut ctx.accounts.tournament;
@@ -23,12 +25,21 @@ pub fn handle_finish_tournament(ctx: Context<FinishTournament>, tournament_id: u
     require!((consensus.finish_votes >> verifier_index) & 1 == 0, GenomeError::AlreadyVoted);
 
     consensus.finish_votes |= 1 << verifier_index;
+    finish_meta_data.finish_votes.push(captain_winner);
 
     let votes = consensus.finish_votes.count_ones();
     let total = config.verifier_addresses.len();
     let ratio = (votes as f64 / total as f64) * 100.0;
 
     if ratio >= config.consensus_rate {
+        let mut counts = HashMap::new();
+        for pk in finish_meta_data.finish_votes.iter() {
+            *counts.entry(pk).or_insert(0) += 1;
+        }
+        let winner = *counts.into_iter()
+        .max_by_key(|&(_, count)| count)
+        .map(|(pk, _)| pk).expect("List of captains can't be empty");
+
         let tournament_seeds = &[
             GENOME_ROOT,
             TOURNAMENT,
@@ -39,7 +50,7 @@ pub fn handle_finish_tournament(ctx: Context<FinishTournament>, tournament_id: u
 
         let reward_pool = tournament.config.sponsor_pool + tournament.config.entry_fee * tournament.team_count as u64;
         let organizer_reward = (reward_pool as f64 * tournament.config.organizer_fee as f64 / 100.0) as u64;
-        let reward_per_winner = (reward_pool - organizer_reward) / (captain_winners.len() * tournament.config.team_size as usize) as u64;
+        let reward_per_winner = (reward_pool - organizer_reward) / tournament.config.team_size as u64;
 
         let accounts = TransferChecked {
             from: ctx.accounts.reward_pool_ata.to_account_info(),
@@ -54,15 +65,12 @@ pub fn handle_finish_tournament(ctx: Context<FinishTournament>, tournament_id: u
         );
         transfer_checked(cpi, organizer_reward, ctx.accounts.asset_mint.decimals)?;
 
-        finish_meta_data.captain_winners = captain_winners;
-        finish_meta_data.tournament_id = tournament_id;
+        finish_meta_data.captain_winner = winner;
         finish_meta_data.reward = reward_per_winner;
 
         tournament.status = TournamentStatus::Finished;
         emit!(TournamentFinished { tournament_id });
     }
-
-    // НУЖНО ЛИ ДЕЛАТЬ ПРОВЕРКУ winners.len() != 0?
 
     Ok(())
 }

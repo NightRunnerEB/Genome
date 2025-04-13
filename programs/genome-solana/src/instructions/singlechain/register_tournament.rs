@@ -26,9 +26,8 @@ pub fn handle_register_tournament(
 
     bloom_check(&register_params, &mut bloom)?;
 
-    if !register_params.teammates.is_empty() || register_params.participant == register_params.captain {
+    if register_params.participant == register_params.captain {
         **team = Team::new(register_params.participant, tournament.config.team_size);
-        tournament.team_count += 1;
 
         let cpi_ctx = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
@@ -48,6 +47,7 @@ pub fn handle_register_tournament(
             all_participants.len() as u64 * tournament.config.entry_fee,
             ctx.accounts.mint.decimals,
         )?;
+
         team.add_participants_by_captain(all_participants)?;
     } else {
         let cpi_ctx = CpiContext::new(
@@ -64,7 +64,11 @@ pub fn handle_register_tournament(
         team.add_participant(register_params.participant)?;
     }
 
+    if team.completed == true {
+        tournament.team_count += 1;
+    }
     bloom_filter.data = bincode::serialize(&bloom).expect("Error serialize Bloom");
+
     Ok(())
 }
 
@@ -120,7 +124,6 @@ pub struct RegisterParticipant<'info> {
         associated_token::authority = tournament,
         associated_token::token_program = token_program,
     )]
-
     reward_pool_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(mut, seeds = [GENOME_ROOT, BLOOM, register_params.tournament_id.to_le_bytes().as_ref()], bump)]

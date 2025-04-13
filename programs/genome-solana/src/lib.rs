@@ -95,7 +95,7 @@ mod genome_solana {
     }
 
     #[instruction(discriminator = b"strttmnt")]
-    pub fn start_tournament<'info>(ctx: Context<'_, '_, 'info, 'info, StartTournament<'info>>, tournament_id: u32) -> Result<()> {
+    pub fn start_tournament(ctx: Context<StartTournament>, tournament_id: u32) -> Result<()> {
         handle_start_tournament(ctx, tournament_id)
     }
 
@@ -108,9 +108,9 @@ mod genome_solana {
     pub fn finish_tournament(
         ctx: Context<FinishTournament>,
         tournament_id: u32,
-        winners: Vec<Pubkey>,
+        winner: Pubkey,
     ) -> Result<()> {
-        handle_finish_tournament(ctx, tournament_id, winners)
+        handle_finish_tournament(ctx, tournament_id, winner)
     }
 
     #[instruction(discriminator = b"clmrewrd")]

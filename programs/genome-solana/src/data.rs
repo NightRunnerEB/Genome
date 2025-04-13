@@ -69,9 +69,9 @@ impl Tournament {
 #[account]
 #[derive(InitSpace)]
 pub(crate) struct FinishMetaData {
-    pub(crate) tournament_id: u32,
     #[max_len(0)]
-    pub(crate) captain_winners: Vec<Pubkey>,
+    pub(crate) finish_votes: Vec<Pubkey>,
+    pub(crate) captain_winner: Pubkey,
     pub(crate) reward: u64,
 }
 

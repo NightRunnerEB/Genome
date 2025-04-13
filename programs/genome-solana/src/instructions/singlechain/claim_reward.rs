@@ -15,10 +15,7 @@ pub fn handle_claim_reward(
     tournament_id: u32,
     captain: Pubkey,
 ) -> Result<()> {
-    require!(
-        ctx.accounts.finish_meta_data.captain_winners.contains(&captain),
-        GenomeError::NotInWinnersList
-    );
+    require!(ctx.accounts.finish_meta_data.captain_winner == captain, GenomeError::NotWinner);
 
     let tournament = &ctx.accounts.tournament;
     let team = &mut ctx.accounts.team;

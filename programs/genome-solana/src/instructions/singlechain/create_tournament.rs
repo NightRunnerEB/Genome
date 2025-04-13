@@ -92,7 +92,7 @@ pub(crate) struct CreateTournament<'info> {
     #[account(
         init, 
         payer = organizer,
-        space = FinishMetaData::DISCRIMINATOR.len() + FinishMetaData::INIT_SPACE + PUBKEY_BYTES * tournament_data.team_size as usize, // НАДО ИЗМЕНИТЬ
+        space = FinishMetaData::DISCRIMINATOR.len() + FinishMetaData::INIT_SPACE + PUBKEY_BYTES * config.verifier_addresses.len(),
         seeds = [GENOME_ROOT, FINISH, config.tournament_nonce.to_le_bytes().as_ref()], 
         bump
     )]

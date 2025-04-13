@@ -13,9 +13,8 @@ use crate::{
 pub fn handle_claim_refund(ctx: Context<ClaimRefund>, tournament_id: u32, _captain: Pubkey) -> Result<()> {
     let tournament = &ctx.accounts.tournament;
     let team = &mut ctx.accounts.team;
-    msg!("Team info: {:?}", team);
 
-    if tournament.status != TournamentStatus::Canceled || !team.canceled {
+    if tournament.status != TournamentStatus::Canceled && team.completed {
         return Err(GenomeError::InvalidStatus.into());
     }
 

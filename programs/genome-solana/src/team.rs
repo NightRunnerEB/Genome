@@ -15,7 +15,7 @@ pub(crate) struct Team {
     #[max_len(0)]
     pub(crate) participants: Vec<ParticipantInfo>,
     pub(crate) team_size: u16,
-    pub(crate) canceled: bool,
+    pub(crate) completed: bool,
 }
 
 impl Team {
@@ -24,12 +24,12 @@ impl Team {
             captain,
             participants: vec![],
             team_size,
-            canceled: false
+            completed: false
         }
     }
 
 
-    pub fn add_participants_by_captain(&mut self, participants: Vec<Pubkey>) -> Result<()> {
+    pub(crate) fn add_participants_by_captain(&mut self, participants: Vec<Pubkey>) -> Result<()> {
         if self.participants.len() + participants.len() > self.team_size as usize {
             return Err(GenomeError::MaxPlayersExceeded.into());
         }
@@ -41,6 +41,11 @@ impl Team {
                 claimed: false,
             });
         }
+
+        if self.participants.len() == self.team_size as usize {
+            self.completed = true;
+        }
+        
         Ok(())
     }
 
@@ -54,6 +59,11 @@ impl Team {
             paid_by_captain: false,
             claimed: false,
         });
+
+        if self.participants.len() == self.team_size as usize {
+            self.completed = true;
+        }
+
         Ok(())
     }
 
