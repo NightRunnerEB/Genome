@@ -10,3 +10,5 @@ done
 yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/Single/genomeSingle.test.ts --grep 'required'
 
 yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/Single/startTournament.test.ts --grep 'required'
+
+yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/Single/finishTournament.test.ts --grep 'required'

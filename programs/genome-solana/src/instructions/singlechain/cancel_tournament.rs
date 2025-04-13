@@ -59,7 +59,7 @@ pub struct CancelTournament<'info> {
     #[account(
         mut, 
         seeds = [GENOME_ROOT, TOURNAMENT, tournament_id.to_le_bytes().as_ref()], 
-        constraint = tournament.status == TournamentStatus::New || tournament.status == TournamentStatus::Started @ GenomeError::InvalidStatus,
+        constraint = tournament.status == TournamentStatus::New @ GenomeError::InvalidStatus,
         bump
     )]
     pub tournament: Account<'info, Tournament>,

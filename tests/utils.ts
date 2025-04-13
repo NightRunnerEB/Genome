@@ -79,11 +79,8 @@ export async function getKeyPairs(): Promise<{
   return { attacker, admin, organizer, sponsor, deployer, token, platform, verifier1, verifier2, verifier3, operator, nome, captain1, captain2, participant1, participant2 };
 }
 
-export async function createGenomeMint(): Promise<{
-  organizerAta: PublicKey;
-  platformAta: PublicKey;
-}> {
-  let { admin, organizer, operator, nome, platform } = await getKeyPairs();
+export async function createGenomeMint(): Promise<void> {
+  let { admin, organizer, operator, nome } = await getKeyPairs();
 
   const connection = getProvider().connection;
 
@@ -98,17 +95,6 @@ export async function createGenomeMint(): Promise<{
     TOKEN_PROGRAM_ID
   );
   console.log("Genome mint:", assetMint.toBase58());
-
-  const platformAta = await createAssociatedTokenAccount(
-    connection,
-    admin,
-    nome.publicKey,
-    platform.publicKey,
-    undefined,
-    TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-  console.log("Platform genome ata:", platformAta.toBase58());
 
   const organizerAta = await createAssociatedTokenAccount(
     connection,
@@ -138,14 +124,12 @@ export async function createGenomeMint(): Promise<{
     nome.publicKey,
     organizerAta,
     admin,
-    1000000000000000,
+    100000000000,
     [],
     {},
     TOKEN_PROGRAM_ID
   );
   console.log("Mint to organizer tx:", tx)
-
-  return { organizerAta, platformAta };
 }
 
 export async function createTournamentMint(): Promise<{

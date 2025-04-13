@@ -40,6 +40,8 @@ pub(crate) enum GenomeError {
     NotWinner,
     #[msg("Paricipant already claimed")]
     AlreadyClaimed,
+    #[msg("The tournament doesn't have any completed teams yet.")]
+    NoCompletedTeams,
     #[msg("Insufficient funds")]
     InsufficientFunds,
 }

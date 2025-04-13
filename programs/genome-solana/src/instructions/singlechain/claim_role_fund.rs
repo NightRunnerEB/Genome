@@ -8,7 +8,7 @@ use crate::{data::RoleInfo, error::GenomeError, GenomeSingleConfig, GENOME_ROOT,
 pub fn handle_claim_role_fund(
     ctx: Context<ClaimRoleFund>,
     amount: u64,
-) -> Result<()> {
+) -> Result<()> {    
     require!(ctx.accounts.role_info.claim >= amount, GenomeError::InsufficientFunds);
     ctx.accounts.role_info.claim -= amount;
 
@@ -21,6 +21,9 @@ pub fn handle_claim_role_fund(
         mint: ctx.accounts.nome_mint.to_account_info(),
         authority: ctx.accounts.platform_wallet.to_account_info(),
     };
+
+    msg!("platform_ata: {}", ctx.accounts.platform_ata.amount);
+    msg!("platform_wallet: {}", ctx.accounts.platform_wallet.lamports());
 
     let cpi = CpiContext::new_with_signer(
         ctx.accounts.token_program.to_account_info(),
@@ -37,7 +40,7 @@ pub fn handle_claim_role_fund(
 pub struct ClaimRoleFund<'info> {
     #[account(mut)]
     pub claimer: Signer<'info>,
-    
+
     /// CHECKED
     #[account(mut, seeds = [GENOME_ROOT, PLATFORM], bump)]
      pub platform_wallet: UncheckedAccount<'info>,

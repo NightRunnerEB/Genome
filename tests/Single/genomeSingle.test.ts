@@ -20,13 +20,11 @@ import {
     buildAndSendTx,
     getTokenInfo,
     getTournament,
-    Role,
     getProvider,
-    getSponsorAtaInfo,
-    getPrizePoolAtaInfo,
-    getOrganizerAtaInfo,
     getGenomePda,
     GENOME_SINGLE_CONFIG,
+    getAtaInfo,
+    PLATFORM,
 } from "../../common/utils";
 import { GenomeSolana } from "../../target/types/genome_solana";
 
@@ -37,7 +35,6 @@ describe("Genome Solana Singlechain", () => {
     let ixBuilder: IxBuilder;
     let admin: Keypair,
         deployer: Keypair,
-        platform: Keypair,
         token: Keypair,
         sponsor: Keypair,
         organizer: Keypair,
@@ -51,18 +48,17 @@ describe("Genome Solana Singlechain", () => {
         participant1: Keypair,
         participant2: Keypair;
 
-    let assetMint: PublicKey;
-    let sponsorAta: PublicKey;
-    let organizerAta: PublicKey;
-    let platformAta: PublicKey;
-    let configPda: PublicKey;
+    let assetMint: PublicKey,
+        sponsorAta: PublicKey,
+        configPda: PublicKey,
+        platformPda: PublicKey;
 
     let tournamentConfigMock: TournamentConfig;
     let configData: GenomeSingleConfig;
 
     before(async () => {
         ixBuilder = new IxBuilder();
-        ({ admin, deployer, platform, token, sponsor, organizer, nome, verifier1, verifier2, verifier3, operator, captain1, captain2, participant1, participant2 } = await getKeyPairs());
+        ({ admin, deployer, token, sponsor, organizer, nome, verifier1, verifier2, verifier3, operator, captain1, captain2, participant1, participant2 } = await getKeyPairs());
 
         tournamentConfigMock = {
             organizerFee: new BN(100),
@@ -78,15 +74,15 @@ describe("Genome Solana Singlechain", () => {
 
         configData = {
             tournamentNonce: 0,
+            platformWallet: new PublicKey("11111111111111111111111111111111"),
             admin: admin.publicKey,
             platformFee: new BN(10),
             verifierFee: new BN(1),
-            platformWallet: platform.publicKey,
             nomeMint: nome.publicKey,
             minTeams: 2,
             maxTeams: 20,
             falsePrecision: 0.000065,
-            maxOrganizerFee: new BN(5000),
+            maxOrganizerFee: new BN(150),
             consensusRate: 60.0,
             verifierAddresses: [],
         };
@@ -107,12 +103,14 @@ describe("Genome Solana Singlechain", () => {
             ],
             10
         );
+        
         configPda = await getGenomePda([GENOME_SINGLE_CONFIG]);
+        platformPda = await getGenomePda([PLATFORM]);
     });
 
     it(`Create mint [${MARKS.required}]`, async () => {
         ({ assetMint, sponsorAta } = await createTournamentMint());
-        ({ organizerAta, platformAta } = await createGenomeMint());
+        await createGenomeMint();
     });
 
     it(`Delegate [${MARKS.required}]`, async () => {
@@ -152,7 +150,6 @@ describe("Genome Solana Singlechain", () => {
         const config = await getSingleConfig();
         assert.equal(config.tournamentNonce, 0);
         assert.deepEqual(config.admin, configData.admin);
-        assert.deepEqual(config.platformWallet, configData.platformWallet);
         assert.equal(config.falsePrecision, configData.falsePrecision);
         assert.equal(config.platformFee.toNumber(), configData.platformFee.toNumber());
         assert.equal(config.maxOrganizerFee.toNumber(), configData.maxOrganizerFee.toNumber());
@@ -286,9 +283,9 @@ describe("Genome Solana Singlechain", () => {
         let txSig = await buildAndSendTx([ix], [operator]);
         console.log("Approve token tx signature:", txSig);
 
-        const sponsorAtaBefore = await getSponsorAtaInfo(sponsorAta);
-        const organizerAtaBefore = await getOrganizerAtaInfo(organizerAta);
-        const platformAtaBefore = await getOrganizerAtaInfo(platformAta);
+        const sponsorAtaBefore = await getAtaInfo(assetMint, sponsor.publicKey);
+        const organizerAtaBefore = await getAtaInfo(nome.publicKey, organizer.publicKey);
+        const platformAtaBefore = await getAtaInfo(nome.publicKey, platformPda);
 
         ix = await ixBuilder.createTournamentIx(
             organizer.publicKey,
@@ -299,9 +296,9 @@ describe("Genome Solana Singlechain", () => {
         txSig = await buildAndSendTx([ix], [organizer]);
         console.log("Create Tournament tx signature:", txSig);
 
-        const sponsorAtaAfter = await getSponsorAtaInfo(sponsorAta);
-        const organizerAtaAfter = await getOrganizerAtaInfo(organizerAta);
-        const platformAtaAfter = await getOrganizerAtaInfo(platformAta);
+        const sponsorAtaAfter = await getAtaInfo(assetMint, sponsor.publicKey);
+        const organizerAtaAfter = await getAtaInfo(nome.publicKey, organizer.publicKey);
+        const platformAtaAfter = await getAtaInfo(nome.publicKey, platformPda);
         const configData = await getSingleConfig();
         const tournamentAccount = await getTournament(configData.tournamentNonce - 1);
 
@@ -321,13 +318,13 @@ describe("Genome Solana Singlechain", () => {
         assert.equal(organizerAtaBefore.amount - organizerAtaAfter.amount, BigInt(configData.platformFee.toNumber()));
         assert.equal(platformAtaAfter.amount - platformAtaBefore.amount, BigInt(configData.platformFee.toNumber()));
 
-        const prizePoolAta = await getPrizePoolAtaInfo(assetMint, tournamentAccount.tournamentPda);
-        assert.equal(sponsorAtaBefore.amount - sponsorAtaAfter.amount, prizePoolAta.amount);
+        const rewardPoolAta = await getAtaInfo(assetMint, tournamentAccount.tournamentPda);
+        assert.equal(sponsorAtaBefore.amount - sponsorAtaAfter.amount, rewardPoolAta.amount);
     });
 
     it(`Register tournament - Captain + Teammates [${MARKS.required}]`, async () => {
         const tournamentAccount = await getTournament(0);
-        const prizePoolAtaBefore = await getPrizePoolAtaInfo(assetMint, tournamentAccount.tournamentPda);
+        const rewardPoolAtaBefore = await getAtaInfo(assetMint, tournamentAccount.tournamentPda);
         const registerParams = {
             tournamentId: 0,
             participant: captain1.publicKey,
@@ -338,15 +335,13 @@ describe("Genome Solana Singlechain", () => {
         const registerIx = await ixBuilder.registerTournamentIx(registerParams);
         const txSig = await buildAndSendTx([registerIx], [captain1]);
         console.log("Register tournament tx signature:", txSig);
-
         const teamAccount = await getTeam(0, captain1.publicKey);
         assert.ok(teamAccount, "Team account not created");
         assert.equal(teamAccount.captain.toBase58(), registerParams.captain.toBase58());
         assert.equal(teamAccount.participants.length, registerParams.teammates.length + 1);
-
-        const prizePoolAtaAfter = await getPrizePoolAtaInfo(assetMint, tournamentAccount.tournamentPda);
+        const rewardPoolAtaAfter = await getAtaInfo(assetMint, tournamentAccount.tournamentPda);
         const expectedTransfer = tournamentAccount.config.entryFee.toNumber() * (registerParams.teammates.length + 1);
-        assert.equal(prizePoolAtaAfter.amount - prizePoolAtaBefore.amount, expectedTransfer);
+        assert.equal(rewardPoolAtaAfter.amount - rewardPoolAtaBefore.amount, expectedTransfer);
     });
 
     it(`Register invalid tournament - Already registered [${MARKS.negative}]`, async () => {
@@ -373,10 +368,10 @@ describe("Genome Solana Singlechain", () => {
             teammates: []
         }
 
-        // Add new team
+        // Register new team
         let registerIx = await ixBuilder.registerTournamentIx(registerParams);
         let txSig = await buildAndSendTx([registerIx], [captain2]);
-        
+
         // Add additional participant
         registerParams.participant = participant2.publicKey;
         registerIx = await ixBuilder.registerTournamentIx(registerParams);
@@ -462,7 +457,7 @@ describe("Genome Solana Singlechain", () => {
         }
     });
 
-    it(`Invalid prize_pool [${MARKS.negative}]`, async () => {
+    it(`Invalid sponsor pool [${MARKS.negative}]`, async () => {
         try {
             const invalidData = { ...tournamentConfigMock, sponsorPool: new BN(10) };
             const ix = await ixBuilder.createTournamentIx(
@@ -491,43 +486,6 @@ describe("Genome Solana Singlechain", () => {
             checkAnchorError(error, "Max players exceeded");
         }
     });
-
-    // it(`Revoke Role [${MARKS.required}]`, async () => {
-    //     const beforeInfo = await getProvider().connection.getAccountInfo(configPda);
-    //     const beforeLamports = beforeInfo?.lamports ?? 0;
-
-    //     const roles: [PublicKey, Role][] = [
-    //         [operator.publicKey, { operator: {} }],
-    //         [organizer.publicKey, { organizer: {} }],
-    //         [verifier2.publicKey, { verifier: {} }],
-    //     ];
-
-    //     for (const [userPubkey, roleParams] of roles) {
-    //         const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, userPubkey, roleParams);
-    //         const txSig = await buildAndSendTx([revokeIx], [admin]);
-    //         console.log("Revoke role tx:", txSig);
-    //         const userRole = await getUserRole(userPubkey);
-    //         assert.ok(!userRole.some((r) => JSON.stringify(r) === JSON.stringify(roleParams)));
-    //     }
-    //     const afterInfo = await getProvider().connection.getAccountInfo(configPda);
-    //     const afterLamports = afterInfo?.lamports ?? 0;
-    //     assert.notEqual(beforeLamports - afterLamports, 0);
-    //     console.log("Config lamports before revoke:", beforeLamports);
-    //     console.log("Config lamports after revoke:", afterLamports);
-
-    //     const config = await getSingleConfig();
-    //     assert.deepEqual(config.verifierAddresses, []);
-    // });
-
-    // it(`Revoke Role of a non-existent person [${MARKS.negative}]`, async () => {
-    //     const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, operator.publicKey, { operator: {} });
-    //     try {
-    //         await buildAndSendTx([revokeIx], [admin]);
-    //         throw new Error("Expected error was not thrown");
-    //     } catch (error) {
-    //         checkAnchorError(error, "Role not found");
-    //     }
-    // });
 
     it(`Set Bloom Precision with valid value [${MARKS.required}]`, async () => {
         const newPrecision = 0.05;

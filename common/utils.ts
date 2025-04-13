@@ -28,6 +28,10 @@ export const GENOME_ROOT = getConstant("genomeRoot");
 export const TOURNAMENT = getConstant("tournament");
 export const ROLE = getConstant("role");
 export const TOKEN = getConstant("token");
+export const PLATFORM = getConstant("platform");
+export const FINISH = getConstant("finish");
+export const CONSENSUS = getConstant("consensus");
+export const BLOOM = getConstant("bloom");
 
 export type Role = IdlTypes<GenomeSolana>["role"];
 
@@ -112,35 +116,11 @@ export async function getTeam(tournamentId: number, captain: PublicKey) {
         captain: team.captain,
         participants: team.participants,
         teamSize: team.teamSize,
-        canceled: team.canceled
+        completed: team.completed
     };
 }
 
-export async function getSponsorAtaInfo(
-    sponsorPoolAta: PublicKey
-): Promise<SplTokenAccount> {
-    const provider = getProvider();
-    return getAccount(
-        provider.connection,
-        sponsorPoolAta,
-        undefined,
-        TOKEN_PROGRAM_ID
-    );
-}
-
-export async function getOrganizerAtaInfo(
-    organizerAta: PublicKey
-): Promise<SplTokenAccount> {
-    const provider = getProvider();
-    return getAccount(
-        provider.connection,
-        organizerAta,
-        undefined,
-        TOKEN_PROGRAM_ID
-    );
-}
-
-export async function getPrizePoolAtaInfo(
+export async function getAtaInfo(
     mint: PublicKey,
     authority: PublicKey
 ): Promise<SplTokenAccount> {

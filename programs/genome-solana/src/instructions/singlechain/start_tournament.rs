@@ -13,6 +13,8 @@ pub fn handle_start_tournament(ctx: Context<StartTournament>, tournament_id: u32
     let tournament = &mut ctx.accounts.tournament;
     let verifier_key = ctx.accounts.verifier.key();
 
+    require!(tournament.team_count != 0, GenomeError::NoCompletedTeams);
+
     let verifier_index = config
         .verifier_addresses
         .iter()

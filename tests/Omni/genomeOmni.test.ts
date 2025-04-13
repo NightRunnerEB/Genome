@@ -1,15 +1,15 @@
 import * as anchor from "@coral-xyz/anchor";
 import { assert } from "chai";
 
-import { checkAnchorError, getKeyPairs, MARKS } from "./utils";
+import { checkAnchorError, getKeyPairs, MARKS } from "../utils";
 import {
   airdropAll,
   buildAndSendTx,
   GENOME_OMNI_CONFIG,
   getGenomePda,
   getProgram,
-} from "../common/utils";
-import { IxBuilder } from "../common/ixBuilder";
+} from "../../common/utils";
+import { IxBuilder } from "../../common/ixBuilder";
 
 describe("Genome Solana Omnichain", () => {
   const UTS_PROGRAM = new anchor.web3.PublicKey(

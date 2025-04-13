@@ -8,7 +8,7 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_PROGRAM_I
 
 import { GenomeSolana } from "../target/types/genome_solana";
 
-import { GENOME_OMNI_CONFIG, GENOME_SINGLE_CONFIG, getConstant, getGenomePda, getProgram, getSingleConfig, getTournament, ROLE, TEAM, TOKEN, TOURNAMENT } from "./utils";
+import { BLOOM, CONSENSUS, FINISH, GENOME_OMNI_CONFIG, GENOME_SINGLE_CONFIG, getConstant, getGenomePda, getProgram, getSingleConfig, getTournament, PLATFORM, ROLE, TEAM, TOKEN, TOURNAMENT } from "./utils";
 
 export class IxBuilder {
   public program: Program<GenomeSolana>;
@@ -24,17 +24,17 @@ export class IxBuilder {
   private platformSeed: Uint8Array;
 
   constructor() {
-    this.program = getProgram();
     this.singleConfigSeed = GENOME_SINGLE_CONFIG;
     this.omniConfigSeed = GENOME_OMNI_CONFIG;
     this.tournamentSeed = TOURNAMENT;
     this.teamSeed = TEAM;
     this.roleSeed = ROLE;
     this.tokenSeed = TOKEN;
-    this.bloomSeed = getConstant("bloom");
-    this.finishSeed = getConstant("finish");
-    this.consensusSeed = getConstant("consensus");
-    this.platformSeed = getConstant("platform");
+    this.platformSeed = PLATFORM;
+    this.finishSeed = FINISH;
+    this.bloomSeed = BLOOM;
+    this.consensusSeed = CONSENSUS;
+    this.program = getProgram();
   }
 
   async initializeOmnichainIx(
@@ -298,7 +298,7 @@ export class IxBuilder {
   async finishTournamentIx(
     verifier: PublicKey,
     tournamentId: number,
-    captainWinners: PublicKey[]
+    winner: PublicKey
   ): Promise<TransactionInstruction> {
     const idBuffer = Buffer.alloc(4);
     idBuffer.writeUInt32LE(tournamentId, 0);
@@ -312,7 +312,7 @@ export class IxBuilder {
     const rolePda = await getGenomePda([this.roleSeed, verifier.toBuffer()]);
     const finishMetaDataPda = await getGenomePda([this.finishSeed, idBuffer]);
     return this.program.methods
-      .finishTournament(tournamentId, captainWinners)
+      .finishTournament(tournamentId, winner)
       .accountsStrict({
         verifier,
         organizer: tournament.organizer,
