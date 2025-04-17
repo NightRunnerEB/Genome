@@ -9,13 +9,13 @@ use crate::{
     GENOME_ROOT, TOURNAMENT,
 };
 
-pub fn handle_claim_sponsor_funds(ctx: Context<ClaimSponsorRefund>) -> Result<()> {
+pub fn handle_claim_sponsor_funds(ctx: Context<ClaimSponsorRefund>, tournament_id: u32) -> Result<()> {
     require!(ctx.accounts.reward_pool_ata.amount >= ctx.accounts.tournament.config.sponsor_pool, GenomeError::InsufficientFunds);
     
     let tournament_seeds = &[
         GENOME_ROOT,
         TOURNAMENT,
-        &ctx.accounts.tournament.id.to_le_bytes(),
+        &tournament_id.to_le_bytes(),
         &[ctx.bumps.tournament],
     ];
     let signer = &[&tournament_seeds[..]];
@@ -31,11 +31,13 @@ pub fn handle_claim_sponsor_funds(ctx: Context<ClaimSponsorRefund>) -> Result<()
         transfer_accounts,
         signer,
     );
+    
     transfer_checked(
         cpi_ctx,
         ctx.accounts.tournament.config.sponsor_pool,
         ctx.accounts.asset_mint.decimals,
     )?;
+
     Ok(())
 }
 

@@ -96,31 +96,72 @@ spl-token create-token -u <network> <path-to-nome-keypair>
 
 Setting up wallets:
 
+1. Airdrop sol
+
 ```rs
-anchor run setup-wallets -- \
-  <path-to-authority-keypair> \
-  <path-to-payer-keypair> \
-  <path-to-sponsor-keypair> \
-  <assetMint> \
-  <nomeMint> \
-  <verifier1-pubkey> \
-  <verifier2-pubkey> \
-  <operator-pubkey> \
-  <organizer-pubkey> \
-  <platform-pubkey> \
+solana airdrop 10 <account-pubkey>
 
 /* Example: 
-  anchor run setup-wallets -- \
+  solana airdrop 10 6MurAyX9MiuLV8ufEeAN26w1KTbT1yDKCAcQF1bHQHCx
+  solana airdrop 10 CB39FqtnDdACX9XkwjsA2gYGd7ZfxjveMewhxRoB9c8k
+  solana airdrop 10 6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne
+  solana airdrop 10 Btzv5f2fxbF5FKSjbEhCxkusvdxridtRGwKWkp1C77dJ
+  solana airdrop 10 FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy
+  solana airdrop 10 9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL
+  solana airdrop 10 6Agqn5YD4fAncrnB9VrvwTfaufw2Tx1pphGca79uWruT
+  solana airdrop 10 ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz
+  */
+```
+
+2. Create token ata. You should do it for Genome Token and Tournament Token.
+
+Genome Token:
+
+```rs
+anchor run create-ata -- \
+  <path-to-payer-keypair> \
+  <path-to-tokenAuthority-keypair> \
+  <token-pubkey> \
+  <account-pubkey1> \
+  <account-pubkey2> \
+  <account-pubkey3> \
+  ...
+
+/* Example: 
+  anchor run create-ata -- \
   /Users/evgeniybukharev/.config/solana/id.json \
   /Users/evgeniybukharev/.config/solana/id.json \
-  keys/sponsor.json \
-  6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne \
   Btzv5f2fxbF5FKSjbEhCxkusvdxridtRGwKWkp1C77dJ \
+  ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz \
   FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
   9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL \
+  3JYy8phwkVSXq6D9LLdhGtTh2Z3sW3hJSmveHCva4pxk
+  */
+```
+
+Tournament Token:
+
+```rs
+anchor run create-ata -- \
+  <path-to-payer-keypair> \
+  <path-to-tokenAuthority-keypair> \
+  <token-pubkey> \
+  <account-pubkey1> \
+  <account-pubkey2> \
+  <account-pubkey3> \
+  ...
+
+/* Example: 
+  anchor run create-ata -- \
+  /Users/evgeniybukharev/.config/solana/id.json \
+  /Users/evgeniybukharev/.config/solana/id.json \
+  6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne \
+  Btzv5f2fxbF5FKSjbEhCxkusvdxridtRGwKWkp1C77dJ \
   6Agqn5YD4fAncrnB9VrvwTfaufw2Tx1pphGca79uWruT \
   ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz \
-  9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe
+  Dxp1rJmA7ei16EcsjiXHGntT9KuTMXBMXAkFiy6vWSVr \
+  23sTZbMHjs2tH5fan7FgQWU8eeaVzLA6L6p2vdRoH7xq \
+  5RuyKrrBCD6URTNQEujCJn9WEB6ssypaAfGWzbU5tGtX
   */
 ```
 
@@ -128,14 +169,11 @@ Initialize Genome Program
 
 ```rs
 anchor run initialize-single -- \
-<tournamentNonce> <platformFee> <minTeams> <maxTeams> <falsePrecision> <maxOrganizerFee> \
-<platformWallet-pubkey> \
-<nome-pubkey> \
+<tournamentNonce> <platformFee> <minTeams> <maxTeams> <falsePrecision> <maxOrganizerFee> <nome-pubkey>
 
 /* Example:
     anchor run initialize-single -- \
-    10 10 2 20 0.000065 5000 66.0 \
-    9z5qaNHxpNWU6XMJFF4pKeA27MnVqVr7HYdAXZsPZSAe \
+    10 10 2 20 65 5000 6600 \
     Btzv5f2fxbF5FKSjbEhCxkusvdxridtRGwKWkp1C77dJ
 */
 ```
@@ -182,20 +220,151 @@ anchor run ban-token -- <path-to-operator-keypair> <asset-mint>
 
 ##### Create Tournament
 
-```rs
-anchor run create-tournament -- \
-<organizer-keypair> \
-<sponsor-publickey> \
-<token-publickey> \
-<organizerFee> <sponsorPool> <entryFee> <teamSize> <minTeams> <maxTeams>
+Before creating a tournament, you must delegate the sponsor's ATA signing rights to the organizer.
 
-/* Example:
-anchor run create-tournament -- \
-keys/organizer.json \
-5RuyKrrBCD6URTNQEujCJn9WEB6ssypaAfGWzbU5tGtX \
-6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne \
-100 1748736000 1000 200 10 4 10
-*/
+Get sponsor's ATA for tournament token:
+
+```rs
+  spl-token address-of --mint <mint-pubkey> --owner <sponsor-pubkey>
+  // Example: spl-token address-of --mint 6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne --owner 5RuyKrrBCD6URTNQEujCJn9WEB6ssypaAfGWzbU5tGtX
+```
+
+Delegate rights:
+
+```rs
+  spl-token approve <sponsor-ata-pubkey> <organizer-pubkey-> 1000000000000 --decimals 9 --owner <path-to-sponsor-keypair>
+  // Example: spl-token address 6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne --owner 5RuyKrrBCD6URTNQEujCJn9WEB6ssypaAfGWzbU5tGtX
+```
+
+```rs
+  anchor run create-tournament -- \
+  <organizer-keypair> \
+  <sponsor-publickey> \
+  <token-publickey> \
+  <organizerFee> <sponsorPool> <entryFee> <teamSize> <minTeams> <maxTeams>
+
+  /* Example:
+  anchor run create-tournament -- \
+  keys/organizer.json \
+  5RuyKrrBCD6URTNQEujCJn9WEB6ssypaAfGWzbU5tGtX \
+  6bNsgK8TZEebYPyGaK9Lm2TNjomzCTYPHq7SGjR7uQne \
+  100 1748736000 1000 200 10 4 10
+  */
+```
+
+##### Register Tournament
+
+Approve:
+
+```rs
+  anchor run register-tournament -- <participant-keypair> <tournamentId> \
+  <captain-pubkey> \
+  <teammate1> \
+  <teammate2> \
+  ...
+
+  /* Example:
+  anchor run register-tournament -- keys/participant.json 5 \
+  9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL \
+  FcKnp8dCRKUFq3pphgAnw18WKiLKGQPn5zBFWq9ojuLy \
+  ERkYz7Dkbj4ZPdZ11BidjHR1A2LfVW1egBskHaWN3ayz
+  */
+```
+
+##### Start Tournament
+
+Approve:
+
+```rs
+  anchor run start-tournament -- <verifier-keypair> <tournamentId>
+
+  /* Example:
+    anchor run start-tournament -- keys/verifier.json 0
+  */
+```
+
+##### Cancel Tournament
+
+Approve:
+
+```rs
+  anchor run cancel-tournament -- <verifier-keypair> <tournamentId>
+
+  /* Example:
+    anchor run cancel-tournament -- keys/verifier.json 0
+  */
+```
+
+##### Finish Tournament
+
+Approve:
+
+```rs
+  anchor run finish-tournament -- <verifier-keypair> <tournamentId> <winner-pubkey>
+
+  /* Example:
+    anchor run finish-tournament -- keys/verifier.json 0 9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL
+  */
+```
+
+##### Claim Refund
+
+Approve:
+
+```rs
+  anchor run claim-refund -- <participant-keypair> <tournamentId> <captain-pubkey>
+
+  /* Example:
+    anchor run claim-refund -- keys/participant.json 0 9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL
+  */
+```
+
+##### Claim Role Fund
+
+Approve:
+
+```rs
+  anchor run claim-role-fund -- <claimer-keypair> <amount>
+
+  /* Example:
+    anchor run claim-role-fund -- keys/claimer.json 2
+  */
+```
+
+##### Claim Sponsor Refund
+
+Approve:
+
+```rs
+  anchor run claim-sponsor-refund -- <sponsor-keypair> <tournamentId>
+
+  /* Example:
+    anchor run claim-sponsor-refund -- keys/sponsor.json 0
+  */
+```
+
+##### Claim Reward
+
+Approve:
+
+```rs
+  anchor run claim-reward -- <participant-keypair> <tournamentId> <captain-pubkey>
+
+  /* Example:
+    anchor run claim-reward -- keys/participant.json 0 9B1tCuuw9nSM5tuZPq8TK5N3LC84PMxGf2xvuhFAagqL
+  */
+```
+
+##### Set Bloom Precision
+
+Approve:
+
+```rs
+  anchor run set-bloom-precision -- <admin-keypair> <newPrecision>
+
+  /* Example:
+    anchor run set-bloom-precision -- keys/admin.json 50
+  */
 ```
 
 ## Omnichain

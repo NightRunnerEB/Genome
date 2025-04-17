@@ -4,14 +4,15 @@ import * as assert from "assert";
 import { describe, it } from "mocha";
 
 import { IxBuilder } from "../../common/ixBuilder";
-import { getKeyPairs, checkAnchorError, MARKS, sleep } from "../utils";
-import { getTournament, buildAndSendTx, getProvider, getAtaInfo, Role, getUserRole, getSingleConfig, getGenomePda, GENOME_SINGLE_CONFIG, PLATFORM } from "../../common/utils";
+import { getKeyPairs, checkAnchorError, MARKS } from "../utils";
+import { getTournament, buildAndSendTx, getProvider, getAtaInfo, Role, getRoleInfo, getSingleConfig, getGenomePda, GENOME_SINGLE_CONFIG, PLATFORM, GenomeSingleConfig } from "../../common/utils";
 
 describe("Cancel Tournament", () => {
     const tournamentId = 0;
     let ixBuilder: IxBuilder;
     let organizer: Keypair,
         operator: Keypair,
+        sponsor: Keypair,
         verifier1: Keypair,
         verifier2: Keypair,
         verifier3: Keypair,
@@ -21,8 +22,8 @@ describe("Cancel Tournament", () => {
         assetMint: Keypair,
         nomeMint: Keypair;
 
-    let platformPda: PublicKey;
     let configPda: PublicKey;
+    let singleConfig: GenomeSingleConfig;
 
     before(async () => {
         const keys = await getKeyPairs();
@@ -32,6 +33,7 @@ describe("Cancel Tournament", () => {
         verifier3 = keys.verifier3;
         organizer = keys.organizer;
         operator = keys.operator;
+        sponsor = keys.sponsor;
         captain = keys.captain1;
         participant = keys.participant1;
         admin = keys.admin;
@@ -39,26 +41,43 @@ describe("Cancel Tournament", () => {
         nomeMint = keys.nome;
 
         configPda = await getGenomePda([GENOME_SINGLE_CONFIG]);
-        platformPda = await getGenomePda([PLATFORM]);
+        singleConfig = await getSingleConfig();
     });
 
+    it(`Verifier vote [${MARKS.required}]`, async () => {
+        const roleInfoBefore = await getRoleInfo(verifier1.publicKey);
+        const cancelIx = await ixBuilder.cancelTournamentIx(verifier1.publicKey, tournamentId);
+        const txSig = await buildAndSendTx([cancelIx], [verifier1]);
+        console.log("Cancel tournament tx (verifier1):", txSig);
 
-    it(`Cancel tournament [${MARKS.required}]`, async () => {
-        const cancelIx1 = await ixBuilder.cancelTournamentIx(verifier1.publicKey, tournamentId);
-        const txSig1 = await buildAndSendTx([cancelIx1], [verifier1]);
-        console.log("Cancel tournament tx (verifier1):", txSig1);
+        const roleInfoAfter = await getRoleInfo(verifier1.publicKey);
+        assert.equal(roleInfoAfter.claim.sub(roleInfoBefore.claim).toNumber(), singleConfig.verifierFee.toNumber());
+    });
 
+    it(`Verifier vote second time [${MARKS.negative}]`, async () => {
+        const cancelIx = await ixBuilder.cancelTournamentIx(verifier1.publicKey, tournamentId);
         try {
-            const claimRefundIx = await ixBuilder.claimRefundIx(participant.publicKey, tournamentId, captain.publicKey);
+            await buildAndSendTx([cancelIx], [verifier1]);
+            throw new Error("Expected error for second voting");
+        } catch (error) {
+            checkAnchorError(error, "Verifier already voted");
+        }
+    });
+
+    it(`Claim refund before the tournament start [${MARKS.negative}]`, async () => {
+        const claimRefundIx = await ixBuilder.claimRefundIx(participant.publicKey, tournamentId, captain.publicKey);
+        try {
             await buildAndSendTx([claimRefundIx], [participant]);
             throw new Error("Expected error for premature claim not thrown");
         } catch (error) {
             checkAnchorError(error, "Invalid tournament status");
         }
+    });
 
-        const cancelIx2 = await ixBuilder.cancelTournamentIx(verifier2.publicKey, tournamentId);
-        const txSig2 = await buildAndSendTx([cancelIx2], [verifier2]);
-        console.log("Cancel tournament tx (verifier1):", txSig2);
+    it(`Cancel tournament [${MARKS.required}]`, async () => {
+        const cancelIx = await ixBuilder.cancelTournamentIx(verifier2.publicKey, tournamentId);
+        const txSig = await buildAndSendTx([cancelIx], [verifier2]);
+        console.log("Cancel tournament tx (verifier2):", txSig);
 
         const tournamentAfter = await getTournament(tournamentId);
         assert.ok(tournamentAfter.status.canceled, "Tournament should be canceled");
@@ -80,7 +99,7 @@ describe("Cancel Tournament", () => {
         const claimerAtaBefore = await getAtaInfo(assetMint.publicKey, captain.publicKey);
         const claimRefundIx = await ixBuilder.claimRefundIx(captain.publicKey, tournamentId, captain.publicKey);
         const claimTxSig = await buildAndSendTx([claimRefundIx], [captain]);
-        console.log("Claim refund tx signature(participant):", claimTxSig);
+        console.log("Claim refund tx signature(captain):", claimTxSig);
 
         const claimerAtaAfter = await getAtaInfo(assetMint.publicKey, participant.publicKey);
         const tournamentAccount = await getTournament(tournamentId);
@@ -96,6 +115,17 @@ describe("Cancel Tournament", () => {
 
         const claimerAtaAfter = await getAtaInfo(nomeMint.publicKey, organizer.publicKey);
         assert.equal(claimerAtaAfter.amount - claimerAtaBefore.amount, amountToClaim);
+    });
+
+    it(`Claim refund by sponsor [${MARKS.required}]`, async () => {
+        const claimerAtaBefore = await getAtaInfo(assetMint.publicKey, sponsor.publicKey);
+        const claimRefundIx = await ixBuilder.claimSponsorRefundIx(sponsor.publicKey, tournamentId);
+        const claimTxSig = await buildAndSendTx([claimRefundIx], [sponsor]);
+        console.log("Claim refund tx signature(sponsor):", claimTxSig);
+
+        const claimerAtaAfter = await getAtaInfo(assetMint.publicKey, sponsor.publicKey);
+        const tournament = await getTournament(tournamentId);
+        assert.equal(claimerAtaAfter.amount - claimerAtaBefore.amount, tournament.config.sponsorPool);
     });
 
     it(`Revoke Role [${MARKS.required}]`, async () => {
@@ -114,8 +144,8 @@ describe("Cancel Tournament", () => {
             const revokeIx = await ixBuilder.revokeRoleIx(admin.publicKey, userPubkey, roleParams);
             const txSig = await buildAndSendTx([revokeIx], [admin]);
             console.log("Revoke role tx:", txSig);
-            const userRole = await getUserRole(userPubkey);
-            assert.ok(!userRole.some((r) => JSON.stringify(r) === JSON.stringify(roleParams)));
+            const userRole = await getRoleInfo(userPubkey);
+            assert.ok(!userRole.roles.some((r) => JSON.stringify(r) === JSON.stringify(roleParams)));
         }
 
 

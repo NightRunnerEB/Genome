@@ -90,7 +90,7 @@ mod genome_solana {
     }
 
     #[instruction(discriminator = b"bloomprc")]
-    pub fn set_bloom_precision(ctx: Context<SetBloomPrecision>, new_precision: f64) -> Result<()> {
+    pub fn set_bloom_precision(ctx: Context<SetBloomPrecision>, new_precision: u64) -> Result<()> {
         handle_set_bloom_precision(ctx, new_precision)
     }
 
@@ -124,8 +124,8 @@ mod genome_solana {
     }
 
     #[instruction(discriminator = b"clmspfnd")]
-    pub fn claim_sponsor_refund(ctx: Context<ClaimSponsorRefund>) -> Result<()> {
-        handle_claim_sponsor_funds(ctx)
+    pub fn claim_sponsor_refund(ctx: Context<ClaimSponsorRefund>, tournament_id: u32) -> Result<()> {
+        handle_claim_sponsor_funds(ctx, tournament_id)
     }
 
     #[instruction(discriminator = b"clmrefnd")]

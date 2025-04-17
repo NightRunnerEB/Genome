@@ -21,6 +21,7 @@ import { getKeypairFromFile } from "@solana-developers/helpers";
 
 const PROGRAM = getProgram();
 const GENOME_PROGRAM_PATH = "./keys/genome-program.json";
+
 export const GENOME_OMNI_CONFIG = getConstant("omniConfig");
 export const GENOME_SINGLE_CONFIG = getConstant("singleConfig");
 export const TEAM = getConstant("team");
@@ -33,7 +34,14 @@ export const FINISH = getConstant("finish");
 export const CONSENSUS = getConstant("consensus");
 export const BLOOM = getConstant("bloom");
 
-export type Role = IdlTypes<GenomeSolana>["role"];
+export type GenomeSingleConfig = IdlTypes<GenomeSolana>['genomeSingleConfig'];
+export type TournamentConfig = IdlTypes<GenomeSolana>['tournamentConfig'];
+export type Tournament = IdlTypes<GenomeSolana>['tournament'];
+export type Team = IdlTypes<GenomeSolana>['team'];
+export type TokenInfo = IdlTypes<GenomeSolana>['tokenInfo'];
+export type RoleInfo = IdlTypes<GenomeSolana>['roleInfo'];
+export type Role = IdlTypes<GenomeSolana>['role'];
+export type FinishMetaData = IdlTypes<GenomeSolana>['finishMetaData'];
 
 /**
  * Make object pretty for logging
@@ -57,67 +65,47 @@ export function prettify(obj: any): string {
     return JSON.stringify(prettyObj, null, 2);
 }
 
-export async function getSingleConfig() {
+export async function getSingleConfig(): Promise<GenomeSingleConfig> {
     const configPda = await getGenomePda([GENOME_SINGLE_CONFIG]);
     const config = await PROGRAM.account.genomeSingleConfig.fetch(configPda);
-    return {
-        admin: config.admin,
-        verifierAddresses: config.verifierAddresses,
-        consensusRate: config.consensusRate,
-        tournamentNonce: config.tournamentNonce,
-        platformFee: config.platformFee,
-        platformWallet: config.platformWallet,
-        falsePrecision: config.falsePrecision,
-        minTeams: config.minTeams,
-        maxTeams: config.maxTeams,
-        maxOrganizerFee: config.maxOrganizerFee,
-        nomeMint: config.nomeMint,
-    };
+    return config
 }
 
-export async function getTokenInfo(assetMint: PublicKey) {
+export async function getTokenInfo(assetMint: PublicKey): Promise<TokenInfo>  {
     const tokenPda = await getGenomePda([TOKEN, assetMint.toBuffer()]);
     const tokenInfo = await PROGRAM.account.tokenInfo.fetch(tokenPda);
-    return {
-        assetMint: tokenInfo.assetMint,
-        minSponsorPool: tokenInfo.minSponsorPool,
-        minEntryFee: tokenInfo.minEntryFee,
-    };
+    return tokenInfo;
 }
 
-export async function getUserRole(user: PublicKey) {
+export async function getRoleInfo(user: PublicKey): Promise<RoleInfo>  {
     const program = getProgram();
     const rolePda = await getGenomePda([ROLE, user.toBuffer()]);
-    const userRole = await program.account.roleInfo.fetch(rolePda);
-    return userRole.roles;
+    const roleInfo = await program.account.roleInfo.fetch(rolePda);
+    return roleInfo;
 }
 
-export async function getTournament(id: number) {
+export async function getTournament(id: number): Promise<Tournament> {
     const idBuffer = Buffer.alloc(4);
     idBuffer.writeUInt32LE(id, 0);
     const tournamentPda = await getGenomePda([TOURNAMENT, idBuffer]);
     const tournament = await PROGRAM.account.tournament.fetch(tournamentPda);
-    return {
-        id: tournament.id,
-        config: tournament.config,
-        status: tournament.status,
-        organizer: tournament.organizer,
-        teamCount: tournament.teamCount,
-        tournamentPda: tournamentPda
-    };
+    return tournament;
 }
 
-export async function getTeam(tournamentId: number, captain: PublicKey) {
+export async function getTeam(tournamentId: number, captain: PublicKey): Promise<Team> {
     const idBuffer = Buffer.alloc(4);
     idBuffer.writeUInt32LE(tournamentId, 0);
     const teamPda = await getGenomePda([TEAM, idBuffer, captain.toBuffer()]);
     const team = await PROGRAM.account.team.fetch(teamPda);
-    return {
-        captain: team.captain,
-        participants: team.participants,
-        teamSize: team.teamSize,
-        completed: team.completed
-    };
+    return team;
+}
+
+export async function getFinishInfo(tournamentId: number): Promise<FinishMetaData> {
+    const idBuffer = Buffer.alloc(4);
+    idBuffer.writeUInt32LE(tournamentId, 0);
+    const finishPda = await getGenomePda([FINISH, idBuffer]);
+    const finishMetaData = await PROGRAM.account.finishMetaData.fetch(finishPda);
+    return finishMetaData;
 }
 
 export async function getAtaInfo(
@@ -132,9 +120,8 @@ export async function getAtaInfo(
         ASSOCIATED_TOKEN_PROGRAM_ID
     );
 
-    const provider = getProvider();
     return getAccount(
-        provider.connection,
+        getProvider().connection,
         prizePoolAta,
         undefined,
         TOKEN_PROGRAM_ID
@@ -164,12 +151,6 @@ export function getProvider() {
     const provider = AnchorProvider.env();
     setProvider(provider);
     return provider;
-}
-
-export function getConstant(name: string): Uint8Array {
-    return JSON.parse(
-        PROGRAM.idl.constants.find((obj) => obj.name == name)!.value
-    );
 }
 
 export function parseRole(roleArg: string): Role {
@@ -207,4 +188,10 @@ async function airdrop(address: PublicKey, sols: number) {
         blockhash,
         lastValidBlockHeight,
     });
+}
+
+function getConstant(name: string): Uint8Array {
+    return JSON.parse(
+        PROGRAM.idl.constants.find((obj) => obj.name == name)!.value
+    );
 }

@@ -8,6 +8,7 @@ use crate::{
 
 pub fn handle_cancel_tournament(ctx: Context<CancelTournament>, tournament_id: u32) -> Result<()> {
     let config = &ctx.accounts.config;
+    let role_info_ver = &mut ctx.accounts.role_info_ver;
     let consensus = &mut ctx.accounts.consensus;
     let tournament = &mut ctx.accounts.tournament;
 
@@ -21,12 +22,12 @@ pub fn handle_cancel_tournament(ctx: Context<CancelTournament>, tournament_id: u
     require!((consensus.cancel_votes >> verifier_index) & 1 == 0, GenomeError::AlreadyVoted);
 
     consensus.cancel_votes |= 1 << verifier_index;
+    role_info_ver.claim += config.verifier_fee;
 
-    let votes = consensus.cancel_votes.count_ones();
-    let total = config.verifier_addresses.len();
-    let ratio = (votes as f64 / total as f64) * 100.0;
+    let votes = consensus.cancel_votes.count_ones() as u64;
+    let total = config.verifier_addresses.len() as u64;
 
-    if ratio >= config.consensus_rate {
+    if votes * 10000 >= total * config.consensus_rate {
         let role_info_org = &mut ctx.accounts.role_info_org;
         role_info_org.claim += config.platform_fee;
         tournament.status = TournamentStatus::Canceled;

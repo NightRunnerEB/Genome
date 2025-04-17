@@ -26,11 +26,10 @@ pub fn handle_start_tournament(ctx: Context<StartTournament>, tournament_id: u32
     consensus.start_votes |= 1 << verifier_index;
     role_info.claim += config.verifier_fee;
 
-    let votes = consensus.start_votes.count_ones();
-    let total = config.verifier_addresses.len();
-    let ratio = (votes as f64 / total as f64) * 100.0;
+    let votes = consensus.start_votes.count_ones() as u64;
+    let total = config.verifier_addresses.len() as u64;
 
-    if ratio >= config.consensus_rate {
+    if votes * 10000 >= total * config.consensus_rate {
         tournament.status = TournamentStatus::Started;
 
         emit!(TournamentStarted { tournament_id });

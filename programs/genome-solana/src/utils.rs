@@ -11,18 +11,19 @@ use crate::{
 
 const MAX_MEMORY: usize = 8156;
 
-pub fn calculate_bloom_memory(participants_count: u16, false_precision: f64) -> Result<usize> {
+pub fn calculate_bloom_memory(participants_count: u16, false_precision: u64) -> Result<usize> {
     let overhead: usize = 76;
-    let num_slices = ((1.0_f64 / false_precision).log2()).ceil();
+    let fp = false_precision as f64 / 1000000f64;
+    let num_slices = ((1f64 / fp).log2()).ceil();
     let ln2 = std::f64::consts::LN_2;
     let max_participants_count =
-        (((MAX_MEMORY - overhead) as f64 * 8.0 * ln2) / num_slices).floor() as u16;
+        (((MAX_MEMORY - overhead) as f64 * 8f64 * ln2) / num_slices).floor() as u16;
     msg!("Max participants count: {}", max_participants_count);
     require!(participants_count <= max_participants_count, GenomeError::MaxPlayersExceeded);
 
     let slice_len_bits = (participants_count as f64 / 2f64.ln()).ceil();
     let total_bits = num_slices * slice_len_bits;
-    let buffer_bytes = ((total_bits + 7.0) / 8.0) as usize;
+    let buffer_bytes = ((total_bits + 7f64) / 8f64) as usize;
     let memory = overhead + buffer_bytes;
     Ok(memory)
 }
@@ -49,11 +50,12 @@ pub fn validate_params(
 
 pub fn initialize_bloom_filter(
     tournament_config: &TournamentConfig,
-    false_precision: &f64,
+    false_precision: &u64,
     bloom_filter: &mut Account<BloomFilter>,
 ) -> Result<()> {
+    let fp = *false_precision as f64 / 1000000.0;
     let items_count = tournament_config.max_teams * tournament_config.team_size;
-    let bloom = Bloom::new(*false_precision, items_count as usize);
+    let bloom = Bloom::new(fp, items_count as usize);
     bloom_filter.data = bincode::serialize(&bloom).expect("Failed to serialize bloom filter");
     Ok(())
 }

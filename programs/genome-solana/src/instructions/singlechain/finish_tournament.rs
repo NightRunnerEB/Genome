@@ -12,6 +12,7 @@ use crate::{
 pub fn handle_finish_tournament(ctx: Context<FinishTournament>, tournament_id: u32, captain_winner: Pubkey) -> Result<()> {
     let config = &ctx.accounts.config;
     let consensus = &mut ctx.accounts.consensus;
+    let role_info = &mut ctx.accounts.role_info;
     let tournament = &mut ctx.accounts.tournament;
     let finish_meta_data = &mut ctx.accounts.finish_meta_data;
 
@@ -26,12 +27,12 @@ pub fn handle_finish_tournament(ctx: Context<FinishTournament>, tournament_id: u
 
     consensus.finish_votes |= 1 << verifier_index;
     finish_meta_data.finish_votes.push(captain_winner);
+    role_info.claim += config.verifier_fee;
 
-    let votes = consensus.finish_votes.count_ones();
-    let total = config.verifier_addresses.len();
-    let ratio = (votes as f64 / total as f64) * 100.0;
+    let votes = consensus.finish_votes.count_ones() as u64;
+    let total = config.verifier_addresses.len() as u64;
 
-    if ratio >= config.consensus_rate {
+    if votes * 10000 >= total * config.consensus_rate {
         let mut counts = HashMap::new();
         for pk in finish_meta_data.finish_votes.iter() {
             *counts.entry(pk).or_insert(0) += 1;
@@ -49,7 +50,7 @@ pub fn handle_finish_tournament(ctx: Context<FinishTournament>, tournament_id: u
         let signer = &[&tournament_seeds[..]];
 
         let reward_pool = tournament.config.sponsor_pool + tournament.config.entry_fee * tournament.team_count as u64;
-        let organizer_reward = (reward_pool as f64 * tournament.config.organizer_fee as f64 / 100.0) as u64;
+        let organizer_reward = (reward_pool as f64 * (tournament.config.organizer_fee as f64 / 10000f64)) as u64;
         let reward_per_winner = (reward_pool - organizer_reward) / tournament.config.team_size as u64;
 
         let accounts = TransferChecked {
@@ -69,7 +70,7 @@ pub fn handle_finish_tournament(ctx: Context<FinishTournament>, tournament_id: u
         finish_meta_data.reward = reward_per_winner;
 
         tournament.status = TournamentStatus::Finished;
-        emit!(TournamentFinished { tournament_id });
+        emit!(TournamentFinished { tournament_id }); ДОБАВЬ КАПИТАНА КОМАНДЫ
     }
 
     Ok(())

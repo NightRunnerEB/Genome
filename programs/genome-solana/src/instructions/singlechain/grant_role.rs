@@ -9,11 +9,14 @@ use crate::{
     GENOME_ROOT, ROLE, SINGLE_CONFIG,
 };
 
+const MAX_VERIFIERS_COUNT: usize = 64;
+
 pub(crate) fn handle_grant_role(ctx: Context<GrantRole>, role: Role) -> Result<()> {
     require!(!ctx.accounts.role_info.roles.contains(&role), GenomeError::RoleAlreadyGranted,);
 
     if role == Role::Verifier {
         let config = &mut ctx.accounts.config;
+        require!(config.verifier_addresses.len() != MAX_VERIFIERS_COUNT, GenomeError::MaxVerifiersExceeded);
         let current_len = config.verifier_addresses.len();
         let new_len = current_len + 1;
         let new_space = GenomeSingleConfig::DISCRIMINATOR.len()

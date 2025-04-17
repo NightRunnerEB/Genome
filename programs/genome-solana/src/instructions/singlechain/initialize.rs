@@ -25,27 +25,23 @@ pub(crate) struct Initialize<'info> {
     deployer: Signer<'info>,
 
     #[account(
-            init,
-            payer = deployer,
-            space = GenomeSingleConfig::DISCRIMINATOR.len() + GenomeSingleConfig::INIT_SPACE,
-            seeds = [GENOME_ROOT, SINGLE_CONFIG],
-            bump
-        )]
+        init,
+        payer = deployer,
+        space = GenomeSingleConfig::DISCRIMINATOR.len() + GenomeSingleConfig::INIT_SPACE,
+        seeds = [GENOME_ROOT, SINGLE_CONFIG],
+        bump
+    )]
     config: Account<'info, GenomeSingleConfig>,
 
-    /// CHECKED
-    #[account(
-            seeds = [GENOME_ROOT, PLATFORM],
-            bump
-        )]
+    /// CHECK: must be a valid platform wallet to allow future income withdrawals   
+    #[account(seeds = [GENOME_ROOT, PLATFORM], bump)]
     platform_wallet: UncheckedAccount<'info>,
 
     #[account(
-            init,
-            payer = deployer,
-            associated_token::mint = nome_mint,
-            associated_token::authority = platform_wallet,
-        )]
+        init,payer = deployer, 
+        associated_token::mint = nome_mint, 
+        associated_token::authority = platform_wallet
+    )]
     platform_pool_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     nome_mint: InterfaceAccount<'info, Mint>,

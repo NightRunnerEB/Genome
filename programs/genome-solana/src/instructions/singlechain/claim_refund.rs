@@ -10,11 +10,17 @@ use crate::{
     GENOME_ROOT, TEAM, TOURNAMENT,
 };
 
-pub fn handle_claim_refund(ctx: Context<ClaimRefund>, tournament_id: u32, _captain: Pubkey) -> Result<()> {
+pub fn handle_claim_refund(
+    ctx: Context<ClaimRefund>,
+    tournament_id: u32,
+    _captain: Pubkey,
+) -> Result<()> {
     let tournament = &ctx.accounts.tournament;
     let team = &mut ctx.accounts.team;
 
-    if tournament.status != TournamentStatus::Canceled && team.completed {
+    if tournament.status == TournamentStatus::New
+        || (tournament.status != TournamentStatus::Canceled && team.completed)
+    {
         return Err(GenomeError::InvalidStatus.into());
     }
 

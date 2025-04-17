@@ -2,11 +2,14 @@ use anchor_lang::prelude::*;
 
 use crate::{data::GenomeSingleConfig, error::GenomeError, GENOME_ROOT, SINGLE_CONFIG};
 
+const MIN_PRECISION: u64 = 0;
+const MAX_PRECISION: u64 = 100000000;
+
 pub(crate) fn handle_set_bloom_precision(
     ctx: Context<SetBloomPrecision>,
-    new_precision: f64,
+    new_precision: u64,
 ) -> Result<()> {
-    require!(new_precision > 0f64 && new_precision <= 100f64, GenomeError::InvalidPrecision);
+    require!(new_precision > MIN_PRECISION && new_precision <= MAX_PRECISION, GenomeError::InvalidPrecision);
 
     let config = &mut ctx.accounts.config;
     config.false_precision = new_precision;

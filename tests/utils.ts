@@ -1,11 +1,10 @@
-import { BN } from "@coral-xyz/anchor";
 import { approveChecked, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccount, createMint, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
+import { getKeypairFromFile } from "@solana-developers/helpers";
 import { AnchorError } from "@coral-xyz/anchor";
 import { assert } from "chai";
 
 import { getProvider } from "../common/utils";
-import { getKeypairFromFile } from "@solana-developers/helpers";
 
 const DEPLOYER_PATH = "./keys/deployer.json";
 const ADMIN_PATH = "./keys/admin.json";
@@ -80,11 +79,11 @@ export async function getKeyPairs(): Promise<{
 }
 
 export async function createGenomeMint(): Promise<void> {
-  let { admin, organizer, operator, nome } = await getKeyPairs();
-
+  const { admin, operator, organizer, verifier1, verifier2, verifier3, nome } = await getKeyPairs();
+  const recipients = [operator, organizer, admin, verifier1, verifier2, verifier3];
   const connection = getProvider().connection;
 
-  const assetMint = await createMint(
+  const nomeMint = await createMint(
     connection,
     admin,
     admin.publicKey,
@@ -94,42 +93,31 @@ export async function createGenomeMint(): Promise<void> {
     undefined,
     TOKEN_PROGRAM_ID
   );
-  console.log("Genome mint:", assetMint.toBase58());
+  console.log("Genome mint:", nomeMint.toBase58());
 
-  const organizerAta = await createAssociatedTokenAccount(
-    connection,
-    organizer,
-    nome.publicKey,
-    organizer.publicKey,
-    undefined,
-    TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-  console.log("Organizer genome ata:", organizerAta.toBase58());
+  for (const recipient of recipients) {
+    const ata = await createAssociatedTokenAccount(
+      connection,
+      recipient,
+      nomeMint,
+      recipient.publicKey,
+      undefined,
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
 
-  const operatorAta = await createAssociatedTokenAccount(
-    connection,
-    operator,
-    nome.publicKey,
-    operator.publicKey,
-    undefined,
-    TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-  console.log("Operator genome ata:", operatorAta.toBase58());
-
-  let tx = await mintTo(
-    connection,
-    organizer,
-    nome.publicKey,
-    organizerAta,
-    admin,
-    100000000000,
-    [],
-    {},
-    TOKEN_PROGRAM_ID
-  );
-  console.log("Mint to organizer tx:", tx)
+    await mintTo(
+      connection,
+      recipient,
+      nomeMint,
+      ata,
+      admin,
+      100000000000,
+      [],
+      {},
+      TOKEN_PROGRAM_ID
+    );
+  }
 }
 
 export async function createTournamentMint(): Promise<{

@@ -8,7 +8,7 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_PROGRAM_I
 
 import { GenomeSolana } from "../target/types/genome_solana";
 
-import { BLOOM, CONSENSUS, FINISH, GENOME_OMNI_CONFIG, GENOME_SINGLE_CONFIG, getConstant, getGenomePda, getProgram, getSingleConfig, getTournament, PLATFORM, ROLE, TEAM, TOKEN, TOURNAMENT } from "./utils";
+import { BLOOM, CONSENSUS, FINISH, GENOME_OMNI_CONFIG, GENOME_SINGLE_CONFIG, getGenomePda, getProgram, getSingleConfig, getTournament, PLATFORM, ROLE, TEAM, TOKEN, TOURNAMENT } from "./utils";
 
 export class IxBuilder {
   public program: Program<GenomeSolana>;
@@ -237,7 +237,7 @@ export class IxBuilder {
 
   async setBloomPrecisionIx(
     admin: PublicKey,
-    newPrecision: number
+    newPrecision: BN
   ): Promise<TransactionInstruction> {
     return this.program.methods
       .setBloomPrecision(newPrecision)
@@ -422,7 +422,7 @@ export class IxBuilder {
     const sponsorAta = await getAssociatedTokenAddress(assetMint, sponsor, true);
     const rewardPoolAta = await getAssociatedTokenAddress(assetMint, tournamentPda, true);
     return this.program.methods
-      .claimSponsorRefund()
+      .claimSponsorRefund(tournamentId)
       .accountsStrict({
         sponsor,
         tournament: tournamentPda,
