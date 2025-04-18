@@ -8,7 +8,7 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_PROGRAM_I
 
 import { GenomeSolana } from "../target/types/genome_solana";
 
-import { BLOOM, CONSENSUS, FINISH, GENOME_OMNI_CONFIG, GENOME_SINGLE_CONFIG, getGenomePda, getProgram, getSingleConfig, getTournament, PLATFORM, ROLE, TEAM, TOKEN, TOURNAMENT } from "./utils";
+import { BLOOM, CONSENSUS, FINISH, GENOME_OMNI_CONFIG, GENOME_SINGLE_CONFIG, getGenomePda, getProgram, getSingleConfig, getTournament, PLATFORM, Role, ROLE, roleToSeed, TEAM, TOKEN, TOURNAMENT } from "./utils";
 
 export class IxBuilder {
   public program: Program<GenomeSolana>;
@@ -106,6 +106,7 @@ export class IxBuilder {
     const consensusPda = await getGenomePda([this.consensusSeed, idBuffer])
     const bloomPda = await getGenomePda([this.bloomSeed, idBuffer]);
     const rolePda = await getGenomePda([this.roleSeed, organizer.toBuffer()]);
+    const verifierListPda = await getGenomePda([this.roleSeed, roleToSeed({ verifier: {} })]);
     const tokenPda = await getGenomePda([this.tokenSeed, assetMint.toBuffer()]);
     const rewardPoolAta = await getAssociatedTokenAddress(assetMint, tournamentPda, true);
     const sponsorAta = await getAssociatedTokenAddress(assetMint, sponsor, true);
@@ -119,6 +120,7 @@ export class IxBuilder {
         sponsor,
         config: configPda,
         roleInfo: rolePda,
+        verifierList: verifierListPda,
         tournament: tournamentPda,
         consensus: consensusPda,
         finishMetaData: finishMetaDataPda,
@@ -141,14 +143,15 @@ export class IxBuilder {
   async grantRoleIx(
     admin: PublicKey,
     user: PublicKey,
-    params: any
+    role: Role
   ): Promise<TransactionInstruction> {
     return this.program.methods
-      .grantRole(params)
+      .grantRole(role)
       .accountsStrict({
         admin,
         user,
         roleInfo: await getGenomePda([this.roleSeed, user.toBuffer()]),
+        roleList: await getGenomePda([this.roleSeed, roleToSeed(role)]),
         config: await getGenomePda([this.singleConfigSeed]),
         systemProgram: SystemProgram.programId,
       })
@@ -158,7 +161,7 @@ export class IxBuilder {
   async revokeRoleIx(
     admin: PublicKey,
     user: PublicKey,
-    role: any
+    role: Role
   ): Promise<TransactionInstruction> {
     return this.program.methods
       .revokeRole(role)
@@ -166,6 +169,7 @@ export class IxBuilder {
         admin,
         user,
         roleInfo: await getGenomePda([this.roleSeed, user.toBuffer()]),
+        roleList: await getGenomePda([this.roleSeed, roleToSeed(role)]),
         config: await getGenomePda([this.singleConfigSeed]),
       })
       .instruction();
@@ -258,11 +262,13 @@ export class IxBuilder {
     const tournamentPda = await getGenomePda([this.tournamentSeed, idBuffer]);
     const consensusPda = await getGenomePda([this.consensusSeed, idBuffer]);
     const rolePda = await getGenomePda([this.roleSeed, verifier.toBuffer()]);
+    const verifierListPda = await getGenomePda([this.roleSeed, roleToSeed({ verifier: {} })]);
     return this.program.methods
       .startTournament(tournamentId)
       .accountsStrict({
         verifier,
         roleInfo: rolePda,
+        verifierList: verifierListPda,
         config: configPda,
         consensus: consensusPda,
         tournament: tournamentPda,
@@ -282,11 +288,13 @@ export class IxBuilder {
     const roleVerPda = await getGenomePda([this.roleSeed, verifier.toBuffer()]);
     const tournament = await getTournament(tournamentId);
     const roleOrgPda = await getGenomePda([this.roleSeed, tournament.organizer.toBuffer()]);
+    const verifierListPda = await getGenomePda([this.roleSeed, roleToSeed({ verifier: {} })]);
     return this.program.methods
       .cancelTournament(tournamentId)
       .accountsStrict({
         verifier,
         roleInfoVer: roleVerPda,
+        verifierList: verifierListPda,
         config: configPda,
         consensus: consensusPda,
         tournament: tournamentPda,
@@ -310,6 +318,7 @@ export class IxBuilder {
     const rewardPoolAta = await getAssociatedTokenAddress(tournament.config.assetMint, tournamentPda, true);
     const organizerAta = await getAssociatedTokenAddress(tournament.config.assetMint, tournament.organizer, true);
     const rolePda = await getGenomePda([this.roleSeed, verifier.toBuffer()]);
+    const verifierListPda = await getGenomePda([this.roleSeed, roleToSeed({ verifier: {} })]);
     const finishMetaDataPda = await getGenomePda([this.finishSeed, idBuffer]);
     return this.program.methods
       .finishTournament(tournamentId, winner)
@@ -317,6 +326,7 @@ export class IxBuilder {
         verifier,
         organizer: tournament.organizer,
         roleInfo: rolePda,
+        verifierList: verifierListPda,
         config: configPda,
         consensus: consensusPda,
         tournament: tournamentPda,

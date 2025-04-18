@@ -7,11 +7,14 @@ skip-lint = false
 [programs.localnet]
 genome_solana = "572G4eB1NNusfqGj3DVTZw1ZooweLBiaA3ko7fLhSsV2"
 
+[programs.devnet]
+genome_solana = "8h5CxhC3UJXcM2ShrmHYPu7qUYxBgUTajjH2LQNGPFQG"
+
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "devnet"
 wallet = "keys/admin.json"
 
 [scripts]
@@ -25,9 +28,7 @@ test-single-all = "sh scripts/run_tests_single.sh && pkill -9 solana-test-valida
 test-all = "anchor run test-ci && pkill -9 solana-test-validator"
 test-ci = "sh scripts/run_tests.sh"
 initialize-omni = "yarn run ts-node migrations/omnichain/initializeOmnichain.ts keys/deployer.json"
-set-bridge-fee = "yarn run ts-node migrations/omnichain/setBridgeFee.ts keys/admin.json"
 initialize-single = "yarn run ts-node migrations/singlechain/initializeSinglechain.ts keys/deployer.json 6MurAyX9MiuLV8ufEeAN26w1KTbT1yDKCAcQF1bHQHCx"
-create-ata = "yarn run ts-node migrations/singlechain/createAta.ts"
 grant-role = "yarn run ts-node migrations/singlechain/grantRole.ts keys/admin.json"
 revoke-role = "yarn run ts-node migrations/singlechain/revokeRole.ts keys/admin.json"
 approve-token = "yarn run ts-node migrations/singlechain/approveToken.ts"

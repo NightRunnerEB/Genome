@@ -13,8 +13,6 @@ pub(crate) struct GenomeOmniConfig {
 #[derive(InitSpace)]
 pub(crate) struct GenomeSingleConfig {
     pub(crate) admin: Pubkey,
-    #[max_len(0)]
-    pub(crate) verifier_addresses: Vec<Pubkey>,
     pub(crate) platform_wallet: Pubkey,
     pub(crate) nome_mint: Pubkey,
     pub(crate) verifier_fee: u64,
@@ -88,26 +86,45 @@ pub(crate) struct TokenInfo {
 pub(crate) struct RoleInfo {
     #[max_len(3)]
     pub(crate) roles: Vec<Role>,
-    pub(crate) claim: u64
+    pub(crate) claim: u64,
 }
 
-#[derive(PartialEq, AnchorSerialize, AnchorDeserialize, Clone, InitSpace, Default)]
+#[derive(PartialEq, AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub(crate) enum Role {
-    #[default]
-    None,
     Operator,
     Verifier,
     Organizer,
+}
+
+impl Role {
+    pub fn to_seed(&self) -> &'static [u8] {
+        match self {
+            Role::Operator => b"operator",
+            Role::Verifier => b"verifier",
+            Role::Organizer => b"organizer",
+        }
+    }
+}
+
+#[account]
+#[derive(InitSpace)]
+pub(crate) struct RoleList {
+    #[max_len(0)]
+    pub(crate) accounts: Vec<Pubkey>,
+}
+
+impl RoleList {
+    pub(crate) const MAX_VERIFIERS_COUNT: usize = 64;
 }
 
 #[account]
 #[derive(InitSpace)]
 pub(crate) struct Consensus {
     pub(crate) tournament_id: u32,
-    pub(crate) start_votes: u32,
-    pub(crate) cancel_votes: u32,
-    pub(crate) finish_votes: u32,
-} 
+    pub(crate) start_votes: u64,
+    pub(crate) cancel_votes: u64,
+    pub(crate) finish_votes: u64,
+}
 
 #[account]
 pub(crate) struct BloomFilter {

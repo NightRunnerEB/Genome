@@ -24,8 +24,6 @@ pub(crate) enum GenomeError {
     InvalidNome,
     #[msg("Invalid tournament mint")]
     InvalidToken,
-    #[msg("The list of verifiers must be empty")]
-    InvalidConfig,
     #[msg("Role already granted")]
     RoleAlreadyGranted,
     #[msg("Role not found")]
@@ -36,6 +34,8 @@ pub(crate) enum GenomeError {
     NotAllowed,
     #[msg("Invalid tournament status")]
     InvalidStatus,
+    #[msg("Invalid Pda")]
+    InvalidPda,
     #[msg("Participant already registered")]
     AlreadyRegistered,
     #[msg("Captain is not winner")]

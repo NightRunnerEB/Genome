@@ -5,7 +5,13 @@ use anchor_spl::{
 };
 
 use crate::{
-    data::{BloomFilter, Consensus, FinishMetaData, GenomeSingleConfig, Role, RoleInfo, TokenInfo, Tournament, TournamentConfig}, error::GenomeError, utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params}, BLOOM, CONSENSUS, FINISH, GENOME_ROOT, ROLE, SINGLE_CONFIG, TOKEN, TOURNAMENT
+    data::{
+        BloomFilter, Consensus, FinishMetaData, GenomeSingleConfig, Role, RoleInfo, RoleList,
+        TokenInfo, Tournament, TournamentConfig,
+    },
+    error::GenomeError,
+    utils::{calculate_bloom_memory, initialize_bloom_filter, validate_params},
+    BLOOM, CONSENSUS, FINISH, GENOME_ROOT, ROLE, SINGLE_CONFIG, TOKEN, TOURNAMENT,
 };
 
 pub(crate) fn handle_create_tournament(
@@ -62,7 +68,7 @@ pub(crate) struct CreateTournament<'info> {
     sponsor: SystemAccount<'info>,
 
     #[account(mut, seeds = [GENOME_ROOT, SINGLE_CONFIG], bump)]
-    pub config: Account<'info, GenomeSingleConfig>,
+    config: Account<'info, GenomeSingleConfig>,
 
     #[account(
         seeds = [GENOME_ROOT, ROLE, organizer.key().as_ref()],
@@ -70,6 +76,12 @@ pub(crate) struct CreateTournament<'info> {
         constraint = role_info.roles.contains(&Role::Organizer) @ GenomeError::NotAllowed
     )]
     role_info: Account<'info, RoleInfo>,
+
+    #[account(
+        seeds = [GENOME_ROOT, ROLE, Role::Verifier.to_seed()],
+        bump,
+    )]
+    verifier_list: Account<'info, RoleList>,
 
     #[account(
         init,
@@ -84,16 +96,16 @@ pub(crate) struct CreateTournament<'info> {
         init,
         payer = organizer,
         space = Consensus::DISCRIMINATOR.len() + Consensus::INIT_SPACE,
-        seeds = [GENOME_ROOT, CONSENSUS, config.tournament_nonce.to_le_bytes().as_ref()], 
+        seeds = [GENOME_ROOT, CONSENSUS, config.tournament_nonce.to_le_bytes().as_ref()],
         bump
     )]
     pub consensus: Account<'info, Consensus>,
 
     #[account(
-        init, 
+        init,
         payer = organizer,
-        space = FinishMetaData::DISCRIMINATOR.len() + FinishMetaData::INIT_SPACE + PUBKEY_BYTES * config.verifier_addresses.len(),
-        seeds = [GENOME_ROOT, FINISH, config.tournament_nonce.to_le_bytes().as_ref()], 
+        space = FinishMetaData::DISCRIMINATOR.len() + FinishMetaData::INIT_SPACE + PUBKEY_BYTES * verifier_list.accounts.len(),
+        seeds = [GENOME_ROOT, FINISH, config.tournament_nonce.to_le_bytes().as_ref()],
         bump
     )]
     finish_meta_data: Account<'info, FinishMetaData>,
@@ -108,7 +120,7 @@ pub(crate) struct CreateTournament<'info> {
         bump,
     )]
     token_info: Account<'info, TokenInfo>,
-    
+
     #[account(
         init,
         payer = organizer,

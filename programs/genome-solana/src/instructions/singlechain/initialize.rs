@@ -12,7 +12,6 @@ pub(crate) fn handle_initialize_single(
     ctx: Context<Initialize>,
     config_params: GenomeSingleConfig,
 ) -> Result<()> {
-    require!(config_params.verifier_addresses.is_empty(), GenomeError::InvalidConfig);
     ctx.accounts.config.set_inner(config_params);
     ctx.accounts.config.platform_wallet = ctx.accounts.platform_wallet.key();
     Ok(())
@@ -38,8 +37,9 @@ pub(crate) struct Initialize<'info> {
     platform_wallet: UncheckedAccount<'info>,
 
     #[account(
-        init,payer = deployer, 
-        associated_token::mint = nome_mint, 
+        init,
+        payer = deployer,
+        associated_token::mint = nome_mint,
         associated_token::authority = platform_wallet
     )]
     platform_pool_ata: Box<InterfaceAccount<'info, TokenAccount>>,

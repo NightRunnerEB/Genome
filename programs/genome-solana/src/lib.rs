@@ -114,7 +114,11 @@ mod genome_solana {
     }
 
     #[instruction(discriminator = b"clmrewrd")]
-    pub fn claim_reward(ctx: Context<ClaimReward>, tournament_id: u32, captain: Pubkey) -> Result<()> {
+    pub fn claim_reward(
+        ctx: Context<ClaimReward>,
+        tournament_id: u32,
+        captain: Pubkey,
+    ) -> Result<()> {
         handle_claim_reward(ctx, tournament_id, captain)
     }
 
@@ -124,12 +128,19 @@ mod genome_solana {
     }
 
     #[instruction(discriminator = b"clmspfnd")]
-    pub fn claim_sponsor_refund(ctx: Context<ClaimSponsorRefund>, tournament_id: u32) -> Result<()> {
+    pub fn claim_sponsor_refund(
+        ctx: Context<ClaimSponsorRefund>,
+        tournament_id: u32,
+    ) -> Result<()> {
         handle_claim_sponsor_funds(ctx, tournament_id)
     }
 
     #[instruction(discriminator = b"clmrefnd")]
-    pub fn claim_refund(ctx: Context<ClaimRefund>, tournament_id: u32, captain: Pubkey) -> Result<()> {
+    pub fn claim_refund(
+        ctx: Context<ClaimRefund>,
+        tournament_id: u32,
+        captain: Pubkey,
+    ) -> Result<()> {
         handle_claim_refund(ctx, tournament_id, captain)
     }
 

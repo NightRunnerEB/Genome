@@ -40,6 +40,7 @@ export type Tournament = IdlTypes<GenomeSolana>['tournament'];
 export type Team = IdlTypes<GenomeSolana>['team'];
 export type TokenInfo = IdlTypes<GenomeSolana>['tokenInfo'];
 export type RoleInfo = IdlTypes<GenomeSolana>['roleInfo'];
+export type RoleList = IdlTypes<GenomeSolana>['roleList'];
 export type Role = IdlTypes<GenomeSolana>['role'];
 export type FinishMetaData = IdlTypes<GenomeSolana>['finishMetaData'];
 
@@ -164,6 +165,18 @@ export function parseRole(roleArg: string): Role {
         default:
             throw new Error("Invalid role. Use one of these: 'verifier', 'operator', 'organizer'.");
     }
+}
+
+export function roleToSeed(role: Role): Buffer {
+    if ("operator" in role) {
+        return Buffer.from("operator");
+    } else if ("verifier" in role) {
+        return Buffer.from("verifier");
+    } else if ("organizer" in role) {
+        return Buffer.from("organizer");
+    }
+
+    throw new Error("Invalid role");
 }
 
 export async function buildAndSendTx(

@@ -24,7 +24,7 @@ pub(crate) struct BanToken<'info> {
         constraint = role_info.roles.contains(&Role::Operator) @ GenomeError::NotAllowed
     )]
     role_info: Account<'info, RoleInfo>,
-    
+
     #[account(
         mut,
         seeds = [GENOME_ROOT, TOKEN, asset_mint.key().as_ref()],

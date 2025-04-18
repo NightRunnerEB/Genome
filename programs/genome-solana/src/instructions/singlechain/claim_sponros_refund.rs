@@ -9,9 +9,15 @@ use crate::{
     GENOME_ROOT, TOURNAMENT,
 };
 
-pub fn handle_claim_sponsor_funds(ctx: Context<ClaimSponsorRefund>, tournament_id: u32) -> Result<()> {
-    require!(ctx.accounts.reward_pool_ata.amount >= ctx.accounts.tournament.config.sponsor_pool, GenomeError::InsufficientFunds);
-    
+pub fn handle_claim_sponsor_funds(
+    ctx: Context<ClaimSponsorRefund>,
+    tournament_id: u32,
+) -> Result<()> {
+    require!(
+        ctx.accounts.reward_pool_ata.amount >= ctx.accounts.tournament.config.sponsor_pool,
+        GenomeError::InsufficientFunds
+    );
+
     let tournament_seeds = &[
         GENOME_ROOT,
         TOURNAMENT,
@@ -19,7 +25,7 @@ pub fn handle_claim_sponsor_funds(ctx: Context<ClaimSponsorRefund>, tournament_i
         &[ctx.bumps.tournament],
     ];
     let signer = &[&tournament_seeds[..]];
-    
+
     let transfer_accounts = TransferChecked {
         from: ctx.accounts.reward_pool_ata.to_account_info(),
         to: ctx.accounts.sponsor_ata.to_account_info(),
@@ -31,7 +37,7 @@ pub fn handle_claim_sponsor_funds(ctx: Context<ClaimSponsorRefund>, tournament_i
         transfer_accounts,
         signer,
     );
-    
+
     transfer_checked(
         cpi_ctx,
         ctx.accounts.tournament.config.sponsor_pool,
@@ -51,9 +57,9 @@ pub struct ClaimSponsorRefund<'info> {
     pub sponsor: Signer<'info>,
 
     #[account(
-        mut, 
+        mut,
         seeds = [GENOME_ROOT, TOURNAMENT, tournament_id.to_le_bytes().as_ref()],
-        constraint = tournament.status == TournamentStatus::Canceled @ GenomeError::InvalidStatus, 
+        constraint = tournament.status == TournamentStatus::Canceled @ GenomeError::InvalidStatus,
         bump)]
     pub tournament: Account<'info, Tournament>,
 
@@ -73,6 +79,6 @@ pub struct ClaimSponsorRefund<'info> {
         associated_token::authority = tournament,
     )]
     pub reward_pool_ata: Box<InterfaceAccount<'info, TokenAccount>>,
-    
+
     pub token_program: Interface<'info, TokenInterface>,
 }

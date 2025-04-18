@@ -24,10 +24,9 @@ impl Team {
             captain,
             participants: vec![],
             team_size,
-            completed: false
+            completed: false,
         }
     }
-
 
     pub(crate) fn add_participants_by_captain(&mut self, participants: Vec<Pubkey>) -> Result<()> {
         if self.participants.len() + participants.len() > self.team_size as usize {
@@ -45,7 +44,7 @@ impl Team {
         if self.participants.len() == self.team_size as usize {
             self.completed = true;
         }
-        
+
         Ok(())
     }
 
@@ -84,11 +83,7 @@ impl Team {
         }
 
         if *participant == self.captain {
-            let count = self
-                .participants
-                .iter()
-                .filter(|p| p.paid_by_captain)
-                .count();
+            let count = self.participants.iter().filter(|p| p.paid_by_captain).count();
             return Ok(count);
         }
 

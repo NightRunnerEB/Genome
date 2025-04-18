@@ -12,7 +12,6 @@ const ATTACKER_PATH = "./keys/attacker.json";
 const ORGANIZER_PATH = "./keys/organizer.json";
 const SPONSOR_PATH = "./keys/sponsor.json";
 const TOKEN_PATH = "./keys/token.json";
-const PLATFORM_PATH = "./keys/platform_wallet.json";
 const VERIFIER1_PATH = "./keys/verifier1.json";
 const VERIFIER2_PATH = "./keys/verifier2.json";
 const VERIFIER3_PATH = "./keys/verifier3.json";
@@ -47,7 +46,6 @@ export async function getKeyPairs(): Promise<{
   sponsor: Keypair,
   deployer: Keypair,
   token: Keypair,
-  platform: Keypair,
   verifier1: Keypair,
   verifier2: Keypair,
   verifier3: Keypair,
@@ -64,7 +62,6 @@ export async function getKeyPairs(): Promise<{
   const sponsor = await getKeypairFromFile(SPONSOR_PATH);
   const deployer = await getKeypairFromFile(DEPLOYER_PATH);
   const token = await getKeypairFromFile(TOKEN_PATH);
-  const platform = await getKeypairFromFile(PLATFORM_PATH);
   const verifier1 = await getKeypairFromFile(VERIFIER1_PATH);
   const verifier2 = await getKeypairFromFile(VERIFIER2_PATH);
   const verifier3 = await getKeypairFromFile(VERIFIER3_PATH);
@@ -75,7 +72,7 @@ export async function getKeyPairs(): Promise<{
   const captain1 = await getKeypairFromFile(CAPTAIN1_PATH);
   const captain2 = await getKeypairFromFile(CAPTAIN2_PATH);
 
-  return { attacker, admin, organizer, sponsor, deployer, token, platform, verifier1, verifier2, verifier3, operator, nome, captain1, captain2, participant1, participant2 };
+  return { attacker, admin, organizer, sponsor, deployer, token, verifier1, verifier2, verifier3, operator, nome, captain1, captain2, participant1, participant2 };
 }
 
 export async function createGenomeMint(): Promise<void> {

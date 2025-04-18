@@ -1,16 +1,16 @@
-use anchor_lang::{
-    prelude::*,
-    solana_program::{program::invoke, pubkey::PUBKEY_BYTES, system_instruction},
-};
+use anchor_lang::{prelude::*, solana_program::pubkey::PUBKEY_BYTES};
 
 use crate::{
-    data::{GenomeSingleConfig, Role, RoleInfo},
+    data::{GenomeSingleConfig, Role, RoleInfo, RoleList},
     error::GenomeError,
-    GENOME_ROOT, ROLE, SINGLE_CONFIG,
+    realloc, GENOME_ROOT, ROLE, SINGLE_CONFIG,
 };
 
 pub(crate) fn handle_revoke_role(ctx: Context<RevokeRole>, role: Role) -> Result<()> {
-    let index = ctx
+    let user_key = ctx.accounts.user.key();
+    let role_list = &mut ctx.accounts.role_list;
+
+    let index_role_info = ctx
         .accounts
         .role_info
         .roles
@@ -18,26 +18,24 @@ pub(crate) fn handle_revoke_role(ctx: Context<RevokeRole>, role: Role) -> Result
         .position(|r| *r == role)
         .ok_or(GenomeError::RoleNotFound)?;
 
-    if role == Role::Verifier {
-        let config = &mut ctx.accounts.config;
-        let user_key = ctx.accounts.user.key();
-        let current_len = config.verifier_addresses.len();
-        let new_len = current_len - 1;
-        let new_space = GenomeSingleConfig::DISCRIMINATOR.len()
-            + GenomeSingleConfig::INIT_SPACE
-            + (new_len * PUBKEY_BYTES);
+    let index_role_list =
+        role_list.accounts.iter().position(|user| *user == user_key).expect("User must have role");
 
-        realloc(config.to_account_info(), ctx.accounts.admin.to_account_info(), new_space)?;
-        if let Some(indx) = config.verifier_addresses.iter().position(|&k| k == user_key) {
-            config.verifier_addresses.remove(indx);
-        }
-    }
-    ctx.accounts.role_info.roles.remove(index);
+    let current_count = role_list.accounts.len();
+    let new_count = current_count - 1;
+    let new_space =
+        RoleList::DISCRIMINATOR.len() + RoleList::INIT_SPACE + (new_count * PUBKEY_BYTES);
+
+    realloc(role_list.to_account_info(), ctx.accounts.admin.to_account_info(), new_space)?;
+
+    role_list.accounts.remove(index_role_list);
+    ctx.accounts.role_info.roles.remove(index_role_info);
 
     Ok(())
 }
 
 #[derive(Accounts)]
+#[instruction(role: Role)]
 pub(crate) struct RevokeRole<'info> {
     #[account(mut, address = config.admin @ GenomeError::NotAllowed)]
     admin: Signer<'info>,
@@ -46,32 +44,14 @@ pub(crate) struct RevokeRole<'info> {
 
     #[account(mut, seeds = [GENOME_ROOT, SINGLE_CONFIG], bump)]
     config: Account<'info, GenomeSingleConfig>,
-    
+
     #[account(mut, seeds = [GENOME_ROOT, ROLE, user.key().as_ref()], bump)]
     role_info: Account<'info, RoleInfo>,
-}
 
-fn realloc<'info>(
-    account: AccountInfo<'info>,
-    payer: AccountInfo<'info>,
-    space: usize,
-) -> Result<()> {
-    let rent_lamports = Rent::get()?.minimum_balance(space);
-    let current_lamports = account.lamports();
-    account.realloc(space, false)?;
-
-    if rent_lamports > current_lamports {
-        system_transfer(payer, account, rent_lamports - current_lamports)?;
-    } else {
-        account.sub_lamports(current_lamports - rent_lamports)?;
-        payer.add_lamports(current_lamports - rent_lamports)?;
-    }
-
-    Ok(())
-}
-
-fn system_transfer<'a>(from: AccountInfo<'a>, to: AccountInfo<'a>, amount: u64) -> Result<()> {
-    let ix = system_instruction::transfer(from.key, to.key, amount);
-    invoke(&ix, &[from.clone(), to.clone()])?;
-    Ok(())
+    #[account(
+        mut,
+        seeds = [GENOME_ROOT, ROLE, role.to_seed()],
+        bump
+    )]
+    role_list: Box<Account<'info, RoleList>>,
 }

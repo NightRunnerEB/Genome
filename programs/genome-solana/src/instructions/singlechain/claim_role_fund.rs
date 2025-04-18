@@ -3,12 +3,12 @@ use anchor_spl::token_interface::{
     transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 
-use crate::{data::RoleInfo, error::GenomeError, GenomeSingleConfig, GENOME_ROOT, PLATFORM, ROLE, SINGLE_CONFIG};
+use crate::{
+    data::RoleInfo, error::GenomeError, GenomeSingleConfig, GENOME_ROOT, PLATFORM, ROLE,
+    SINGLE_CONFIG,
+};
 
-pub fn handle_claim_role_fund(
-    ctx: Context<ClaimRoleFund>,
-    amount: u64,
-) -> Result<()> {    
+pub fn handle_claim_role_fund(ctx: Context<ClaimRoleFund>, amount: u64) -> Result<()> {
     require!(ctx.accounts.role_info.claim >= amount, GenomeError::InsufficientFunds);
     ctx.accounts.role_info.claim -= amount;
 
@@ -43,11 +43,11 @@ pub struct ClaimRoleFund<'info> {
 
     /// CHECKED
     #[account(mut, seeds = [GENOME_ROOT, PLATFORM], bump)]
-     pub platform_wallet: UncheckedAccount<'info>,
+    pub platform_wallet: UncheckedAccount<'info>,
 
     #[account(
-        mut, 
-        seeds = [GENOME_ROOT, ROLE, claimer.key().as_ref()], 
+        mut,
+        seeds = [GENOME_ROOT, ROLE, claimer.key().as_ref()],
         constraint = !role_info.roles.is_empty() @ GenomeError::NotAllowed,
         bump
     )]

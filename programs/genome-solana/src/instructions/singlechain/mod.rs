@@ -1,47 +1,81 @@
-pub mod initialize;
-pub use initialize::*;
+use anchor_lang::{
+    prelude::*,
+    solana_program::{program::invoke, system_instruction},
+};
 
-pub mod approve_token;
-pub use approve_token::*;
+pub(crate) mod initialize;
+pub(crate) use initialize::*;
 
-pub mod ban_token;
-pub use ban_token::*;
+pub(crate) mod approve_token;
+pub(crate) use approve_token::*;
 
-pub mod grant_role;
-pub use grant_role::*;
+pub(crate) mod ban_token;
+pub(crate) use ban_token::*;
 
-pub mod revoke_role;
-pub use revoke_role::*;
+pub(crate) mod grant_role;
+pub(crate) use grant_role::*;
 
-pub mod create_tournament;
-pub use create_tournament::*;
+pub(crate) mod revoke_role;
+pub(crate) use revoke_role::*;
 
-pub mod register_tournament;
-pub use register_tournament::*;
+pub(crate) mod create_tournament;
+pub(crate) use create_tournament::*;
 
-pub mod set_bloom_precision;
-pub use set_bloom_precision::*;
+pub(crate) mod register_tournament;
+pub(crate) use register_tournament::*;
 
-pub mod start_tournament;
-pub use start_tournament::*;
+pub(crate) mod set_bloom_precision;
+pub(crate) use set_bloom_precision::*;
 
-pub mod cancel_tournament;
-pub use cancel_tournament::*;
+pub(crate) mod start_tournament;
+pub(crate) use start_tournament::*;
 
-pub mod finish_tournament;
-pub use finish_tournament::*;
+pub(crate) mod cancel_tournament;
+pub(crate) use cancel_tournament::*;
 
-pub mod claim_refund;
-pub use claim_refund::*;
+pub(crate) mod finish_tournament;
+pub(crate) use finish_tournament::*;
 
-pub mod claim_role_fund;
-pub use claim_role_fund::*;
+pub(crate) mod claim_refund;
+pub(crate) use claim_refund::*;
 
-pub mod claim_sponros_refund;
-pub use claim_sponros_refund::*;
+pub(crate) mod claim_role_fund;
+pub(crate) use claim_role_fund::*;
 
-pub mod claim_reward;
-pub use claim_reward::*;
+pub(crate) mod claim_sponros_refund;
+pub(crate) use claim_sponros_refund::*;
 
-pub mod withdraw;
-pub use withdraw::*;
+pub(crate) mod claim_reward;
+pub(crate) use claim_reward::*;
+
+pub(crate) mod withdraw;
+pub(crate) use withdraw::*;
+
+pub(crate) fn realloc<'info>(
+    account: AccountInfo<'info>,
+    payer: AccountInfo<'info>,
+    space: usize,
+) -> Result<()> {
+    let rent_lamports = Rent::get()?.minimum_balance(space);
+    let current_lamports = account.lamports();
+    account.realloc(space, false)?;
+
+    if rent_lamports > current_lamports {
+        system_transfer(payer, account, rent_lamports - current_lamports)?;
+    } else {
+        account.sub_lamports(current_lamports - rent_lamports)?;
+        payer.add_lamports(current_lamports - rent_lamports)?;
+    }
+
+    Ok(())
+}
+
+pub(crate) fn system_transfer<'a>(
+    from: AccountInfo<'a>,
+    to: AccountInfo<'a>,
+    amount: u64,
+) -> Result<()> {
+    let ix = system_instruction::transfer(from.key, to.key, amount);
+    invoke(&ix, &[from.clone(), to.clone()])?;
+    Ok(())
+}

@@ -23,6 +23,6 @@ pub(crate) struct InitializeOmni<'info> {
         bump
     )]
     omni_config: Box<Account<'info, GenomeOmniConfig>>,
-    
+
     system_program: Program<'info, System>,
 }

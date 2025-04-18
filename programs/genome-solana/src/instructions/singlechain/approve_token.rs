@@ -33,7 +33,7 @@ pub(crate) struct ApproveToken<'info> {
         constraint = role_info.roles.contains(&Role::Operator) @ GenomeError::NotAllowed
     )]
     role_info: Account<'info, RoleInfo>,
-    
+
     #[account(
         init_if_needed,
         payer = operator,
@@ -42,6 +42,6 @@ pub(crate) struct ApproveToken<'info> {
         bump
     )]
     token_info: Account<'info, TokenInfo>,
-    
+
     system_program: Program<'info, System>,
 }
