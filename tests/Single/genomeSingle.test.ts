@@ -1,4 +1,4 @@
-import { BN, IdlTypes } from "@coral-xyz/anchor";
+import { BN } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import * as assert from "assert";
 
@@ -28,8 +28,8 @@ import {
     GenomeSingleConfig,
     getRoleInfo,
     TOURNAMENT,
+    Role,
 } from "../../common/utils";
-import { GenomeSolana } from "../../target/types/genome_solana";
 
 describe("Genome Solana Singlechain", () => {
     let ixBuilder: IxBuilder;
@@ -85,7 +85,6 @@ describe("Genome Solana Singlechain", () => {
             falsePrecision: new BN(65), //  1000000
             maxOrganizerFee: new BN(5000), // 100
             consensusRate: new BN(6000), // 100
-            verifierAddresses: [],
         };
 
         await airdropAll(
@@ -120,27 +119,6 @@ describe("Genome Solana Singlechain", () => {
         console.log("Initialize delegate tx: ", delegate);
     });
 
-    it(`Initialize Genome Solana with Invalid Params [${MARKS.negative}]`, async () => {
-        try {
-            const configDataInvalid = {
-                ...configData,
-                verifierAddresses: [
-                    ...configData.verifierAddresses,
-                    verifier1.publicKey,
-                    verifier2.publicKey,
-                ],
-            };
-            const initIx = await ixBuilder.initializeSingleIx(
-                deployer.publicKey,
-                configDataInvalid
-            );
-            await buildAndSendTx([initIx], [deployer]);
-            throw new Error("Expected error was not thrown");
-        } catch (error) {
-            checkAnchorError(error, "The list of verifiers must be empty");
-        }
-    });
-
     it(`Initialize Genome Solana [${MARKS.required}]`, async () => {
         const initIx = await ixBuilder.initializeSingleIx(
             deployer.publicKey,
@@ -153,7 +131,6 @@ describe("Genome Solana Singlechain", () => {
         assert.equal(config.tournamentNonce, 0);
         assert.deepEqual(config.admin, configData.admin);
         assert.deepEqual(config.nomeMint, configData.nomeMint);
-        assert.deepEqual(config.verifierAddresses, configData.verifierAddresses);
         assert.equal(config.minTeams, configData.minTeams);
         assert.equal(config.maxTeams, configData.maxTeams);
         assert.equal(config.falsePrecision.toNumber(), configData.falsePrecision.toNumber());
@@ -176,11 +153,12 @@ describe("Genome Solana Singlechain", () => {
         }
     });
 
+    // НОВЫЙ МЕХАНИЗМ - НУЖНЫ НОВЫЕ ТЕСТЫ РОЛЕЙ
     it(`Grant role [${MARKS.required}]`, async () => {
         const beforeInfo = await getProvider().connection.getAccountInfo(configPda);
         const beforeLamports = beforeInfo?.lamports ?? 0;
 
-        const roles: [PublicKey, IdlTypes<GenomeSolana>["role"]][] = [
+        const roles: [PublicKey, Role][] = [
             [operator.publicKey, { operator: {} }],
             [organizer.publicKey, { organizer: {} }],
             [verifier1.publicKey, { verifier: {} }],
@@ -208,7 +186,6 @@ describe("Genome Solana Singlechain", () => {
         console.log("Config lamports after grant:", afterLamports);
 
         const config = await getSingleConfig();
-        assert.deepEqual(config.verifierAddresses, [verifier1.publicKey, verifier2.publicKey, verifier3.publicKey]);
     });
 
     it(`Give the role to the same person again [${MARKS.negative}]`, async () => {

@@ -41,15 +41,19 @@ pub(crate) fn handle_create_tournament(
         transfer_checked(cpi, tournament.config.sponsor_pool, ctx.accounts.asset_mint.decimals)?;
     }
 
-    let accounts = TransferChecked {
-        from: ctx.accounts.organizer_ata.to_account_info(),
-        to: ctx.accounts.platform_ata.to_account_info(),
-        mint: ctx.accounts.nome_mint.to_account_info(),
-        authority: ctx.accounts.organizer.to_account_info(),
-    };
+    if ctx.accounts.role_info.claim >= ctx.accounts.config.platform_fee {
+        ctx.accounts.role_info.claim -= ctx.accounts.config.platform_fee;
+    } else {
+        let accounts = TransferChecked {
+            from: ctx.accounts.organizer_ata.to_account_info(),
+            to: ctx.accounts.platform_ata.to_account_info(),
+            mint: ctx.accounts.nome_mint.to_account_info(),
+            authority: ctx.accounts.organizer.to_account_info(),
+        };
 
-    let cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), accounts);
-    transfer_checked(cpi, ctx.accounts.config.platform_fee, ctx.accounts.nome_mint.decimals)?;
+        let cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), accounts);
+        transfer_checked(cpi, ctx.accounts.config.platform_fee, ctx.accounts.nome_mint.decimals)?;
+    }
 
     emit!(TournamentCreated {
         id: tournament.id,
